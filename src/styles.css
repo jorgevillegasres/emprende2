@@ -21,6 +21,7 @@
 body {
   margin: 0;
   min-height: 100vh;
+  overflow-x: hidden;
   color: var(--ink);
   background:
     linear-gradient(90deg, rgba(67, 102, 87, 0.08) 1px, transparent 1px),
@@ -175,7 +176,7 @@ h2 {
 
 .metric-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 14px;
   margin-bottom: 18px;
 }
@@ -243,6 +244,11 @@ h2 {
   border-left: 4px solid var(--amber);
   background: rgba(216, 157, 57, 0.09);
   padding: 10px 12px;
+}
+
+.sales-list li {
+  border-left-color: var(--aqua);
+  background: rgba(61, 128, 132, 0.09);
 }
 
 .alert-list strong,
@@ -411,6 +417,7 @@ button:focus-visible {
 
   .nav {
     display: flex;
+    max-width: 100%;
     overflow-x: auto;
     padding-bottom: 4px;
   }

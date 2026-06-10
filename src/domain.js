@@ -90,6 +90,45 @@ export function registerProduction(state, production) {
   };
 }
 
+export function registerSale(state, sale) {
+  const product = (state.products || []).find((item) => item.id === sale.productId);
+  if (!product) throw new Error(`Producto no encontrado: ${sale.productId}`);
+
+  const quantity = Number(sale.quantity || 0);
+  if (quantity <= 0) throw new Error('La cantidad vendida debe ser mayor que cero');
+  if (Number(product.stock || 0) < quantity) {
+    throw new Error(`Stock insuficiente para ${product.name}`);
+  }
+
+  const unitPrice = Number(sale.unitPrice || product.price || 0);
+  const unitCost = Number(product.unitCost || 0);
+  const revenue = quantity * unitPrice;
+  const cost = quantity * unitCost;
+  const grossProfit = revenue - cost;
+
+  const products = (state.products || []).map((item) => {
+    if (item.id !== sale.productId) return item;
+    return { ...item, stock: round(Number(item.stock || 0) - quantity) };
+  });
+
+  return {
+    ...state,
+    products,
+    sales: [
+      {
+        ...sale,
+        quantity,
+        unitPrice: round(unitPrice),
+        unitCost: round(unitCost),
+        revenue: round(revenue),
+        cost: round(cost),
+        grossProfit: round(grossProfit),
+      },
+      ...(state.sales || []),
+    ],
+  };
+}
+
 export function getLowStockItems(state) {
   const supplies = (state.supplies || [])
     .filter((item) => Number(item.stock || 0) <= Number(item.minStock || 0))
@@ -128,6 +167,11 @@ export function calculateDashboardMetrics(state, today = toDateKey(new Date())) 
   const supplyInventoryValue = sumBy(state.supplies, (item) => item.stock * item.averageCost);
   const productInventoryValue = sumBy(state.products, (item) => item.stock * item.unitCost);
   const monthlyExpenses = getMonthlyExpenseTotal(state.expenses || [], monthKey);
+  const monthlySales = (state.sales || []).filter((sale) =>
+    String(sale.date || '').startsWith(monthKey),
+  );
+  const monthlyRevenue = sumBy(monthlySales, (sale) => sale.revenue);
+  const monthlyGrossProfit = sumBy(monthlySales, (sale) => sale.grossProfit);
   const marginLeaders = [...(state.products || [])]
     .map((product) => ({
       ...product,
@@ -144,6 +188,9 @@ export function calculateDashboardMetrics(state, today = toDateKey(new Date())) 
     productInventoryValue: round(productInventoryValue),
     totalInventoryValue: round(supplyInventoryValue + productInventoryValue),
     monthlyExpenses,
+    monthlyRevenue,
+    monthlyGrossProfit,
+    netAfterExpenses: round(monthlyGrossProfit - monthlyExpenses),
     lowStockItems: getLowStockItems(state),
     upcomingExpirations: getUpcomingExpirations(state, today),
     marginLeaders,

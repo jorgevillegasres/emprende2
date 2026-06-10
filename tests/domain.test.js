@@ -5,6 +5,7 @@ import {
   calculateDashboardMetrics,
   getLowStockItems,
   getMonthlyExpenseTotal,
+  registerSale,
   registerProduction,
 } from '../src/domain.js';
 
@@ -76,6 +77,47 @@ test('registerProduction rejects insufficient supply stock', () => {
   );
 });
 
+test('registerSale discounts finished stock and records gross margin', () => {
+  const state = {
+    products: [{ id: 'soap', name: 'Jabon lavanda', stock: 10, unitCost: 3000, price: 9000 }],
+    sales: [],
+  };
+
+  const result = registerSale(state, {
+    id: 'sale1',
+    productId: 'soap',
+    quantity: 3,
+    unitPrice: 10000,
+    date: '2026-06-10',
+    channel: 'Feria',
+  });
+
+  assert.equal(result.products[0].stock, 7);
+  assert.equal(result.sales[0].revenue, 30000);
+  assert.equal(result.sales[0].cost, 9000);
+  assert.equal(result.sales[0].grossProfit, 21000);
+});
+
+test('registerSale rejects insufficient finished product stock', () => {
+  const state = {
+    products: [{ id: 'soap', name: 'Jabon lavanda', stock: 1, unitCost: 3000, price: 9000 }],
+    sales: [],
+  };
+
+  assert.throws(
+    () =>
+      registerSale(state, {
+        id: 'sale1',
+        productId: 'soap',
+        quantity: 2,
+        unitPrice: 9000,
+        date: '2026-06-10',
+        channel: 'Instagram',
+      }),
+    /Stock insuficiente/,
+  );
+});
+
 test('getLowStockItems returns supplies and products below minimum', () => {
   const alerts = getLowStockItems({
     supplies: [{ name: 'Aceite de coco', stock: 1, minStock: 2, unit: 'L' }],
@@ -107,6 +149,7 @@ test('calculateDashboardMetrics summarizes inventory value and margins', () => {
       supplies: [{ stock: 10, averageCost: 2000, minStock: 2 }],
       products: [{ name: 'Jabon', stock: 5, unitCost: 3000, price: 9000, minStock: 1 }],
       expenses: [{ date: '2026-06-09', amount: 7000 }],
+      sales: [{ date: '2026-06-09', revenue: 30000, cost: 9000, grossProfit: 21000 }],
       productions: [],
       purchases: [],
     },
@@ -116,5 +159,7 @@ test('calculateDashboardMetrics summarizes inventory value and margins', () => {
   assert.equal(metrics.supplyInventoryValue, 20000);
   assert.equal(metrics.productInventoryValue, 15000);
   assert.equal(metrics.monthlyExpenses, 7000);
+  assert.equal(metrics.monthlyRevenue, 30000);
+  assert.equal(metrics.monthlyGrossProfit, 21000);
   assert.equal(metrics.marginLeaders[0].margin, 6000);
 });

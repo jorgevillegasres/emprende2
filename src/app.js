@@ -4,6 +4,7 @@ import {
   formatCurrency,
   makeId,
   registerProduction,
+  registerSale,
   toDateKey,
 } from './domain.js';
 import { loadState, resetState, saveState } from './storage.js';
@@ -19,6 +20,7 @@ const viewTitles = {
   recipes: 'Recetas y formulaciones',
   production: 'Produccion por lotes',
   purchases: 'Compras de insumos',
+  sales: 'Ventas simples',
   expenses: 'Gastos del taller',
 };
 
@@ -52,6 +54,7 @@ function render() {
   renderRecipes();
   renderProduction();
   renderPurchases();
+  renderSales();
   renderExpenses();
 }
 
@@ -63,7 +66,10 @@ function renderDashboard() {
       ${metricCard('Inventario total', formatCurrency(metrics.totalInventoryValue), 'Insumos + producto terminado')}
       ${metricCard('Valor insumos', formatCurrency(metrics.supplyInventoryValue), 'Costo promedio ponderado')}
       ${metricCard('Valor producto', formatCurrency(metrics.productInventoryValue), 'Costo unitario estimado')}
+      ${metricCard('Ventas del mes', formatCurrency(metrics.monthlyRevenue), 'Ingresos registrados')}
+      ${metricCard('Utilidad bruta', formatCurrency(metrics.monthlyGrossProfit), 'Ventas - costo vendido')}
       ${metricCard('Gastos del mes', formatCurrency(metrics.monthlyExpenses), 'Operacion registrada')}
+      ${metricCard('Resultado operativo', formatCurrency(metrics.netAfterExpenses), 'Utilidad bruta - gastos')}
     </div>
 
     <div class="dashboard-grid">
@@ -99,14 +105,83 @@ function renderDashboard() {
         <div class="quick-actions">
           <button type="button" data-jump="purchases">Registrar compra</button>
           <button type="button" data-jump="production">Registrar produccion</button>
+          <button type="button" data-jump="sales">Registrar venta</button>
           <button type="button" data-jump="expenses">Registrar gasto</button>
         </div>
+      </article>
+
+      <article class="panel">
+        <div class="panel-head">
+          <h2>Ventas recientes</h2>
+          <span>${(state.sales || []).length}</span>
+        </div>
+        ${renderRecentSales()}
       </article>
     </div>
   `;
   section.querySelectorAll('[data-jump]').forEach((button) => {
     button.addEventListener('click', () => setView(button.dataset.jump));
   });
+}
+
+function renderSales() {
+  const section = document.querySelector('#sales');
+  section.innerHTML = `
+    <div class="split-layout">
+      <form class="panel form-panel" id="saleForm">
+        <h2>Registrar venta</h2>
+        <label>Producto
+          <select name="productId" required>
+            ${state.products.map((product) => option(product.id, `${product.name} | stock ${product.stock}`)).join('')}
+          </select>
+        </label>
+        <label>Cantidad
+          <input name="quantity" type="number" min="1" step="1" required />
+        </label>
+        <label>Precio unitario
+          <input name="unitPrice" type="number" min="0" step="100" required />
+        </label>
+        <label>Canal
+          <select name="channel" required>
+            ${['Feria local', 'Instagram', 'WhatsApp', 'Tienda aliada', 'Otro'].map((item) => option(item, item)).join('')}
+          </select>
+        </label>
+        <label>Fecha
+          <input name="date" type="date" value="${today}" required />
+        </label>
+        <label>Nota
+          <input name="note" placeholder="Opcional" />
+        </label>
+        <button type="submit">Guardar venta</button>
+        <p class="form-note">La venta descuenta producto terminado y calcula utilidad con el costo unitario actual.</p>
+      </form>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th>Producto</th>
+              <th>Canal</th>
+              <th>Cantidad</th>
+              <th>Ingreso</th>
+              <th>Utilidad</th>
+            </tr>
+          </thead>
+          <tbody>${(state.sales || []).map(renderSaleRow).join('')}</tbody>
+        </table>
+      </div>
+    </div>
+  `;
+
+  const form = section.querySelector('#saleForm');
+  const productSelect = form.elements.productId;
+  const priceInput = form.elements.unitPrice;
+  productSelect.addEventListener('change', () => {
+    priceInput.value = findProduct(productSelect.value)?.price || 0;
+  });
+  priceInput.value = findProduct(productSelect.value)?.price || 0;
+  form.addEventListener('submit', handleSaleSubmit);
 }
 
 function renderSupplies() {
@@ -418,6 +493,27 @@ function handleExpenseSubmit(event) {
   persistAndRender('Gasto registrado');
 }
 
+function handleSaleSubmit(event) {
+  event.preventDefault();
+  const data = Object.fromEntries(new FormData(event.currentTarget));
+
+  try {
+    state = registerSale(state, {
+      id: makeId('venta'),
+      productId: data.productId,
+      date: data.date,
+      quantity: Number(data.quantity),
+      unitPrice: Number(data.unitPrice),
+      channel: data.channel,
+      note: data.note.trim(),
+    });
+    event.currentTarget.reset();
+    persistAndRender('Venta registrada');
+  } catch (error) {
+    showToast(error.message);
+  }
+}
+
 function updateMinimum(collection, id, value) {
   state = {
     ...state,
@@ -475,6 +571,26 @@ function renderExpirationList(items) {
             </li>
           `,
         )
+        .join('')}
+    </ul>
+  `;
+}
+
+function renderRecentSales() {
+  const sales = (state.sales || []).slice(0, 5);
+  if (!sales.length) return '<p class="empty">Sin ventas registradas.</p>';
+  return `
+    <ul class="alert-list sales-list">
+      ${sales
+        .map((sale) => {
+          const product = findProduct(sale.productId);
+          return `
+            <li>
+              <strong>${product?.name || sale.productId}</strong>
+              <span>${sale.quantity} un | ${sale.channel} | ${formatCurrency(sale.revenue)}</span>
+            </li>
+          `;
+        })
         .join('')}
     </ul>
   `;
@@ -577,6 +693,20 @@ function renderExpenseRow(expense) {
       <td>${expense.category}</td>
       <td>${expense.description}</td>
       <td>${formatCurrency(expense.amount)}</td>
+    </tr>
+  `;
+}
+
+function renderSaleRow(sale) {
+  const product = findProduct(sale.productId);
+  return `
+    <tr>
+      <td>${sale.date}</td>
+      <td>${product?.name || sale.productId}</td>
+      <td>${sale.channel}</td>
+      <td>${sale.quantity} ${product?.unit || 'un'}</td>
+      <td>${formatCurrency(sale.revenue)}</td>
+      <td>${formatCurrency(sale.grossProfit)}</td>
     </tr>
   `;
 }

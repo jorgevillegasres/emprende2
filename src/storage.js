@@ -1,4 +1,4 @@
-import { addSupplyPurchase, registerProduction } from './domain.js';
+import { addSupplyPurchase, registerProduction, registerSale } from './domain.js';
 
 const STORAGE_KEY = 'taller-huerta-state-v1';
 
@@ -149,6 +149,7 @@ export function createInitialState() {
     ],
     purchases: [],
     productions: [],
+    sales: [],
     expenses: [
       {
         id: 'gasto-1',
@@ -265,6 +266,24 @@ export function createInitialState() {
       { supplyId: 'etiqueta-kraft', quantity: 30 },
     ],
     directCost: 12000,
+  });
+  state = registerSale(state, {
+    id: 'venta-jabon-0609',
+    productId: 'jabon-lavanda',
+    date: '2026-06-09',
+    quantity: 5,
+    unitPrice: 9000,
+    channel: 'Feria local',
+    note: 'Combo jabones corporales',
+  });
+  state = registerSale(state, {
+    id: 'venta-shampoo-0609',
+    productId: 'shampoo-romero',
+    date: '2026-06-09',
+    quantity: 3,
+    unitPrice: 16000,
+    channel: 'Instagram',
+    note: 'Pedido directo',
   });
 
   return state;
