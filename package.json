@@ -1,9 +1,20 @@
 {
-  "name": "taller-de-la-huerta",
+  "name": "emprendedos",
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "packageManager": "pnpm@9.15.0",
   "scripts": {
-    "test": "node --test tests/domain.test.js"
+    "test": "pnpm -r test",
+    "typecheck": "pnpm -r typecheck",
+    "dev:api": "pnpm --filter @emprendedos/api dev",
+    "dev:web": "pnpm --filter @emprendedos/web dev",
+    "dev": "pnpm --parallel dev",
+    "legacy:test": "node --test tests/domain.test.js"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
   }
 }
