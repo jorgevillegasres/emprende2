@@ -1,6 +1,7 @@
 import cors from "@fastify/cors";
 import Fastify from "fastify";
 import { getConfig } from "./config.js";
+import { registerDashboardRoutes } from "./routes/dashboard.js";
 import { registerHealthRoutes } from "./routes/health.js";
 
 export function buildApp() {
@@ -8,5 +9,6 @@ export function buildApp() {
   const config = getConfig();
   void app.register(cors, { origin: config.webOrigin });
   void app.register(registerHealthRoutes);
+  void app.register(registerDashboardRoutes);
   return app;
 }

@@ -1,0 +1,15 @@
+import { describe, expect, it } from "vitest";
+import { buildApp } from "../src/app.js";
+
+describe("dashboard endpoint", () => {
+  it("returns tenant-scoped dashboard metrics", async () => {
+    const app = buildApp();
+    const response = await app.inject({ method: "GET", url: "/v1/dashboard" });
+    const body = response.json();
+
+    expect(response.statusCode).toBe(200);
+    expect(body.monthlyRevenue).toBeGreaterThan(0);
+    expect(body.growthActions.length).toBeGreaterThan(0);
+    expect(body.lowStockItems.length).toBeGreaterThan(0);
+  });
+});
