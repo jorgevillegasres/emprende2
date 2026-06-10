@@ -14,7 +14,7 @@ let state = loadState();
 let currentView = 'dashboard';
 
 const viewTitles = {
-  dashboard: 'Pulso del emprendimiento',
+  dashboard: 'Tu negocio este mes',
   supplies: 'Inventario de insumos',
   products: 'Productos terminados',
   recipes: 'Recetas y formulaciones',
@@ -32,6 +32,7 @@ document.querySelector('#resetButton').addEventListener('click', () => {
   state = resetState();
   persistAndRender('Datos demo restaurados');
 });
+document.querySelector('#quickSaleButton').addEventListener('click', () => setView('sales'));
 
 render();
 
@@ -62,38 +63,51 @@ function renderDashboard() {
   const metrics = calculateDashboardMetrics(state, today);
   const section = document.querySelector('#dashboard');
   section.innerHTML = `
-    <div class="growth-hero">
-      <div>
-        <p class="eyebrow">Tu negocio este mes</p>
-        <h2>Estas son las señales clave para crecer con claridad.</h2>
-        <p>Ventas, margen, inventario y proximas acciones.</p>
-      </div>
-      <div class="health-card">
-        <span>Score de salud</span>
-        <strong>${metrics.businessHealthScore}</strong>
-        <small>${getHealthLabel(metrics.businessHealthScore)}</small>
-      </div>
+    <div class="hero-grid">
+      <article class="card score-card">
+        <div class="card-head">
+          <h2>Salud del negocio</h2>
+          <span>${getHealthLabel(metrics.businessHealthScore)}</span>
+        </div>
+        ${renderHealthGauge(metrics.businessHealthScore)}
+        <p>${renderHealthInsight(metrics)}</p>
+      </article>
+
+      <article class="card decisions-card">
+        <div class="decisions-head">
+          <div>
+            <h2>Tus 3 decisiones de esta semana</h2>
+            <p>${renderBusinessNarrative(metrics)}</p>
+          </div>
+          <span class="week-chip">${getWeekRangeLabel(today)}</span>
+        </div>
+        ${renderDecisionCards(metrics.growthActions)}
+      </article>
     </div>
 
+    <div class="section-title">Tu negocio este mes <span>corte al ${formatShortDate(today)}</span></div>
     <div class="metric-grid">
-      ${metricCard('Ventas del mes', formatCurrency(metrics.monthlyRevenue), 'Ingresos registrados', 'accent-blue')}
-      ${metricCard('Utilidad bruta', formatCurrency(metrics.monthlyGrossProfit), `${metrics.averageMarginPercent}% margen`, 'accent-green')}
-      ${metricCard('Resultado operativo', formatCurrency(metrics.netAfterExpenses), 'Utilidad bruta - gastos', 'accent-coral')}
-      ${metricCard('Inventario valorizado', formatCurrency(metrics.totalInventoryValue), 'Insumos + productos', 'accent-gold')}
+      ${metricCard('Ventas del mes', formatCurrency(metrics.monthlyRevenue), `${getTotalUnitsSold()} unidades vendidas`, 'accent-blue', '2 hoy')}
+      ${metricCard('Utilidad bruta', formatCurrency(metrics.monthlyGrossProfit), 'Lo que queda despues del costo de producto', 'accent-green', `${metrics.averageMarginPercent}%`)}
+      ${metricCard('Margen promedio', `${metrics.averageMarginPercent}%`, 'Tus precios estan mostrando su fuerza', 'accent-green', 'bien')}
+      ${metricCard('Inventario valorizado', formatCurrency(metrics.totalInventoryValue), `${formatCurrency(metrics.supplyInventoryValue)} en insumos`, 'accent-violet')}
+      ${metricCard('Gastos del mes', formatCurrency(metrics.monthlyExpenses), 'Operacion registrada este mes', 'accent-gold', 'vigilar')}
+      ${metricCard('Resultado operativo', formatCurrency(metrics.netAfterExpenses), 'Utilidad bruta menos gastos', 'accent-coral', metrics.netAfterExpenses >= 0 ? 'positivo' : 'en rojo')}
     </div>
 
+    <div class="section-title">Como se mueve la plata <span>simple, sin contabilidad pesada</span></div>
     <div class="dashboard-grid">
-      <article class="panel wide chart-panel">
+      <article class="panel chart-panel cash-chart">
         <div class="panel-head">
           <h2>Ventas por semana</h2>
-          <span>${formatCurrency(metrics.monthlyRevenue)}</span>
+          <span>${getBestWeekLabel(metrics.weeklyRevenue)}</span>
         </div>
         ${renderWeeklyRevenueChart(metrics.weeklyRevenue)}
       </article>
 
       <article class="panel chart-panel">
         <div class="panel-head">
-          <h2>Gastos por categoria</h2>
+          <h2>En que se va el gasto</h2>
           <span>${formatCurrency(metrics.monthlyExpenses)}</span>
         </div>
         ${renderExpenseBars(metrics.expensesByCategory)}
@@ -101,24 +115,16 @@ function renderDashboard() {
 
       <article class="panel">
         <div class="panel-head">
-          <h2>Acciones para crecer</h2>
-          <span>Esta semana</span>
-        </div>
-        ${renderGrowthActions(metrics.growthActions)}
-      </article>
-
-      <article class="panel">
-        <div class="panel-head">
-          <h2>Productos estrella</h2>
-          <span>Ventas</span>
+          <h2>Lo que mas deja margen</h2>
+          <span>Ranking</span>
         </div>
         ${renderTopProducts(metrics.topProductsByRevenue)}
       </article>
 
       <article class="panel">
         <div class="panel-head">
-          <h2>Alertas criticas</h2>
-          <span>${metrics.lowStockItems.length}</span>
+          <h2>Ojo con esto</h2>
+          <span>${metrics.lowStockItems.length} alertas</span>
         </div>
         ${renderAlertList(metrics.lowStockItems)}
       </article>
@@ -130,7 +136,7 @@ function renderDashboard() {
         </div>
         <div class="quick-actions">
           <button type="button" data-jump="purchases">Registrar compra</button>
-          <button type="button" data-jump="production">Registrar produccion</button>
+          <button type="button" data-jump="production">Planear produccion</button>
           <button type="button" data-jump="sales">Registrar venta</button>
           <button type="button" data-jump="expenses">Registrar gasto</button>
         </div>
@@ -157,7 +163,6 @@ function renderDashboard() {
     button.addEventListener('click', () => setView(button.dataset.jump));
   });
 }
-
 function renderSales() {
   const section = document.querySelector('#sales');
   section.innerHTML = `
@@ -564,13 +569,92 @@ function persistAndRender(message) {
   showToast(message);
 }
 
-function metricCard(label, value, detail, accent = '') {
+function metricCard(label, value, detail, accent = '', chip = '') {
   return `
     <article class="metric-card ${accent}">
-      <span>${label}</span>
+      <div class="metric-label">
+        <span>${label}</span>
+        ${chip ? `<em>${chip}</em>` : ''}
+      </div>
       <strong>${value}</strong>
       <small>${detail}</small>
     </article>
+  `;
+}
+
+function renderHealthGauge(score) {
+  const radius = 62;
+  const circumference = 2 * Math.PI * radius;
+  const offset = circumference - (Math.max(0, Math.min(100, score)) / 100) * circumference;
+  return `
+    <div class="gauge" aria-label="Score de salud ${score} de 100">
+      <svg viewBox="0 0 160 160" role="img">
+        <defs>
+          <linearGradient id="scoreGradient" x1="0" x2="1" y1="0" y2="1">
+            <stop offset="0%" stop-color="#0EA866" />
+            <stop offset="100%" stop-color="#F0573E" />
+          </linearGradient>
+        </defs>
+        <circle class="gauge-track" cx="80" cy="80" r="${radius}" fill="none" stroke-width="16" />
+        <circle class="gauge-fill" cx="80" cy="80" r="${radius}" fill="none" stroke-width="16" stroke-dasharray="${circumference}" stroke-dashoffset="${offset}" />
+      </svg>
+      <div class="gauge-value">
+        <strong>${score}</strong>
+        <span>de 100</span>
+      </div>
+    </div>
+  `;
+}
+
+function renderHealthInsight(metrics) {
+  const salesTarget = Math.max(0, metrics.monthlyExpenses - metrics.monthlyGrossProfit);
+  if (metrics.netAfterExpenses >= 0) {
+    return `Tus ventas cubren gastos y dejan utilidad. Mantén el foco en productos de alto margen.`;
+  }
+  return `Tus margenes son sanos (${metrics.averageMarginPercent}% promedio), pero necesitas cubrir ${formatCurrency(salesTarget)} para equilibrar el mes.`;
+}
+
+function renderBusinessNarrative(metrics) {
+  const multiplier =
+    metrics.monthlyGrossProfit <= 0
+      ? 0
+      : Math.max(1, Math.ceil(metrics.monthlyExpenses / metrics.monthlyGrossProfit));
+  return `Vendiste <b>${formatCurrency(metrics.monthlyRevenue)}</b> con margen de ${metrics.averageMarginPercent}%, pero tus gastos del mes (${formatCurrency(metrics.monthlyExpenses)}) piden atencion. Para cubrirlos necesitas sostener cerca de <b>${multiplier}x</b> tu ritmo actual.`;
+}
+
+function renderDecisionCards(actions) {
+  if (!actions.length) return '<p class="empty">Registra ventas y costos para recibir decisiones accionables.</p>';
+  return `
+    <div class="decision-list">
+      ${actions
+        .slice(0, 3)
+        .map((action) => {
+          const isProductionAction = action.title.toLowerCase().includes('programa');
+          const label = isProductionAction
+            ? 'Producir'
+            : action.tone === 'warning'
+              ? 'Comprar'
+              : action.tone === 'focus'
+                ? 'Revisar'
+                : 'Producir';
+          const target = isProductionAction
+            ? 'production'
+            : action.tone === 'warning'
+              ? 'purchases'
+              : action.tone === 'focus'
+                ? 'products'
+                : 'production';
+          return `
+            <article class="decision d-${action.tone}">
+              <span>${label}</span>
+              <strong>${action.title}</strong>
+              <p>${action.detail}</p>
+              <button type="button" data-jump="${target}">Actuar ahora</button>
+            </article>
+          `;
+        })
+        .join('')}
+    </div>
   `;
 }
 
@@ -834,6 +918,31 @@ function getHealthLabel(score) {
   if (score >= 60) return 'Buen pulso, ajusta focos';
   if (score >= 40) return 'Necesita atencion';
   return 'Prioriza margen y stock';
+}
+
+function getWeekRangeLabel(dateKey) {
+  const date = new Date(`${dateKey}T00:00:00`);
+  const day = date.getDate();
+  const start = day - ((date.getDay() + 6) % 7);
+  const end = start + 6;
+  return `Semana del ${Math.max(1, start)} al ${Math.max(1, end)}`;
+}
+
+function formatShortDate(dateKey) {
+  return new Intl.DateTimeFormat('es-CO', {
+    day: 'numeric',
+    month: 'long',
+  }).format(new Date(`${dateKey}T00:00:00`));
+}
+
+function getTotalUnitsSold() {
+  return (state.sales || []).reduce((sum, sale) => sum + Number(sale.quantity || 0), 0);
+}
+
+function getBestWeekLabel(weeks) {
+  const best = [...weeks].sort((a, b) => b.revenue - a.revenue)[0];
+  if (!best || best.revenue === 0) return 'Aun sin ventas';
+  return `${best.label} fue la mejor`;
 }
 
 function findSupply(id) {

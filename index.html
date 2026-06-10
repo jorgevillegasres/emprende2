@@ -7,45 +7,50 @@
     <link rel="stylesheet" href="./src/styles.css" />
   </head>
   <body>
-    <aside class="sidebar">
-      <div class="brand">
-        <span class="brand-mark">E2</span>
-        <div>
-          <strong>Emprendedos</strong>
-          <small>Crece con claridad</small>
-        </div>
-      </div>
-      <nav class="nav" aria-label="Secciones">
-        <button class="nav-item active" data-view="dashboard">Dashboard</button>
-        <button class="nav-item" data-view="supplies">Insumos</button>
-        <button class="nav-item" data-view="products">Productos</button>
-        <button class="nav-item" data-view="recipes">Recetas</button>
-        <button class="nav-item" data-view="production">Produccion</button>
-        <button class="nav-item" data-view="purchases">Compras</button>
-        <button class="nav-item" data-view="sales">Ventas</button>
-        <button class="nav-item" data-view="expenses">Gastos</button>
-      </nav>
-      <button class="reset-button" id="resetButton" type="button">Reiniciar demo</button>
-    </aside>
-
-    <main class="workspace">
+    <div class="shell">
       <header class="topbar">
-        <div>
-          <p class="eyebrow">Tu dupla de crecimiento</p>
-          <h1 id="viewTitle">Pulso del emprendimiento</h1>
+        <div class="brand">
+          <span class="brand-mark">e</span>
+          <div>
+            <strong>emprende<span>dos</span></strong>
+            <small>Crece con claridad</small>
+          </div>
         </div>
-        <div class="today-pill" id="todayPill"></div>
+
+        <nav class="nav" aria-label="Secciones">
+          <button class="nav-item active" data-view="dashboard">Mi negocio</button>
+          <button class="nav-item" data-view="products">Productos</button>
+          <button class="nav-item" data-view="supplies">Inventario</button>
+          <button class="nav-item" data-view="sales">Ventas</button>
+          <button class="nav-item" data-view="expenses">Gastos</button>
+          <button class="nav-item" data-view="production">Produccion</button>
+          <button class="nav-item" data-view="purchases">Compras</button>
+          <button class="nav-item" data-view="recipes">Recetas</button>
+        </nav>
+
+        <div class="top-actions">
+          <div class="today-pill" id="todayPill"></div>
+          <button class="reset-button" id="resetButton" type="button">Demo</button>
+          <button class="primary-action" id="quickSaleButton" type="button">+ Registrar venta</button>
+        </div>
       </header>
 
-      <section class="view active" id="dashboard"></section>
-      <section class="view" id="supplies"></section>
-      <section class="view" id="products"></section>
-      <section class="view" id="recipes"></section>
-      <section class="view" id="production"></section>
-      <section class="view" id="purchases"></section>
-      <section class="view" id="sales"></section>
-      <section class="view" id="expenses"></section>
-    </main>
+      <main class="workspace">
+        <div class="view-heading">
+          <p class="eyebrow">Tu dupla de crecimiento</p>
+          <h1 id="viewTitle">Tu negocio este mes</h1>
+        </div>
+
+        <section class="view active" id="dashboard"></section>
+        <section class="view" id="supplies"></section>
+        <section class="view" id="products"></section>
+        <section class="view" id="recipes"></section>
+        <section class="view" id="production"></section>
+        <section class="view" id="purchases"></section>
+        <section class="view" id="sales"></section>
+        <section class="view" id="expenses"></section>
+      </main>
+    </div>
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
