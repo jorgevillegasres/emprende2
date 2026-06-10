@@ -14,7 +14,7 @@ let state = loadState();
 let currentView = 'dashboard';
 
 const viewTitles = {
-  dashboard: 'Dashboard operativo',
+  dashboard: 'Pulso del emprendimiento',
   supplies: 'Inventario de insumos',
   products: 'Productos terminados',
   recipes: 'Recetas y formulaciones',
@@ -62,39 +62,65 @@ function renderDashboard() {
   const metrics = calculateDashboardMetrics(state, today);
   const section = document.querySelector('#dashboard');
   section.innerHTML = `
+    <div class="growth-hero">
+      <div>
+        <p class="eyebrow">Tu negocio este mes</p>
+        <h2>Estas son las señales clave para crecer con claridad.</h2>
+        <p>Ventas, margen, inventario y proximas acciones.</p>
+      </div>
+      <div class="health-card">
+        <span>Score de salud</span>
+        <strong>${metrics.businessHealthScore}</strong>
+        <small>${getHealthLabel(metrics.businessHealthScore)}</small>
+      </div>
+    </div>
+
     <div class="metric-grid">
-      ${metricCard('Inventario total', formatCurrency(metrics.totalInventoryValue), 'Insumos + producto terminado')}
-      ${metricCard('Valor insumos', formatCurrency(metrics.supplyInventoryValue), 'Costo promedio ponderado')}
-      ${metricCard('Valor producto', formatCurrency(metrics.productInventoryValue), 'Costo unitario estimado')}
-      ${metricCard('Ventas del mes', formatCurrency(metrics.monthlyRevenue), 'Ingresos registrados')}
-      ${metricCard('Utilidad bruta', formatCurrency(metrics.monthlyGrossProfit), 'Ventas - costo vendido')}
-      ${metricCard('Gastos del mes', formatCurrency(metrics.monthlyExpenses), 'Operacion registrada')}
-      ${metricCard('Resultado operativo', formatCurrency(metrics.netAfterExpenses), 'Utilidad bruta - gastos')}
+      ${metricCard('Ventas del mes', formatCurrency(metrics.monthlyRevenue), 'Ingresos registrados', 'accent-blue')}
+      ${metricCard('Utilidad bruta', formatCurrency(metrics.monthlyGrossProfit), `${metrics.averageMarginPercent}% margen`, 'accent-green')}
+      ${metricCard('Resultado operativo', formatCurrency(metrics.netAfterExpenses), 'Utilidad bruta - gastos', 'accent-coral')}
+      ${metricCard('Inventario valorizado', formatCurrency(metrics.totalInventoryValue), 'Insumos + productos', 'accent-gold')}
     </div>
 
     <div class="dashboard-grid">
+      <article class="panel wide chart-panel">
+        <div class="panel-head">
+          <h2>Ventas por semana</h2>
+          <span>${formatCurrency(metrics.monthlyRevenue)}</span>
+        </div>
+        ${renderWeeklyRevenueChart(metrics.weeklyRevenue)}
+      </article>
+
+      <article class="panel chart-panel">
+        <div class="panel-head">
+          <h2>Gastos por categoria</h2>
+          <span>${formatCurrency(metrics.monthlyExpenses)}</span>
+        </div>
+        ${renderExpenseBars(metrics.expensesByCategory)}
+      </article>
+
       <article class="panel">
         <div class="panel-head">
-          <h2>Alertas de stock</h2>
+          <h2>Acciones para crecer</h2>
+          <span>Esta semana</span>
+        </div>
+        ${renderGrowthActions(metrics.growthActions)}
+      </article>
+
+      <article class="panel">
+        <div class="panel-head">
+          <h2>Productos estrella</h2>
+          <span>Ventas</span>
+        </div>
+        ${renderTopProducts(metrics.topProductsByRevenue)}
+      </article>
+
+      <article class="panel">
+        <div class="panel-head">
+          <h2>Alertas criticas</h2>
           <span>${metrics.lowStockItems.length}</span>
         </div>
         ${renderAlertList(metrics.lowStockItems)}
-      </article>
-
-      <article class="panel">
-        <div class="panel-head">
-          <h2>Proximos vencimientos</h2>
-          <span>${metrics.upcomingExpirations.length}</span>
-        </div>
-        ${renderExpirationList(metrics.upcomingExpirations)}
-      </article>
-
-      <article class="panel wide">
-        <div class="panel-head">
-          <h2>Margen estimado</h2>
-          <span>Precio - costo</span>
-        </div>
-        ${renderMarginTable(metrics.marginLeaders)}
       </article>
 
       <article class="panel">
@@ -116,6 +142,14 @@ function renderDashboard() {
           <span>${(state.sales || []).length}</span>
         </div>
         ${renderRecentSales()}
+      </article>
+
+      <article class="panel wide">
+        <div class="panel-head">
+          <h2>Margen estimado</h2>
+          <span>Precio - costo</span>
+        </div>
+        ${renderMarginTable(metrics.marginLeaders)}
       </article>
     </div>
   `;
@@ -530,13 +564,93 @@ function persistAndRender(message) {
   showToast(message);
 }
 
-function metricCard(label, value, detail) {
+function metricCard(label, value, detail, accent = '') {
   return `
-    <article class="metric-card">
+    <article class="metric-card ${accent}">
       <span>${label}</span>
       <strong>${value}</strong>
       <small>${detail}</small>
     </article>
+  `;
+}
+
+function renderWeeklyRevenueChart(weeks) {
+  const max = Math.max(1, ...weeks.map((week) => Number(week.revenue || 0)));
+  return `
+    <div class="bar-chart weekly-chart">
+      ${weeks
+        .map(
+          (week) => `
+            <div class="bar-column">
+              <div class="bar-track">
+                <span style="height: ${Math.max(6, (week.revenue / max) * 100)}%"></span>
+              </div>
+              <strong>${formatCurrency(week.revenue)}</strong>
+              <small>${week.label}</small>
+            </div>
+          `,
+        )
+        .join('')}
+    </div>
+  `;
+}
+
+function renderExpenseBars(expenses) {
+  if (!expenses.length) return '<p class="empty">Sin gastos registrados este mes.</p>';
+  const max = Math.max(1, ...expenses.map((expense) => Number(expense.amount || 0)));
+  return `
+    <div class="expense-bars">
+      ${expenses
+        .map(
+          (expense) => `
+            <div class="expense-bar">
+              <div>
+                <strong>${expense.category}</strong>
+                <span>${formatCurrency(expense.amount)}</span>
+              </div>
+              <i style="width: ${Math.max(8, (expense.amount / max) * 100)}%"></i>
+            </div>
+          `,
+        )
+        .join('')}
+    </div>
+  `;
+}
+
+function renderGrowthActions(actions) {
+  if (!actions.length) return '<p class="empty">Registra ventas y costos para recibir recomendaciones.</p>';
+  return `
+    <ul class="action-list">
+      ${actions
+        .map(
+          (action) => `
+            <li class="${action.tone}">
+              <strong>${action.title}</strong>
+              <span>${action.detail}</span>
+            </li>
+          `,
+        )
+        .join('')}
+    </ul>
+  `;
+}
+
+function renderTopProducts(products) {
+  if (!products.length) return '<p class="empty">Sin ventas registradas este mes.</p>';
+  return `
+    <div class="top-products">
+      ${products
+        .map(
+          (product, index) => `
+            <div>
+              <span>${index + 1}</span>
+              <strong>${product.name}</strong>
+              <small>${product.quantity} un | ${formatCurrency(product.revenue)}</small>
+            </div>
+          `,
+        )
+        .join('')}
+    </div>
   `;
 }
 
@@ -713,6 +827,13 @@ function renderSaleRow(sale) {
 
 function option(value, label) {
   return `<option value="${value}">${label}</option>`;
+}
+
+function getHealthLabel(score) {
+  if (score >= 80) return 'Negocio en expansion';
+  if (score >= 60) return 'Buen pulso, ajusta focos';
+  if (score >= 40) return 'Necesita atencion';
+  return 'Prioriza margen y stock';
 }
 
 function findSupply(id) {

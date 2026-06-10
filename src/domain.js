@@ -172,6 +172,8 @@ export function calculateDashboardMetrics(state, today = toDateKey(new Date())) 
   );
   const monthlyRevenue = sumBy(monthlySales, (sale) => sale.revenue);
   const monthlyGrossProfit = sumBy(monthlySales, (sale) => sale.grossProfit);
+  const averageMarginPercent =
+    monthlyRevenue === 0 ? 0 : round((monthlyGrossProfit / monthlyRevenue) * 100);
   const marginLeaders = [...(state.products || [])]
     .map((product) => ({
       ...product,
@@ -182,6 +184,24 @@ export function calculateDashboardMetrics(state, today = toDateKey(new Date())) 
           : round(((Number(product.price) - Number(product.unitCost || 0)) / Number(product.price)) * 100),
     }))
     .sort((a, b) => b.margin - a.margin);
+  const lowStockItems = getLowStockItems(state);
+  const upcomingExpirations = getUpcomingExpirations(state, today);
+  const weeklyRevenue = getWeeklyRevenue(monthlySales, today);
+  const expensesByCategory = getExpensesByCategory(state.expenses || [], monthKey);
+  const topProductsByRevenue = getTopProductsByRevenue(monthlySales, state.products || []);
+  const growthActions = getGrowthActions({
+    lowStockItems,
+    marginLeaders,
+    expensesByCategory,
+    topProductsByRevenue,
+    averageMarginPercent,
+  });
+  const businessHealthScore = getBusinessHealthScore({
+    averageMarginPercent,
+    netAfterExpenses: monthlyGrossProfit - monthlyExpenses,
+    lowStockItems,
+    monthlyRevenue,
+  });
 
   return {
     supplyInventoryValue: round(supplyInventoryValue),
@@ -190,9 +210,15 @@ export function calculateDashboardMetrics(state, today = toDateKey(new Date())) 
     monthlyExpenses,
     monthlyRevenue,
     monthlyGrossProfit,
+    averageMarginPercent,
     netAfterExpenses: round(monthlyGrossProfit - monthlyExpenses),
-    lowStockItems: getLowStockItems(state),
-    upcomingExpirations: getUpcomingExpirations(state, today),
+    businessHealthScore,
+    weeklyRevenue,
+    expensesByCategory,
+    topProductsByRevenue,
+    growthActions,
+    lowStockItems,
+    upcomingExpirations,
     marginLeaders,
   };
 }
@@ -221,6 +247,137 @@ function ensureFound(items, id, label) {
 
 function sumBy(items = [], selector) {
   return round(items.reduce((sum, item) => sum + Number(selector(item) || 0), 0));
+}
+
+function getWeeklyRevenue(sales, today) {
+  const monthStart = new Date(`${today.slice(0, 7)}-01T00:00:00`);
+  const weeks = Array.from({ length: 5 }, (_, index) => ({
+    label: `Semana ${index + 1}`,
+    revenue: 0,
+  }));
+
+  for (const sale of sales || []) {
+    const saleDate = new Date(`${sale.date}T00:00:00`);
+    const dayOffset = Math.floor((saleDate - monthStart) / 86400000);
+    const weekIndex = Math.min(4, Math.max(0, Math.floor(dayOffset / 7)));
+    weeks[weekIndex].revenue += Number(sale.revenue || 0);
+  }
+
+  return weeks.map((week) => ({ ...week, revenue: round(week.revenue) }));
+}
+
+function getExpensesByCategory(expenses, monthKey) {
+  const totals = new Map();
+  for (const expense of expenses || []) {
+    if (!String(expense.date || '').startsWith(monthKey)) continue;
+    const category = expense.category || 'Otros';
+    totals.set(category, (totals.get(category) || 0) + Number(expense.amount || 0));
+  }
+
+  return [...totals.entries()]
+    .map(([category, amount]) => ({ category, amount: round(amount) }))
+    .sort((a, b) => b.amount - a.amount);
+}
+
+function getTopProductsByRevenue(sales, products) {
+  const productNames = new Map((products || []).map((product) => [product.id, product.name]));
+  const totals = new Map();
+
+  for (const sale of sales || []) {
+    const current = totals.get(sale.productId) || {
+      productId: sale.productId,
+      name: productNames.get(sale.productId) || sale.productId,
+      quantity: 0,
+      revenue: 0,
+      grossProfit: 0,
+    };
+    current.quantity += Number(sale.quantity || 0);
+    current.revenue += Number(sale.revenue || 0);
+    current.grossProfit += Number(sale.grossProfit || 0);
+    totals.set(sale.productId, current);
+  }
+
+  return [...totals.values()]
+    .map((item) => ({
+      ...item,
+      quantity: round(item.quantity),
+      revenue: round(item.revenue),
+      grossProfit: round(item.grossProfit),
+    }))
+    .sort((a, b) => b.revenue - a.revenue)
+    .slice(0, 5);
+}
+
+function getGrowthActions({
+  lowStockItems,
+  marginLeaders,
+  expensesByCategory,
+  topProductsByRevenue,
+  averageMarginPercent,
+}) {
+  const actions = [];
+  const lowProduct = (lowStockItems || []).find((item) => item.type === 'Producto');
+  const lowSupply = (lowStockItems || []).find((item) => item.type === 'Insumo');
+  const weakMargin = [...(marginLeaders || [])]
+    .reverse()
+    .find((product) => Number(product.marginPercent || 0) < 55);
+  const topProduct = (topProductsByRevenue || [])[0];
+  const topExpense = (expensesByCategory || [])[0];
+
+  if (topProduct) {
+    actions.push({
+      title: `Impulsa ${topProduct.name}`,
+      detail: 'Es el producto con mas ventas este mes. Dale visibilidad en tus canales.',
+      tone: 'growth',
+    });
+  }
+  if (lowProduct) {
+    actions.push({
+      title: `Programa produccion de ${lowProduct.name}`,
+      detail: `Esta por debajo del minimo: ${lowProduct.stock} ${lowProduct.unit || ''}.`,
+      tone: 'warning',
+    });
+  }
+  if (lowSupply) {
+    actions.push({
+      title: `Compra ${lowSupply.name}`,
+      detail: 'Este insumo puede frenar tu proxima produccion.',
+      tone: 'warning',
+    });
+  }
+  if (weakMargin) {
+    actions.push({
+      title: `Revisa precio de ${weakMargin.name}`,
+      detail: `Su margen estimado es ${weakMargin.marginPercent}%.`,
+      tone: 'focus',
+    });
+  }
+  if (topExpense) {
+    actions.push({
+      title: `Observa gasto en ${topExpense.category}`,
+      detail: `Es tu mayor categoria del mes: ${formatCurrency(topExpense.amount)}.`,
+      tone: 'focus',
+    });
+  }
+  if (averageMarginPercent < 45) {
+    actions.push({
+      title: 'Sube el margen promedio',
+      detail: 'Tu rentabilidad necesita una revision de precios o costos.',
+      tone: 'focus',
+    });
+  }
+
+  return actions.slice(0, 3);
+}
+
+function getBusinessHealthScore({ averageMarginPercent, netAfterExpenses, lowStockItems, monthlyRevenue }) {
+  let score = 50;
+  score += Math.min(25, averageMarginPercent * 0.35);
+  score += monthlyRevenue > 0 ? 12 : -8;
+  score += netAfterExpenses >= 0 ? 12 : -10;
+  score -= Math.min(18, (lowStockItems || []).length * 4);
+
+  return Math.max(0, Math.min(100, Math.round(score)));
 }
 
 function round(value) {

@@ -148,8 +148,8 @@ test('calculateDashboardMetrics summarizes inventory value and margins', () => {
   const metrics = calculateDashboardMetrics(
     {
       supplies: [{ stock: 10, averageCost: 2000, minStock: 2 }],
-      products: [{ name: 'Jabon', stock: 5, unitCost: 3000, price: 9000, minStock: 1 }],
-      expenses: [{ date: '2026-06-09', amount: 7000 }],
+      products: [{ id: 'soap', name: 'Jabon', stock: 5, unitCost: 3000, price: 9000, minStock: 1 }],
+      expenses: [{ date: '2026-06-09', category: 'Servicios', amount: 7000 }],
       sales: [{ date: '2026-06-09', revenue: 30000, cost: 9000, grossProfit: 21000 }],
       productions: [],
       purchases: [],
@@ -163,6 +163,62 @@ test('calculateDashboardMetrics summarizes inventory value and margins', () => {
   assert.equal(metrics.monthlyRevenue, 30000);
   assert.equal(metrics.monthlyGrossProfit, 21000);
   assert.equal(metrics.marginLeaders[0].margin, 6000);
+});
+
+test('calculateDashboardMetrics builds growth dashboard insights', () => {
+  const metrics = calculateDashboardMetrics(
+    {
+      supplies: [{ name: 'Etiquetas', stock: 5, minStock: 10, averageCost: 300 }],
+      products: [
+        { id: 'soap', name: 'Jabon', stock: 5, minStock: 3, unitCost: 3000, price: 9000 },
+        { id: 'balm', name: 'Balsamo', stock: 1, minStock: 5, unitCost: 7000, price: 9000 },
+      ],
+      expenses: [
+        { date: '2026-06-02', category: 'Servicios', amount: 20000 },
+        { date: '2026-06-03', category: 'Publicidad', amount: 30000 },
+      ],
+      sales: [
+        {
+          date: '2026-06-01',
+          productId: 'soap',
+          quantity: 2,
+          revenue: 18000,
+          cost: 6000,
+          grossProfit: 12000,
+        },
+        {
+          date: '2026-06-09',
+          productId: 'balm',
+          quantity: 1,
+          revenue: 9000,
+          cost: 7000,
+          grossProfit: 2000,
+        },
+      ],
+      productions: [],
+      purchases: [],
+    },
+    '2026-06-10',
+  );
+
+  assert.equal(metrics.averageMarginPercent, 51.85);
+  assert.equal(metrics.businessHealthScore, 62);
+  assert.deepEqual(
+    metrics.weeklyRevenue.map((week) => week.revenue),
+    [18000, 9000, 0, 0, 0],
+  );
+  assert.deepEqual(metrics.expensesByCategory, [
+    { category: 'Publicidad', amount: 30000 },
+    { category: 'Servicios', amount: 20000 },
+  ]);
+  assert.deepEqual(metrics.topProductsByRevenue[0], {
+    productId: 'soap',
+    name: 'Jabon',
+    quantity: 2,
+    revenue: 18000,
+    grossProfit: 12000,
+  });
+  assert.equal(metrics.growthActions.length, 3);
 });
 
 test('shouldRefreshStoredState flags stored states without sales collection', () => {
