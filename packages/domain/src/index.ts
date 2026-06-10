@@ -1,2 +1,2 @@
-export * from "./metrics";
-export * from "./inventory";
+export * from "./metrics.js";
+export * from "./inventory.js";
