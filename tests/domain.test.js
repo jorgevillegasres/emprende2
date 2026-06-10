@@ -8,6 +8,7 @@ import {
   registerSale,
   registerProduction,
 } from '../src/domain.js';
+import { shouldRefreshStoredState } from '../src/storage.js';
 
 test('addSupplyPurchase recalculates weighted average cost', () => {
   const state = {
@@ -162,4 +163,31 @@ test('calculateDashboardMetrics summarizes inventory value and margins', () => {
   assert.equal(metrics.monthlyRevenue, 30000);
   assert.equal(metrics.monthlyGrossProfit, 21000);
   assert.equal(metrics.marginLeaders[0].margin, 6000);
+});
+
+test('shouldRefreshStoredState flags stored states without sales collection', () => {
+  assert.equal(
+    shouldRefreshStoredState({
+      supplies: [],
+      products: [],
+      recipes: [],
+      purchases: [],
+      productions: [],
+      expenses: [],
+    }),
+    true,
+  );
+
+  assert.equal(
+    shouldRefreshStoredState({
+      supplies: [],
+      products: [],
+      recipes: [],
+      purchases: [],
+      productions: [],
+      expenses: [],
+      sales: [],
+    }),
+    false,
+  );
 });

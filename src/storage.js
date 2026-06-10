@@ -298,7 +298,13 @@ export function loadState() {
   }
 
   try {
-    return JSON.parse(stored);
+    const parsed = JSON.parse(stored);
+    if (shouldRefreshStoredState(parsed)) {
+      const initial = createInitialState();
+      saveState(initial);
+      return initial;
+    }
+    return parsed;
   } catch {
     const initial = createInitialState();
     saveState(initial);
@@ -314,4 +320,8 @@ export function resetState() {
   const initial = createInitialState();
   saveState(initial);
   return initial;
+}
+
+export function shouldRefreshStoredState(state) {
+  return !state || !Array.isArray(state.sales);
 }
