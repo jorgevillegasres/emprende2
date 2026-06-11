@@ -8,6 +8,21 @@
 4. Run `corepack pnpm --filter @emprendedos/web dev -- --port 5173`.
 5. Open `http://127.0.0.1:5173`.
 
+## Data Store Modes
+
+The API supports two data store modes:
+
+- `DATA_STORE=memory`: default mode, seeded demo data, no database required.
+- `DATA_STORE=postgres`: uses Drizzle ORM and `DATABASE_URL`.
+
+To inspect or generate Drizzle migration files, use:
+
+```bash
+corepack pnpm --filter @emprendedos/api exec drizzle-kit generate
+```
+
+The current automated test suite uses memory mode so it can run without a local PostgreSQL service.
+
 ## Verification
 
 - `corepack pnpm test`
@@ -23,6 +38,5 @@ All business data must be read through tenant-aware repositories. Never query bu
 ## Current Limitations
 
 - Demo auth only.
-- In-memory repositories for the first SaaS foundation milestone.
-- PostgreSQL schema is drafted but not wired to runtime yet.
+- PostgreSQL/Drizzle repositories are wired but migrations are not applied automatically.
 - Billing is not implemented.

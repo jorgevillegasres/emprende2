@@ -5,11 +5,23 @@ export type TenantRecord = {
 };
 
 export type ProductRecord = Product & TenantRecord;
-export type SupplyRecord = Supply & TenantRecord;
+export type SupplyRecord = Supply & TenantRecord & { id: string };
 export type SaleRecord = Sale & TenantRecord;
 export type ExpenseRecord = Expense & TenantRecord;
 
-export function createInMemoryRepositories() {
+export type TenantRepository<TRecord extends TenantRecord> = {
+  insert(record: TRecord): Promise<TRecord>;
+  listByTenant(tenantId: string): Promise<TRecord[]>;
+};
+
+export type Repositories = {
+  products: TenantRepository<ProductRecord>;
+  supplies: TenantRepository<SupplyRecord>;
+  sales: TenantRepository<SaleRecord>;
+  expenses: TenantRepository<ExpenseRecord>;
+};
+
+export function createInMemoryRepositories(): Repositories {
   const products: ProductRecord[] = [];
   const supplies: SupplyRecord[] = [];
   const sales: SaleRecord[] = [];
@@ -23,7 +35,7 @@ export function createInMemoryRepositories() {
   };
 }
 
-function createTenantRepository<TRecord extends TenantRecord>(records: TRecord[]) {
+function createTenantRepository<TRecord extends TenantRecord>(records: TRecord[]): TenantRepository<TRecord> {
   return {
     async insert(record: TRecord) {
       records.push(record);
