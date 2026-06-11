@@ -1,3 +1,6 @@
+import { getConfig } from "../config.js";
+import { verifyAuthToken } from "./tokens.js";
+
 export type RequestContext = {
   userId: string;
   tenantId: string;
@@ -17,12 +20,20 @@ export function getDemoRequestContext(): RequestContext {
 
 export function resolveRequestContext(headers: RequestHeaders): RequestContext {
   const demo = getDemoRequestContext();
+  const tokenContext = resolveBearerContext(headers);
+  if (tokenContext) return tokenContext;
 
   return {
     userId: readHeader(headers, "x-emprendedos-user-id") ?? demo.userId,
     tenantId: readHeader(headers, "x-emprendedos-tenant-id") ?? demo.tenantId,
     role: resolveRole(readHeader(headers, "x-emprendedos-role")) ?? demo.role
   };
+}
+
+export function resolveBearerContext(headers: RequestHeaders): RequestContext | null {
+  const authorization = readHeader(headers, "authorization");
+  if (!authorization?.startsWith("Bearer ")) return null;
+  return verifyAuthToken(authorization.slice("Bearer ".length), { secret: getConfig().authSecret });
 }
 
 function readHeader(headers: RequestHeaders, name: string) {

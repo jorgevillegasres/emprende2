@@ -71,6 +71,21 @@ Until real authentication is implemented, the API resolves request context from 
 
 When headers are missing, the API falls back to the demo tenant and demo owner user from `.env.example`. These headers are a development bridge only; production auth must verify users and memberships server-side before trusting tenant access.
 
+## Auth Foundation
+
+The API exposes:
+
+- `POST /v1/auth/login`
+- `GET /v1/auth/me`
+
+Demo credentials are controlled by:
+
+- `DEMO_AUTH_EMAIL`
+- `DEMO_AUTH_PASSWORD`
+- `AUTH_SECRET`
+
+Successful login returns a bearer token signed with `AUTH_SECRET`. Business routes resolve tenant context from `Authorization: Bearer <token>` before falling back to development headers and demo context.
+
 ## Current Limitations
 
 - Demo auth only.
