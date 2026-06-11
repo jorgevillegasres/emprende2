@@ -719,18 +719,22 @@ h2 {
   gap: 12px;
 }
 
-.form-grid label {
+.form-grid label,
+.sales-builder label {
   display: grid;
   gap: 6px;
 }
 
-.form-grid label span {
+.form-grid label span,
+.sales-builder label span {
   color: var(--muted);
   font-size: 0.86rem;
   font-weight: 800;
 }
 
-.form-grid input {
+.form-grid input,
+.sales-builder input,
+.sales-builder select {
   width: 100%;
   min-height: 40px;
   border: 1px solid var(--line);
@@ -738,11 +742,73 @@ h2 {
   padding: 9px 10px;
   color: var(--ink);
   font: inherit;
+  background: var(--surface);
 }
 
-.form-grid input:focus {
+.form-grid input:focus,
+.sales-builder input:focus,
+.sales-builder select:focus {
   border-color: var(--blue);
   outline: 3px solid rgba(38, 104, 232, 0.14);
+}
+
+.sales-builder {
+  display: grid;
+  gap: 12px;
+}
+
+.sales-summary {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid rgba(10, 159, 106, 0.24);
+  border-radius: 8px;
+  background:
+    linear-gradient(135deg, rgba(223, 245, 235, 0.95), rgba(255, 255, 255, 0.96)),
+    var(--surface);
+}
+
+.sales-summary div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.sales-summary span {
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 900;
+}
+
+.sales-summary strong {
+  font-size: 1rem;
+  text-align: right;
+}
+
+.sales-summary .profit {
+  margin-top: 4px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(10, 159, 106, 0.18);
+  color: #05754c;
+}
+
+.sales-summary .profit strong {
+  font-size: 1.25rem;
+}
+
+.empty-helper {
+  display: grid;
+  gap: 6px;
+  padding: 14px;
+  border: 1px dashed rgba(38, 104, 232, 0.35);
+  border-radius: 8px;
+  background: var(--blue-soft);
+}
+
+.empty-helper span {
+  color: #40515f;
+  line-height: 1.4;
 }
 
 .form-action {

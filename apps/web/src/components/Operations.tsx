@@ -14,6 +14,7 @@ import {
   type SupplyRecord
 } from "../api/client";
 import { getTemplatesForSection } from "./operationTemplates";
+import { calculateSaleTotals } from "./salesCalculator";
 import type { AppSection } from "./Shell";
 
 type Field = {
@@ -107,32 +108,72 @@ export function Operations({ section, token }: { section: Exclude<AppSection, "d
   const config = resourceConfig[section];
   const templates = getTemplatesForSection(section);
   const [rows, setRows] = useState<Row[]>([]);
+  const [productOptions, setProductOptions] = useState<ProductRecord[]>([]);
+  const [selectedProductId, setSelectedProductId] = useState("");
+  const [saleQuantity, setSaleQuantity] = useState(1);
   const [error, setError] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const formRef = useRef<HTMLFormElement | null>(null);
   const totalValue = useMemo(() => rows.length, [rows]);
+  const selectedProduct = productOptions.find((product) => product.id === selectedProductId);
+  const saleTotals = calculateSaleTotals(selectedProduct, saleQuantity);
+  const isSalesSection = section === "sales";
+  const canSubmitSale = Boolean(selectedProduct) && Number.isFinite(saleQuantity) && saleQuantity > 0;
+  const salesDateDefault = resourceConfig.sales.fields.find((field) => field.name === "date")?.defaultValue;
 
   useEffect(() => {
+    let isMounted = true;
     setError("");
-    config.load(token).then(setRows).catch(() => setError("No se pudo cargar la informacion"));
-  }, [config, token]);
+    config.load(token).then((records) => {
+      if (isMounted) setRows(records);
+    }).catch(() => {
+      if (isMounted) setError("No se pudo cargar la informacion");
+    });
+
+    if (section === "sales") {
+      listProducts(token).then((products) => {
+        if (!isMounted) return;
+
+        setProductOptions(products);
+        setSelectedProductId((currentId) => {
+          if (products.some((product) => product.id === currentId)) return currentId;
+          return products[0]?.id ?? "";
+        });
+        setSaleQuantity(1);
+      }).catch(() => {
+        if (isMounted) setError("No se pudo cargar el catalogo de productos");
+      });
+    }
+
+    return () => {
+      isMounted = false;
+    };
+  }, [config, section, token]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setIsSaving(true);
     setError("");
     const form = new FormData(event.currentTarget);
-    const payload = Object.fromEntries(
-      config.fields.map((field) => {
-        const value = String(form.get(field.name) ?? "");
-        return [field.name, field.type === "number" ? Number(value) : value];
-      })
-    );
+    const payload = isSalesSection
+      ? {
+          date: String(form.get("date") ?? ""),
+          productId: selectedProductId,
+          quantity: saleQuantity,
+          ...saleTotals
+        }
+      : Object.fromEntries(
+          config.fields.map((field) => {
+            const value = String(form.get(field.name) ?? "");
+            return [field.name, field.type === "number" ? Number(value) : value];
+          })
+        );
 
     try {
       await config.create(payload as never, token);
       setRows(await config.load(token));
       event.currentTarget.reset();
+      if (isSalesSection) setSaleQuantity(1);
     } catch {
       setError("Revisa los campos e intenta guardar de nuevo");
     } finally {
@@ -182,16 +223,62 @@ export function Operations({ section, token }: { section: Exclude<AppSection, "d
               ))}
             </div>
           ) : null}
-          <div className="form-grid">
-            {config.fields.map((field) => (
-              <label key={field.name}>
-                <span>{field.label}</span>
-                <input name={field.name} type={field.type} min={field.type === "number" ? 0 : undefined} step={field.type === "number" ? 0.01 : undefined} defaultValue={field.defaultValue} required />
-              </label>
-            ))}
-          </div>
+          {isSalesSection ? (
+            <div className="sales-builder">
+              {productOptions.length ? (
+                <>
+                  <label>
+                    <span>Fecha</span>
+                    <input name="date" type="date" defaultValue={salesDateDefault} required />
+                  </label>
+                  <label>
+                    <span>Producto vendido</span>
+                    <select value={selectedProductId} onChange={(event) => setSelectedProductId(event.target.value)} required>
+                      {productOptions.map((product) => (
+                        <option key={product.id} value={product.id}>
+                          {product.name} - {money(product.price)}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label>
+                    <span>Cantidad</span>
+                    <input name="quantity" type="number" min={0.01} step={0.01} value={saleQuantity} onChange={(event) => setSaleQuantity(Number(event.target.value))} required />
+                  </label>
+                  <div className="sales-summary" aria-live="polite">
+                    <div>
+                      <span>Ingreso</span>
+                      <strong>{money(saleTotals.revenue)}</strong>
+                    </div>
+                    <div>
+                      <span>Costo</span>
+                      <strong>{money(saleTotals.cost)}</strong>
+                    </div>
+                    <div className="profit">
+                      <span>Utilidad</span>
+                      <strong>{money(saleTotals.grossProfit)}</strong>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <div className="empty-helper">
+                  <strong>Primero crea un producto.</strong>
+                  <span>Las ventas usan precio y costo del catalogo para calcular utilidad automaticamente.</span>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="form-grid">
+              {config.fields.map((field) => (
+                <label key={field.name}>
+                  <span>{field.label}</span>
+                  <input name={field.name} type={field.type} min={field.type === "number" ? 0 : undefined} step={field.type === "number" ? 0.01 : undefined} defaultValue={field.defaultValue} required />
+                </label>
+              ))}
+            </div>
+          )}
           {error ? <p className="form-error">{error}</p> : null}
-          <button className="primary-action form-action" disabled={isSaving} type="submit">
+          <button className="primary-action form-action" disabled={isSaving || (isSalesSection && !canSubmitSale)} type="submit">
             {isSaving ? "Guardando..." : "Guardar"}
           </button>
         </form>
