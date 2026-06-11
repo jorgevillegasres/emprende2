@@ -46,6 +46,11 @@ export type ProductRepository = TenantRepository<ProductRecord> & {
   updateStock(tenantId: string, id: string, stock: number): Promise<ProductRecord | null>;
 };
 
+export type SupplyRepository = TenantRepository<SupplyRecord> & {
+  findByTenantAndId(tenantId: string, id: string): Promise<SupplyRecord | null>;
+  updateStockAndAverageCost(tenantId: string, id: string, stock: number, averageCost: number): Promise<SupplyRecord | null>;
+};
+
 export type AuthRepository = {
   insert(record: AuthIdentityRecord): Promise<AuthIdentityRecord>;
   findByEmail(email: string): Promise<AuthIdentityRecord | null>;
@@ -55,7 +60,7 @@ export type AuthRepository = {
 export type Repositories = {
   auth: AuthRepository;
   products: ProductRepository;
-  supplies: TenantRepository<SupplyRecord>;
+  supplies: SupplyRepository;
   sales: TenantRepository<SaleRecord>;
   expenses: TenantRepository<ExpenseRecord>;
   inventoryMovements: TenantRepository<InventoryMovementRecord>;
@@ -71,7 +76,7 @@ export function createInMemoryRepositories(): Repositories {
 
   return {
     auth: createAuthRepository(authIdentities),
-    supplies: createTenantRepository(supplies),
+    supplies: createSupplyRepository(supplies),
     sales: createTenantRepository(sales),
     expenses: createTenantRepository(expenses),
     inventoryMovements: createTenantRepository(inventoryMovements),
@@ -87,6 +92,22 @@ function createTenantRepository<TRecord extends TenantRecord>(records: TRecord[]
     },
     async listByTenant(tenantId: string) {
       return records.filter((record) => record.tenantId === tenantId);
+    }
+  };
+}
+
+function createSupplyRepository(records: SupplyRecord[]): SupplyRepository {
+  return {
+    ...createTenantRepository(records),
+    async findByTenantAndId(tenantId: string, id: string) {
+      return records.find((record) => record.tenantId === tenantId && record.id === id) ?? null;
+    },
+    async updateStockAndAverageCost(tenantId: string, id: string, stock: number, averageCost: number) {
+      const record = records.find((supply) => supply.tenantId === tenantId && supply.id === id);
+      if (!record) return null;
+      record.stock = stock;
+      record.averageCost = averageCost;
+      return record;
     }
   };
 }

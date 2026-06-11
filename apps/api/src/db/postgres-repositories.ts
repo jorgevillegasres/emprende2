@@ -109,6 +109,18 @@ export function createPostgresRepositories(db: Db): Repositories {
       async listByTenant(tenantId: string) {
         const rows = await db.select().from(supplies).where(eq(supplies.tenantId, tenantId));
         return rows.map(toSupplyRecord);
+      },
+      async findByTenantAndId(tenantId: string, id: string) {
+        const [row] = await db.select().from(supplies).where(and(eq(supplies.tenantId, tenantId), eq(supplies.id, id))).limit(1);
+        return row ? toSupplyRecord(row) : null;
+      },
+      async updateStockAndAverageCost(tenantId: string, id: string, stock: number, averageCost: number) {
+        const [updated] = await db
+          .update(supplies)
+          .set({ stock, averageCost, updatedAt: new Date() })
+          .where(and(eq(supplies.tenantId, tenantId), eq(supplies.id, id)))
+          .returning();
+        return updated ? toSupplyRecord(updated) : null;
       }
     },
     sales: {

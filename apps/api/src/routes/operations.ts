@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
+import { calculateWeightedAverageCost } from "@emprendedos/domain";
 import { resolveRequestContext } from "../auth/context.js";
 import { getRepositories } from "../db/store.js";
 
@@ -42,6 +43,14 @@ const inventoryAdjustmentSchema = z.object({
   itemType: z.literal("product"),
   itemId: z.string().min(1),
   stockAfter: z.number().nonnegative(),
+  note: z.string().min(1).max(240)
+});
+
+const inventoryPurchaseSchema = z.object({
+  itemType: z.enum(["product", "supply"]),
+  itemId: z.string().min(1),
+  quantity: z.number().positive(),
+  unitCost: z.number().nonnegative().optional(),
   note: z.string().min(1).max(240)
 });
 
@@ -122,6 +131,55 @@ export async function registerOperationRoutes(app: FastifyInstance) {
       note: parsed.data.note
     });
 
+    return reply.code(201).send(movement);
+  });
+  app.post("/v1/inventory-purchases", async (request, reply) => {
+    const context = resolveRequestContext(request.headers);
+    const parsed = inventoryPurchaseSchema.safeParse(request.body);
+    if (!parsed.success) return reply.code(400).send({ error: "Invalid inventory purchase payload", issues: parsed.error.issues });
+
+    if (parsed.data.itemType === "product") {
+      const product = await repositories.products.findByTenantAndId(context.tenantId, parsed.data.itemId);
+      if (!product) return reply.code(404).send({ error: "Product not found" });
+      const stockBefore = product.stock;
+      const stockAfter = stockBefore + parsed.data.quantity;
+      await repositories.products.updateStock(context.tenantId, parsed.data.itemId, stockAfter);
+      const movement = await repositories.inventoryMovements.insert({
+        id: randomUUID(),
+        tenantId: context.tenantId,
+        itemType: "product",
+        itemId: parsed.data.itemId,
+        movementType: "purchase",
+        quantity: parsed.data.quantity,
+        stockBefore,
+        stockAfter,
+        referenceType: "inventory-purchase",
+        referenceId: randomUUID(),
+        note: parsed.data.note
+      });
+      return reply.code(201).send(movement);
+    }
+
+    const supply = await repositories.supplies.findByTenantAndId(context.tenantId, parsed.data.itemId);
+    if (!supply) return reply.code(404).send({ error: "Supply not found" });
+    const stockBefore = supply.stock;
+    const stockAfter = stockBefore + parsed.data.quantity;
+    const addedTotalCost = parsed.data.quantity * (parsed.data.unitCost ?? supply.averageCost);
+    const averageCost = calculateWeightedAverageCost(stockBefore, supply.averageCost, parsed.data.quantity, addedTotalCost);
+    await repositories.supplies.updateStockAndAverageCost(context.tenantId, parsed.data.itemId, stockAfter, averageCost);
+    const movement = await repositories.inventoryMovements.insert({
+      id: randomUUID(),
+      tenantId: context.tenantId,
+      itemType: "supply",
+      itemId: parsed.data.itemId,
+      movementType: "purchase",
+      quantity: parsed.data.quantity,
+      stockBefore,
+      stockAfter,
+      referenceType: "inventory-purchase",
+      referenceId: randomUUID(),
+      note: parsed.data.note
+    });
     return reply.code(201).send(movement);
   });
 

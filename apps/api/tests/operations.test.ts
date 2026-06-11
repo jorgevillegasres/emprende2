@@ -208,6 +208,98 @@ describe("operational resource routes", () => {
     );
   });
 
+  it("records a product inventory purchase as a positive movement", async () => {
+    const app = buildApp();
+    const headers = { "x-emprendedos-tenant-id": "purchase-product-tenant", "x-emprendedos-user-id": "purchase-product-user" };
+
+    await app.inject({
+      method: "POST",
+      url: "/v1/products",
+      headers,
+      payload: { id: "purchased-soap", name: "Jabon comprado", stock: 4, minStock: 2, unitCost: 5000, price: 12000, unit: "un" }
+    });
+
+    const purchaseResponse = await app.inject({
+      method: "POST",
+      url: "/v1/inventory-purchases",
+      headers,
+      payload: {
+        itemType: "product",
+        itemId: "purchased-soap",
+        quantity: 6,
+        unitCost: 5200,
+        note: "Reposicion inicial"
+      }
+    });
+    const productsResponse = await app.inject({ method: "GET", url: "/v1/products", headers });
+    const movementsResponse = await app.inject({ method: "GET", url: "/v1/inventory-movements", headers });
+    const products = productsResponse.json();
+    const movements = movementsResponse.json();
+
+    expect(purchaseResponse.statusCode).toBe(201);
+    expect(products.find((product: { id: string }) => product.id === "purchased-soap")?.stock).toBe(10);
+    expect(movements).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          itemType: "product",
+          itemId: "purchased-soap",
+          movementType: "purchase",
+          quantity: 6,
+          stockBefore: 4,
+          stockAfter: 10,
+          referenceType: "inventory-purchase",
+          note: "Reposicion inicial"
+        })
+      ])
+    );
+  });
+
+  it("records a supply inventory purchase and recalculates average cost", async () => {
+    const app = buildApp();
+    const headers = { "x-emprendedos-tenant-id": "purchase-supply-tenant", "x-emprendedos-user-id": "purchase-supply-user" };
+
+    await app.inject({
+      method: "POST",
+      url: "/v1/supplies",
+      headers,
+      payload: { id: "purchased-oil", name: "Aceite comprado", stock: 4, minStock: 2, averageCost: 1000, unit: "ml" }
+    });
+
+    const purchaseResponse = await app.inject({
+      method: "POST",
+      url: "/v1/inventory-purchases",
+      headers,
+      payload: {
+        itemType: "supply",
+        itemId: "purchased-oil",
+        quantity: 6,
+        unitCost: 1500,
+        note: "Compra de insumo"
+      }
+    });
+    const suppliesResponse = await app.inject({ method: "GET", url: "/v1/supplies", headers });
+    const movementsResponse = await app.inject({ method: "GET", url: "/v1/inventory-movements", headers });
+    const supplies = suppliesResponse.json();
+    const movements = movementsResponse.json();
+
+    expect(purchaseResponse.statusCode).toBe(201);
+    expect(supplies.find((supply: { id: string }) => supply.id === "purchased-oil")?.stock).toBe(10);
+    expect(supplies.find((supply: { id: string }) => supply.id === "purchased-oil")?.averageCost).toBe(1300);
+    expect(movements).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          itemType: "supply",
+          itemId: "purchased-oil",
+          movementType: "purchase",
+          quantity: 6,
+          stockBefore: 4,
+          stockAfter: 10,
+          referenceType: "inventory-purchase"
+        })
+      ])
+    );
+  });
+
   it("lists and creates tenant-scoped expenses", async () => {
     const app = buildApp();
 

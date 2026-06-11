@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { createAuthHeaders, getInventoryAdjustmentPath, getInventoryMovementsPath, getRegisterPath } from "./client";
+import { createAuthHeaders, getInventoryAdjustmentPath, getInventoryMovementsPath, getInventoryPurchasePath, getRegisterPath } from "./client";
 
 describe("createAuthHeaders", () => {
   it("returns an empty header set when the session token is missing", () => {
@@ -28,5 +28,11 @@ describe("getInventoryMovementsPath", () => {
 describe("getInventoryAdjustmentPath", () => {
   it("targets the inventory adjustment endpoint", () => {
     expect(getInventoryAdjustmentPath()).toBe("/v1/inventory-adjustments");
+  });
+});
+
+describe("getInventoryPurchasePath", () => {
+  it("targets the inventory purchase endpoint", () => {
+    expect(getInventoryPurchasePath()).toBe("/v1/inventory-purchases");
   });
 });

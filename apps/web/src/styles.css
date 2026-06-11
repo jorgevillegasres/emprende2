@@ -880,19 +880,26 @@ h2 {
   font-size: 1.05rem;
 }
 
-.adjustment-grid {
+.adjustment-grid,
+.purchase-grid {
   display: grid;
   grid-template-columns: minmax(180px, 1.2fr) 140px minmax(180px, 1fr) 110px auto;
   gap: 10px;
   align-items: end;
 }
 
-.adjustment-grid label {
+.purchase-grid {
+  grid-template-columns: 130px minmax(180px, 1.2fr) 120px 140px minmax(180px, 1fr) auto;
+}
+
+.adjustment-grid label,
+.purchase-grid label {
   display: grid;
   gap: 6px;
 }
 
 .adjustment-grid label span,
+.purchase-grid label span,
 .adjustment-delta span {
   color: var(--muted);
   font-size: 0.82rem;
@@ -900,7 +907,9 @@ h2 {
 }
 
 .adjustment-grid input,
-.adjustment-grid select {
+.adjustment-grid select,
+.purchase-grid input,
+.purchase-grid select {
   width: 100%;
   min-height: 40px;
   border: 1px solid var(--line);
@@ -912,7 +921,9 @@ h2 {
 }
 
 .adjustment-grid input:focus,
-.adjustment-grid select:focus {
+.adjustment-grid select:focus,
+.purchase-grid input:focus,
+.purchase-grid select:focus {
   border-color: var(--blue);
   outline: 3px solid rgba(38, 104, 232, 0.14);
 }
@@ -1075,7 +1086,8 @@ h2 {
     text-align: left;
   }
 
-  .adjustment-grid {
+  .adjustment-grid,
+  .purchase-grid {
     grid-template-columns: 1fr;
   }
 

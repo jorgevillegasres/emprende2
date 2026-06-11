@@ -2,6 +2,7 @@ import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import {
   createExpense,
   createInventoryAdjustment,
+  createInventoryPurchase,
   createProduct,
   createSale,
   createSupply,
@@ -117,6 +118,14 @@ export function Operations({ section, token }: { section: Exclude<AppSection, "d
   const [adjustmentStockAfter, setAdjustmentStockAfter] = useState(0);
   const [adjustmentNote, setAdjustmentNote] = useState("Conteo fisico");
   const [isAdjusting, setIsAdjusting] = useState(false);
+  const [purchaseProducts, setPurchaseProducts] = useState<ProductRecord[]>([]);
+  const [purchaseSupplies, setPurchaseSupplies] = useState<SupplyRecord[]>([]);
+  const [purchaseItemType, setPurchaseItemType] = useState<"product" | "supply">("product");
+  const [purchaseItemId, setPurchaseItemId] = useState("");
+  const [purchaseQuantity, setPurchaseQuantity] = useState(1);
+  const [purchaseUnitCost, setPurchaseUnitCost] = useState(0);
+  const [purchaseNote, setPurchaseNote] = useState("Compra de inventario");
+  const [isPurchasing, setIsPurchasing] = useState(false);
   const [productOptions, setProductOptions] = useState<ProductRecord[]>([]);
   const [selectedProductId, setSelectedProductId] = useState("");
   const [saleQuantity, setSaleQuantity] = useState(1);
@@ -132,6 +141,9 @@ export function Operations({ section, token }: { section: Exclude<AppSection, "d
   const adjustmentProduct = adjustmentProducts.find((product) => product.id === adjustmentProductId);
   const adjustmentDelta = adjustmentStockAfter - (adjustmentProduct?.stock ?? 0);
   const canSubmitAdjustment = Boolean(adjustmentProduct) && Number.isFinite(adjustmentStockAfter) && adjustmentStockAfter >= 0 && adjustmentNote.trim().length > 0;
+  const purchaseOptions = purchaseItemType === "product" ? purchaseProducts : purchaseSupplies;
+  const purchaseItem = purchaseOptions.find((item) => item.id === purchaseItemId);
+  const canSubmitPurchase = Boolean(purchaseItem) && Number.isFinite(purchaseQuantity) && purchaseQuantity > 0 && purchaseNote.trim().length > 0;
 
   useEffect(() => {
     let isMounted = true;
@@ -162,13 +174,28 @@ export function Operations({ section, token }: { section: Exclude<AppSection, "d
         if (!isMounted) return;
 
         setAdjustmentProducts(products);
+        setPurchaseProducts(products);
         setAdjustmentProductId((currentId) => {
           const nextId = products.some((product) => product.id === currentId) ? currentId : products[0]?.id ?? "";
           setAdjustmentStockAfter(products.find((product) => product.id === nextId)?.stock ?? 0);
           return nextId;
         });
+        if (purchaseItemType === "product") {
+          setPurchaseItemId((currentId) => products.some((product) => product.id === currentId) ? currentId : products[0]?.id ?? "");
+        }
       }).catch(() => {
         if (isMounted) setError("No se pudo cargar el catalogo de productos");
+      });
+
+      listSupplies(token).then((supplies) => {
+        if (!isMounted) return;
+
+        setPurchaseSupplies(supplies);
+        if (purchaseItemType === "supply") {
+          setPurchaseItemId((currentId) => supplies.some((supply) => supply.id === currentId) ? currentId : supplies[0]?.id ?? "");
+        }
+      }).catch(() => {
+        if (isMounted) setError("No se pudo cargar el catalogo de insumos");
       });
 
       listInventoryMovements(token).then((movements) => {
@@ -240,6 +267,38 @@ export function Operations({ section, token }: { section: Exclude<AppSection, "d
       setError("No se pudo registrar el ajuste de inventario");
     } finally {
       setIsAdjusting(false);
+    }
+  }
+
+  async function handlePurchaseSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!canSubmitPurchase) return;
+
+    setIsPurchasing(true);
+    setError("");
+    try {
+      await createInventoryPurchase({
+        itemType: purchaseItemType,
+        itemId: purchaseItemId,
+        quantity: purchaseQuantity,
+        unitCost: purchaseUnitCost,
+        note: purchaseNote.trim()
+      }, token);
+      const [supplies, products, movements] = await Promise.all([listSupplies(token), listProducts(token), listInventoryMovements(token)]);
+      setRows(supplies);
+      setPurchaseSupplies(supplies);
+      setPurchaseProducts(products);
+      setAdjustmentProducts(products);
+      setInventoryMovements(movements);
+      setPurchaseItemId((currentId) => {
+        const options = purchaseItemType === "product" ? products : supplies;
+        return options.some((item) => item.id === currentId) ? currentId : options[0]?.id ?? "";
+      });
+      setPurchaseQuantity(1);
+    } catch {
+      setError("No se pudo registrar la entrada de inventario");
+    } finally {
+      setIsPurchasing(false);
     }
   }
 
@@ -390,6 +449,58 @@ export function Operations({ section, token }: { section: Exclude<AppSection, "d
               <h2>Movimientos recientes</h2>
             </div>
           </div>
+          <form className="adjustment-panel" onSubmit={handlePurchaseSubmit}>
+            <div>
+              <p className="eyebrow">Entrada</p>
+              <h3>Registrar compra o reposicion</h3>
+            </div>
+            {purchaseOptions.length ? (
+              <div className="purchase-grid">
+                <label>
+                  <span>Tipo</span>
+                  <select
+                    value={purchaseItemType}
+                    onChange={(event) => {
+                      const nextType = event.target.value as "product" | "supply";
+                      const nextOptions = nextType === "product" ? purchaseProducts : purchaseSupplies;
+                      setPurchaseItemType(nextType);
+                      setPurchaseItemId(nextOptions[0]?.id ?? "");
+                    }}
+                  >
+                    <option value="product">Producto</option>
+                    <option value="supply">Insumo</option>
+                  </select>
+                </label>
+                <label>
+                  <span>Item</span>
+                  <select value={purchaseItemId} onChange={(event) => setPurchaseItemId(event.target.value)} required>
+                    {purchaseOptions.map((item) => (
+                      <option key={item.id} value={item.id}>
+                        {item.name} - stock {item.stock}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label>
+                  <span>Cantidad</span>
+                  <input type="number" min={0.01} step={0.01} value={purchaseQuantity} onChange={(event) => setPurchaseQuantity(Number(event.target.value))} required />
+                </label>
+                <label>
+                  <span>Costo unitario</span>
+                  <input type="number" min={0} step={0.01} value={purchaseUnitCost} onChange={(event) => setPurchaseUnitCost(Number(event.target.value))} />
+                </label>
+                <label>
+                  <span>Nota</span>
+                  <input value={purchaseNote} onChange={(event) => setPurchaseNote(event.target.value)} required />
+                </label>
+                <button className="secondary-action adjustment-action" disabled={isPurchasing || !canSubmitPurchase} type="submit">
+                  {isPurchasing ? "Registrando..." : "Registrar entrada"}
+                </button>
+              </div>
+            ) : (
+              <p className="empty-copy">Crea productos o insumos para registrar entradas de inventario.</p>
+            )}
+          </form>
           <form className="adjustment-panel" onSubmit={handleAdjustmentSubmit}>
             <div>
               <p className="eyebrow">Ajuste manual</p>
