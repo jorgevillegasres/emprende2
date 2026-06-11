@@ -273,6 +273,78 @@ button {
   margin: 14px 0 20px;
 }
 
+.onboarding-band {
+  display: grid;
+  grid-template-columns: minmax(280px, 0.82fr) minmax(0, 1.18fr);
+  gap: 18px;
+  align-items: stretch;
+  margin: 14px 0 20px;
+  padding: 22px;
+  border: 1px solid rgba(10, 159, 106, 0.22);
+  border-radius: 8px;
+  background:
+    linear-gradient(135deg, rgba(223, 245, 235, 0.95), rgba(255, 255, 255, 0.92)),
+    var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.onboarding-copy h1 {
+  max-width: 520px;
+  font-size: clamp(1.8rem, 3.1vw, 3.35rem);
+  line-height: 0.98;
+}
+
+.onboarding-copy p:not(.eyebrow) {
+  max-width: 560px;
+  color: #40515f;
+  line-height: 1.48;
+}
+
+.onboarding-steps {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.onboarding-step {
+  min-height: 154px;
+  display: grid;
+  align-content: start;
+  gap: 9px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 14px;
+  background: var(--surface);
+  color: var(--ink);
+  text-align: left;
+  box-shadow: 0 1px 2px rgba(23, 33, 43, 0.04);
+}
+
+.onboarding-step:hover {
+  border-color: rgba(38, 104, 232, 0.35);
+  transform: translateY(-1px);
+}
+
+.onboarding-step span {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  background: var(--ink);
+  color: #fff;
+  font-weight: 950;
+}
+
+.onboarding-step strong {
+  font-size: 1rem;
+}
+
+.onboarding-step small {
+  color: var(--muted);
+  line-height: 1.35;
+}
+
 .card,
 .metric-card,
 .system-panel {
@@ -739,9 +811,14 @@ h2 {
   }
 
   .hero-grid,
+  .onboarding-band,
   .decision-list,
   .metric-grid,
   .operations-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .onboarding-steps {
     grid-template-columns: 1fr;
   }
 

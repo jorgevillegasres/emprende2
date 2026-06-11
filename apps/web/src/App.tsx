@@ -100,7 +100,7 @@ export function App() {
         <>
           {error ? <div className="system-panel">{error}</div> : null}
           {!metrics && !error ? <div className="system-panel">Cargando Emprendedos...</div> : null}
-          {metrics ? <Dashboard metrics={metrics} /> : null}
+          {metrics ? <Dashboard metrics={metrics} onSectionChange={setActiveSection} /> : null}
         </>
       ) : (
         <Operations section={activeSection} token={authSession.token} />

@@ -1,4 +1,6 @@
 import type { DashboardMetrics } from "../api/client";
+import type { AppSection } from "./Shell";
+import { isNewBusiness, onboardingSteps } from "./onboarding";
 
 const toneLabels: Record<string, string> = {
   growth: "Crecer",
@@ -10,7 +12,7 @@ function money(value: number) {
   return new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 }).format(value);
 }
 
-export function Dashboard({ metrics }: { metrics: DashboardMetrics }) {
+export function Dashboard({ metrics, onSectionChange }: { metrics: DashboardMetrics; onSectionChange?: (section: AppSection) => void }) {
   const score = metrics.businessHealthScore ?? getScore(metrics);
   const circumference = 389.56;
   const offset = circumference - (score / 100) * circumference;
@@ -19,6 +21,8 @@ export function Dashboard({ metrics }: { metrics: DashboardMetrics }) {
 
   return (
     <main>
+      {isNewBusiness(metrics) ? <OnboardingPanel onSectionChange={onSectionChange} /> : null}
+
       <section className="hero-grid">
         <article className="card score-card">
           <div className="card-head">
@@ -135,6 +139,27 @@ export function Dashboard({ metrics }: { metrics: DashboardMetrics }) {
         </article>
       </section>
     </main>
+  );
+}
+
+function OnboardingPanel({ onSectionChange }: { onSectionChange?: (section: AppSection) => void }) {
+  return (
+    <section className="onboarding-band">
+      <div className="onboarding-copy">
+        <p className="eyebrow">Primeras 3 cargas</p>
+        <h1>Convierte tu espacio en un tablero con datos reales</h1>
+        <p>Empieza por lo minimo: productos, insumos y gastos. Con eso Emprendedos ya puede mostrar margen, stock y resultado operativo.</p>
+      </div>
+      <div className="onboarding-steps">
+        {onboardingSteps.map((step, index) => (
+          <button className="onboarding-step" key={step.section} onClick={() => onSectionChange?.(step.section)} type="button">
+            <span>{index + 1}</span>
+            <strong>{step.title}</strong>
+            <small>{step.detail}</small>
+          </button>
+        ))}
+      </div>
+    </section>
   );
 }
 
