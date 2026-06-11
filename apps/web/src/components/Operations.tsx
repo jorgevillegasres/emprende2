@@ -30,6 +30,7 @@ type Field = {
 };
 
 type Row = ProductRecord | SupplyRecord | SaleRecord | ExpenseRecord;
+type OperationSection = Exclude<AppSection, "dashboard" | "recipes">;
 
 const resourceConfig = {
   products: {
@@ -98,7 +99,7 @@ const resourceConfig = {
     create: createExpense,
     toCells: (row: ExpenseRecord) => [row.date, row.category, money(row.amount)]
   }
-} satisfies Record<Exclude<AppSection, "dashboard">, {
+} satisfies Record<OperationSection, {
   title: string;
   eyebrow: string;
   description: string;
@@ -109,7 +110,7 @@ const resourceConfig = {
   toCells: (row: never) => Array<string | number>;
 }>;
 
-export function Operations({ section, token }: { section: Exclude<AppSection, "dashboard">; token: string }) {
+export function Operations({ section, token }: { section: OperationSection; token: string }) {
   const config = resourceConfig[section];
   const templates = getTemplatesForSection(section);
   const [rows, setRows] = useState<Row[]>([]);

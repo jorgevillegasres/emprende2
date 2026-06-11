@@ -131,6 +131,38 @@ export const inventoryMovements = pgTable(
   })
 );
 
+export const recipes = pgTable(
+  "recipes",
+  {
+    id: text("id").primaryKey(),
+    tenantId: uuid("tenant_id").notNull().references(() => tenants.id),
+    productId: text("product_id").notNull(),
+    name: text("name").notNull(),
+    outputQuantity: doublePrecision("output_quantity").notNull(),
+    note: text("note").notNull().default(""),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow()
+  },
+  (table) => ({
+    recipesTenantIdIdx: index("recipes_tenant_id_idx").on(table.tenantId),
+    recipesTenantProductIdx: index("recipes_tenant_product_idx").on(table.tenantId, table.productId)
+  })
+);
+
+export const recipeIngredients = pgTable(
+  "recipe_ingredients",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    tenantId: uuid("tenant_id").notNull().references(() => tenants.id),
+    recipeId: text("recipe_id").notNull().references(() => recipes.id),
+    supplyId: text("supply_id").notNull(),
+    quantity: doublePrecision("quantity").notNull()
+  },
+  (table) => ({
+    recipeIngredientsRecipeIdx: index("recipe_ingredients_recipe_idx").on(table.tenantId, table.recipeId)
+  })
+);
+
 export const schema = {
   tenants,
   users,
@@ -139,7 +171,9 @@ export const schema = {
   supplies,
   sales,
   expenses,
-  inventoryMovements
+  inventoryMovements,
+  recipes,
+  recipeIngredients
 };
 
-export const databaseSchemaVersion = "2026-06-11-inventory-movements";
+export const databaseSchemaVersion = "2026-06-11-recipes";

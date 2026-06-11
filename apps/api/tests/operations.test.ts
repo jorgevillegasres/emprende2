@@ -430,6 +430,96 @@ describe("operational resource routes", () => {
     expect(movements).toHaveLength(0);
   });
 
+  it("creates and lists tenant-scoped recipes with ingredients", async () => {
+    const app = buildApp();
+    const headers = { "x-emprendedos-tenant-id": "recipe-tenant", "x-emprendedos-user-id": "recipe-user" };
+
+    await app.inject({
+      method: "POST",
+      url: "/v1/products",
+      headers,
+      payload: { id: "recipe-soap", name: "Jabon receta", stock: 0, minStock: 2, unitCost: 0, price: 12000, unit: "un" }
+    });
+    await app.inject({
+      method: "POST",
+      url: "/v1/supplies",
+      headers,
+      payload: { id: "recipe-oil", name: "Aceite receta", stock: 100, minStock: 10, averageCost: 100, unit: "ml" }
+    });
+    await app.inject({
+      method: "POST",
+      url: "/v1/supplies",
+      headers,
+      payload: { id: "recipe-label", name: "Etiqueta receta", stock: 30, minStock: 10, averageCost: 300, unit: "un" }
+    });
+
+    const createResponse = await app.inject({
+      method: "POST",
+      url: "/v1/recipes",
+      headers,
+      payload: {
+        id: "soap-formula",
+        productId: "recipe-soap",
+        name: "Formula jabon",
+        outputQuantity: 10,
+        ingredients: [
+          { supplyId: "recipe-oil", quantity: 80 },
+          { supplyId: "recipe-label", quantity: 10 }
+        ],
+        note: "Lote base"
+      }
+    });
+    const listResponse = await app.inject({ method: "GET", url: "/v1/recipes", headers });
+    const recipes = listResponse.json();
+
+    expect(createResponse.statusCode).toBe(201);
+    expect(listResponse.statusCode).toBe(200);
+    expect(recipes).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: "soap-formula",
+          productId: "recipe-soap",
+          name: "Formula jabon",
+          outputQuantity: 10,
+          note: "Lote base",
+          ingredients: [
+            { supplyId: "recipe-oil", quantity: 80 },
+            { supplyId: "recipe-label", quantity: 10 }
+          ]
+        })
+      ])
+    );
+  });
+
+  it("rejects recipes that reference a missing supply", async () => {
+    const app = buildApp();
+    const headers = { "x-emprendedos-tenant-id": "recipe-missing-tenant", "x-emprendedos-user-id": "recipe-missing-user" };
+
+    await app.inject({
+      method: "POST",
+      url: "/v1/products",
+      headers,
+      payload: { id: "missing-recipe-soap", name: "Jabon sin insumo", stock: 0, minStock: 2, unitCost: 0, price: 12000, unit: "un" }
+    });
+
+    const createResponse = await app.inject({
+      method: "POST",
+      url: "/v1/recipes",
+      headers,
+      payload: {
+        id: "missing-supply-formula",
+        productId: "missing-recipe-soap",
+        name: "Formula incompleta",
+        outputQuantity: 10,
+        ingredients: [{ supplyId: "missing-oil", quantity: 80 }],
+        note: "Debe fallar"
+      }
+    });
+
+    expect(createResponse.statusCode).toBe(404);
+    expect(createResponse.json()).toEqual(expect.objectContaining({ error: "Supply not found", supplyId: "missing-oil" }));
+  });
+
   it("lists and creates tenant-scoped expenses", async () => {
     const app = buildApp();
 

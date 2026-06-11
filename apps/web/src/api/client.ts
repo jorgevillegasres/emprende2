@@ -111,6 +111,30 @@ export type ProductionOrderRecord = {
   movements: InventoryMovementRecord[];
 };
 
+export type RecipeIngredientRecord = {
+  supplyId: string;
+  quantity: number;
+};
+
+export type RecipeRecord = {
+  id: string;
+  productId: string;
+  name: string;
+  outputQuantity: number;
+  ingredients: RecipeIngredientRecord[];
+  note?: string;
+  createdAt?: string;
+};
+
+export type RecipePayload = {
+  id: string;
+  productId: string;
+  name: string;
+  outputQuantity: number;
+  ingredients: RecipeIngredientRecord[];
+  note?: string;
+};
+
 export function createAuthHeaders(token: string | null | undefined): Record<string, string> {
   if (!token) return {};
   return { Authorization: `Bearer ${token}` };
@@ -134,6 +158,10 @@ export function getInventoryPurchasePath() {
 
 export function getProductionOrderPath() {
   return "/v1/production-orders";
+}
+
+export function getRecipesPath() {
+  return "/v1/recipes";
 }
 
 export async function login(email: string, password: string): Promise<AuthSession> {
@@ -203,6 +231,14 @@ export async function createInventoryPurchase(payload: InventoryPurchasePayload,
 
 export async function createProductionOrder(payload: ProductionOrderPayload, token?: string | null): Promise<ProductionOrderRecord> {
   return postJson(getProductionOrderPath(), payload, token);
+}
+
+export async function listRecipes(token?: string | null): Promise<RecipeRecord[]> {
+  return getJson(getRecipesPath(), token);
+}
+
+export async function createRecipe(payload: RecipePayload, token?: string | null): Promise<RecipeRecord> {
+  return postJson(getRecipesPath(), payload, token);
 }
 
 async function getJson<T>(path: string, token?: string | null): Promise<T> {

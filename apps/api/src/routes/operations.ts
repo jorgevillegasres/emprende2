@@ -66,6 +66,20 @@ const productionOrderSchema = z
     path: ["supplies"]
   });
 
+const recipeSchema = z
+  .object({
+    id: z.string().min(1),
+    productId: z.string().min(1),
+    name: z.string().min(1),
+    outputQuantity: z.number().positive(),
+    ingredients: z.array(z.object({ supplyId: z.string().min(1), quantity: z.number().positive() })).min(1),
+    note: z.string().max(240).optional()
+  })
+  .refine((recipe) => new Set(recipe.ingredients.map((ingredient) => ingredient.supplyId)).size === recipe.ingredients.length, {
+    message: "Ingredient supply lines must be unique",
+    path: ["ingredients"]
+  });
+
 export async function registerOperationRoutes(app: FastifyInstance) {
   const repositories = await getRepositories();
 
@@ -118,6 +132,34 @@ export async function registerOperationRoutes(app: FastifyInstance) {
   });
 
   app.get("/v1/inventory-movements", async (request) => repositories.inventoryMovements.listByTenant(resolveRequestContext(request.headers).tenantId));
+
+  app.get("/v1/recipes", async (request) => repositories.recipes.listByTenant(resolveRequestContext(request.headers).tenantId));
+  app.post("/v1/recipes", async (request, reply) => {
+    const context = resolveRequestContext(request.headers);
+    const parsed = recipeSchema.safeParse(request.body);
+    if (!parsed.success) return reply.code(400).send({ error: "Invalid recipe payload", issues: parsed.error.issues });
+
+    const product = await repositories.products.findByTenantAndId(context.tenantId, parsed.data.productId);
+    if (!product) return reply.code(404).send({ error: "Product not found" });
+
+    for (const ingredient of parsed.data.ingredients) {
+      const supply = await repositories.supplies.findByTenantAndId(context.tenantId, ingredient.supplyId);
+      if (!supply) return reply.code(404).send({ error: "Supply not found", supplyId: ingredient.supplyId });
+    }
+
+    const created = await repositories.recipes.insert({
+      tenantId: context.tenantId,
+      id: parsed.data.id,
+      productId: parsed.data.productId,
+      name: parsed.data.name,
+      outputQuantity: parsed.data.outputQuantity,
+      ingredients: parsed.data.ingredients,
+      note: parsed.data.note ?? ""
+    });
+
+    return reply.code(201).send(created);
+  });
+
   app.post("/v1/inventory-adjustments", async (request, reply) => {
     const context = resolveRequestContext(request.headers);
     const parsed = inventoryAdjustmentSchema.safeParse(request.body);

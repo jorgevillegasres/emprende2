@@ -21,6 +21,19 @@ export type InventoryMovementRecord = TenantRecord & {
   note?: string;
   createdAt?: string;
 };
+export type RecipeIngredientRecord = {
+  supplyId: string;
+  quantity: number;
+};
+export type RecipeRecord = TenantRecord & {
+  id: string;
+  productId: string;
+  name: string;
+  outputQuantity: number;
+  ingredients: RecipeIngredientRecord[];
+  note?: string;
+  createdAt?: string;
+};
 
 export type AuthIdentityRecord = {
   userId: string;
@@ -58,6 +71,8 @@ export type AuthRepository = {
   registerOwner(record: AuthIdentityRecord): Promise<AuthIdentityRecord>;
 };
 
+export type RecipeRepository = TenantRepository<RecipeRecord>;
+
 export type Repositories = {
   auth: AuthRepository;
   products: ProductRepository;
@@ -65,6 +80,7 @@ export type Repositories = {
   sales: TenantRepository<SaleRecord>;
   expenses: TenantRepository<ExpenseRecord>;
   inventoryMovements: TenantRepository<InventoryMovementRecord>;
+  recipes: RecipeRepository;
 };
 
 export function createInMemoryRepositories(): Repositories {
@@ -73,6 +89,7 @@ export function createInMemoryRepositories(): Repositories {
   const sales: SaleRecord[] = [];
   const expenses: ExpenseRecord[] = [];
   const inventoryMovements: InventoryMovementRecord[] = [];
+  const recipes: RecipeRecord[] = [];
   const authIdentities: AuthIdentityRecord[] = [];
 
   return {
@@ -81,6 +98,7 @@ export function createInMemoryRepositories(): Repositories {
     sales: createTenantRepository(sales),
     expenses: createTenantRepository(expenses),
     inventoryMovements: createTenantRepository(inventoryMovements),
+    recipes: createRecipeRepository(recipes),
     products: createProductRepository(products)
   };
 }
@@ -93,6 +111,22 @@ function createTenantRepository<TRecord extends TenantRecord>(records: TRecord[]
     },
     async listByTenant(tenantId: string) {
       return records.filter((record) => record.tenantId === tenantId);
+    }
+  };
+}
+
+function createRecipeRepository(records: RecipeRecord[]): RecipeRepository {
+  return {
+    async insert(record: RecipeRecord) {
+      const stored = { ...record, ingredients: record.ingredients.map((ingredient) => ({ ...ingredient })) };
+      records.push(stored);
+      return stored;
+    },
+    async listByTenant(tenantId: string) {
+      return records.filter((record) => record.tenantId === tenantId).map((record) => ({
+        ...record,
+        ingredients: record.ingredients.map((ingredient) => ({ ...ingredient }))
+      }));
     }
   };
 }

@@ -3,6 +3,7 @@ import { getCurrentUser, getDashboardMetrics, login, registerOwner, type AuthSes
 import { Dashboard } from "./components/Dashboard";
 import { Login } from "./components/Login";
 import { Operations } from "./components/Operations";
+import { Recipes } from "./components/Recipes";
 import { Shell, type AppSection } from "./components/Shell";
 
 const AUTH_STORAGE_KEY = "emprendedos.auth";
@@ -102,6 +103,8 @@ export function App() {
           {!metrics && !error ? <div className="system-panel">Cargando Emprendedos...</div> : null}
           {metrics ? <Dashboard metrics={metrics} onSectionChange={setActiveSection} /> : null}
         </>
+      ) : activeSection === "recipes" ? (
+        <Recipes token={authSession.token} />
       ) : (
         <Operations section={activeSection} token={authSession.token} />
       )}

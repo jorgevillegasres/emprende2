@@ -1,5 +1,5 @@
 import type { createPostgresClient } from "./client.js";
-import { expenses, memberships, products, sales, supplies, tenants, users } from "./schema.js";
+import { expenses, memberships, products, recipeIngredients, recipes, sales, supplies, tenants, users } from "./schema.js";
 import { getConfig } from "../config.js";
 import { hashPassword } from "../auth/passwords.js";
 
@@ -64,6 +64,38 @@ export async function seedPostgresDemoData(db: Db) {
     .values([
       { tenantId: demoTenantId, id: "shampoo-romero", name: "Shampoo solido romero", stock: 12, minStock: 10, unitCost: 5200, price: 16000, unit: "un" },
       { tenantId: demoTenantId, id: "balsamo-calendula", name: "Balsamo calendula", stock: 6, minStock: 8, unitCost: 4300, price: 14000, unit: "un" }
+    ])
+    .onConflictDoNothing();
+
+  await db
+    .insert(recipes)
+    .values({
+      id: "shampoo-romero-base",
+      tenantId: demoTenantId,
+      productId: "shampoo-romero",
+      name: "Formula base shampoo romero",
+      outputQuantity: 10,
+      note: "Receta demo para validar produccion repetible"
+    })
+    .onConflictDoNothing();
+
+  await db
+    .insert(recipeIngredients)
+    .values([
+      {
+        id: "50000000-0000-0000-0000-000000000001",
+        tenantId: demoTenantId,
+        recipeId: "shampoo-romero-base",
+        supplyId: "envase-vidrio",
+        quantity: 10
+      },
+      {
+        id: "50000000-0000-0000-0000-000000000002",
+        tenantId: demoTenantId,
+        recipeId: "shampoo-romero-base",
+        supplyId: "etiqueta-kraft",
+        quantity: 10
+      }
     ])
     .onConflictDoNothing();
 

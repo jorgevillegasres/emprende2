@@ -1,13 +1,14 @@
 import type { ReactNode } from "react";
 
-export type AppSection = "dashboard" | "products" | "supplies" | "sales" | "expenses";
+export type AppSection = "dashboard" | "products" | "supplies" | "sales" | "expenses" | "recipes";
 
 const navItems: Array<{ section: AppSection; label: string }> = [
   { section: "dashboard", label: "Mi negocio" },
   { section: "products", label: "Productos" },
   { section: "supplies", label: "Inventario" },
   { section: "sales", label: "Ventas" },
-  { section: "expenses", label: "Gastos" }
+  { section: "expenses", label: "Gastos" },
+  { section: "recipes", label: "Recetas" }
 ];
 
 export function Shell({

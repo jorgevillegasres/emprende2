@@ -1,8 +1,8 @@
 import { randomUUID } from "node:crypto";
 import { and, desc, eq } from "drizzle-orm";
 import type { createPostgresClient } from "./client.js";
-import type { AuthIdentityRecord, ExpenseRecord, InventoryMovementRecord, ProductRecord, Repositories, SaleRecord, SupplyRecord } from "./repositories.js";
-import { expenses, inventoryMovements, memberships, products, sales, supplies, tenants, users } from "./schema.js";
+import type { AuthIdentityRecord, ExpenseRecord, InventoryMovementRecord, ProductRecord, RecipeRecord, Repositories, SaleRecord, SupplyRecord } from "./repositories.js";
+import { expenses, inventoryMovements, memberships, products, recipeIngredients, recipes, sales, supplies, tenants, users } from "./schema.js";
 
 type Db = ReturnType<typeof createPostgresClient>["db"];
 
@@ -161,6 +161,48 @@ export function createPostgresRepositories(db: Db): Repositories {
         const rows = await db.select().from(inventoryMovements).where(eq(inventoryMovements.tenantId, tenantId)).orderBy(desc(inventoryMovements.createdAt));
         return rows.map(toInventoryMovementRecord);
       }
+    },
+    recipes: {
+      async insert(record: RecipeRecord) {
+        const [created] = await db
+          .insert(recipes)
+          .values({
+            id: record.id,
+            tenantId: record.tenantId,
+            productId: record.productId,
+            name: record.name,
+            outputQuantity: record.outputQuantity,
+            note: record.note ?? ""
+          })
+          .returning();
+
+        if (record.ingredients.length) {
+          await db.insert(recipeIngredients).values(
+            record.ingredients.map((ingredient) => ({
+              tenantId: record.tenantId,
+              recipeId: record.id,
+              supplyId: ingredient.supplyId,
+              quantity: ingredient.quantity
+            }))
+          );
+        }
+
+        return {
+          ...toRecipeRecord(created),
+          ingredients: record.ingredients.map((ingredient) => ({ ...ingredient }))
+        };
+      },
+      async listByTenant(tenantId: string) {
+        const recipeRows = await db.select().from(recipes).where(eq(recipes.tenantId, tenantId)).orderBy(desc(recipes.createdAt));
+        const ingredientRows = await db.select().from(recipeIngredients).where(eq(recipeIngredients.tenantId, tenantId));
+
+        return recipeRows.map((recipe) => ({
+          ...toRecipeRecord(recipe),
+          ingredients: ingredientRows
+            .filter((ingredient) => ingredient.recipeId === recipe.id)
+            .map((ingredient) => ({ supplyId: ingredient.supplyId, quantity: ingredient.quantity }))
+        }));
+      }
     }
   };
 }
@@ -228,6 +270,18 @@ function toInventoryMovementRecord(row: typeof inventoryMovements.$inferSelect):
     stockAfter: row.stockAfter,
     referenceType: row.referenceType,
     referenceId: row.referenceId,
+    note: row.note,
+    createdAt: row.createdAt.toISOString()
+  };
+}
+
+function toRecipeRecord(row: typeof recipes.$inferSelect): Omit<RecipeRecord, "ingredients"> {
+  return {
+    tenantId: row.tenantId,
+    id: row.id,
+    productId: row.productId,
+    name: row.name,
+    outputQuantity: row.outputQuantity,
     note: row.note,
     createdAt: row.createdAt.toISOString()
   };

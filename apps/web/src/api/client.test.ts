@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { createAuthHeaders, getInventoryAdjustmentPath, getInventoryMovementsPath, getInventoryPurchasePath, getProductionOrderPath, getRegisterPath } from "./client";
+import { createAuthHeaders, getInventoryAdjustmentPath, getInventoryMovementsPath, getInventoryPurchasePath, getProductionOrderPath, getRecipesPath, getRegisterPath } from "./client";
 
 describe("createAuthHeaders", () => {
   it("returns an empty header set when the session token is missing", () => {
@@ -40,5 +40,11 @@ describe("getInventoryPurchasePath", () => {
 describe("getProductionOrderPath", () => {
   it("targets the production order endpoint", () => {
     expect(getProductionOrderPath()).toBe("/v1/production-orders");
+  });
+});
+
+describe("getRecipesPath", () => {
+  it("targets the recipes endpoint", () => {
+    expect(getRecipesPath()).toBe("/v1/recipes");
   });
 });

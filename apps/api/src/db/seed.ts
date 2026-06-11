@@ -54,6 +54,18 @@ export async function createSeededRepositories() {
     price: 14000,
     unit: "un"
   });
+  await repositories.recipes.insert({
+    tenantId,
+    id: "shampoo-romero-base",
+    productId: "shampoo-romero",
+    name: "Formula base shampoo romero",
+    outputQuantity: 10,
+    ingredients: [
+      { supplyId: "envase-vidrio", quantity: 10 },
+      { supplyId: "etiqueta-kraft", quantity: 10 }
+    ],
+    note: "Receta demo para validar produccion repetible"
+  });
   await repositories.sales.insert({
     tenantId,
     date: "2026-06-09",
