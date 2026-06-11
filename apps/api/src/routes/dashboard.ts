@@ -1,10 +1,10 @@
 import { calculateDashboardMetrics } from "@emprendedos/domain";
 import type { FastifyInstance } from "fastify";
 import { getDemoRequestContext } from "../auth/context.js";
-import { createSeededRepositories } from "../db/seed.js";
+import { getRepositories } from "../db/store.js";
 
 export async function registerDashboardRoutes(app: FastifyInstance) {
-  const repositories = await createSeededRepositories();
+  const repositories = await getRepositories();
 
   app.get("/v1/dashboard", async () => {
     const context = getDemoRequestContext();

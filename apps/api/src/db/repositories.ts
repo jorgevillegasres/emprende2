@@ -19,15 +19,7 @@ export function createInMemoryRepositories() {
     supplies: createTenantRepository(supplies),
     sales: createTenantRepository(sales),
     expenses: createTenantRepository(expenses),
-    products: {
-      async insert(product: ProductRecord) {
-        products.push(product);
-        return product;
-      },
-      async listByTenant(tenantId: string) {
-        return products.filter((product) => product.tenantId === tenantId);
-      }
-    }
+    products: createTenantRepository(products)
   };
 }
 

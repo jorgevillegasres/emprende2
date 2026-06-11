@@ -1,10 +1,28 @@
 import type { ReactNode } from "react";
 
-export function Shell({ children }: { children: ReactNode }) {
+export type AppSection = "dashboard" | "products" | "supplies" | "sales" | "expenses";
+
+const navItems: Array<{ section: AppSection; label: string }> = [
+  { section: "dashboard", label: "Mi negocio" },
+  { section: "products", label: "Productos" },
+  { section: "supplies", label: "Inventario" },
+  { section: "sales", label: "Ventas" },
+  { section: "expenses", label: "Gastos" }
+];
+
+export function Shell({
+  activeSection,
+  onSectionChange,
+  children
+}: {
+  activeSection: AppSection;
+  onSectionChange: (section: AppSection) => void;
+  children: ReactNode;
+}) {
   return (
     <div className="shell">
       <header className="topbar">
-        <a className="brand" href="/" aria-label="Emprendedos">
+        <button className="brand brand-button" type="button" onClick={() => onSectionChange("dashboard")} aria-label="Emprendedos">
           <span className="brand-mark">e</span>
           <span>
             <strong>
@@ -12,13 +30,18 @@ export function Shell({ children }: { children: ReactNode }) {
             </strong>
             <small>Crece con claridad</small>
           </span>
-        </a>
+        </button>
         <nav className="nav" aria-label="Principal">
-          <button className="nav-item active">Mi negocio</button>
-          <button className="nav-item">Productos</button>
-          <button className="nav-item">Inventario</button>
-          <button className="nav-item">Ventas</button>
-          <button className="nav-item">Gastos</button>
+          {navItems.map((item) => (
+            <button
+              className={`nav-item ${activeSection === item.section ? "active" : ""}`}
+              key={item.section}
+              type="button"
+              onClick={() => onSectionChange(item.section)}
+            >
+              {item.label}
+            </button>
+          ))}
         </nav>
         <div className="top-actions">
           <span className="today-pill">Junio 2026</span>
