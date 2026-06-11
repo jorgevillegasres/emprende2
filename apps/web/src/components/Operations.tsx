@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import {
   createExpense,
   createProduct,
@@ -13,6 +13,7 @@ import {
   type SaleRecord,
   type SupplyRecord
 } from "../api/client";
+import { getTemplatesForSection } from "./operationTemplates";
 import type { AppSection } from "./Shell";
 
 type Field = {
@@ -104,9 +105,11 @@ const resourceConfig = {
 
 export function Operations({ section, token }: { section: Exclude<AppSection, "dashboard">; token: string }) {
   const config = resourceConfig[section];
+  const templates = getTemplatesForSection(section);
   const [rows, setRows] = useState<Row[]>([]);
   const [error, setError] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const formRef = useRef<HTMLFormElement | null>(null);
   const totalValue = useMemo(() => rows.length, [rows]);
 
   useEffect(() => {
@@ -137,6 +140,18 @@ export function Operations({ section, token }: { section: Exclude<AppSection, "d
     }
   }
 
+  function applyTemplate(values: Record<string, string | number>) {
+    const form = formRef.current;
+    if (!form) return;
+
+    Object.entries(values).forEach(([name, value]) => {
+      const input = form.elements.namedItem(name);
+      if (input instanceof HTMLInputElement) {
+        input.value = String(value);
+      }
+    });
+  }
+
   return (
     <main className="operations-page">
       <section className="operations-hero">
@@ -152,11 +167,21 @@ export function Operations({ section, token }: { section: Exclude<AppSection, "d
       </section>
 
       <section className="operations-grid">
-        <form className="card operations-form" onSubmit={handleSubmit}>
+        <form className="card operations-form" onSubmit={handleSubmit} ref={formRef}>
           <div>
             <p className="eyebrow">Nuevo registro</p>
             <h2>Captura rapida</h2>
           </div>
+          {templates.length ? (
+            <div className="template-strip">
+              {templates.map((template) => (
+                <button className="template-chip" key={template.label} onClick={() => applyTemplate(template.values)} type="button">
+                  <strong>{template.label}</strong>
+                  <span>{template.hint}</span>
+                </button>
+              ))}
+            </div>
+          ) : null}
           <div className="form-grid">
             {config.fields.map((field) => (
               <label key={field.name}>

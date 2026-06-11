@@ -683,6 +683,37 @@ h2 {
   gap: 16px;
 }
 
+.template-strip {
+  display: grid;
+  gap: 8px;
+}
+
+.template-chip {
+  display: grid;
+  gap: 4px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 11px 12px;
+  background: #f8fbfc;
+  color: var(--ink);
+  text-align: left;
+}
+
+.template-chip:hover {
+  border-color: rgba(10, 159, 106, 0.35);
+  background: var(--green-soft);
+}
+
+.template-chip strong {
+  font-size: 0.92rem;
+}
+
+.template-chip span {
+  color: var(--muted);
+  font-size: 0.8rem;
+  line-height: 1.35;
+}
+
 .form-grid {
   display: grid;
   gap: 12px;
