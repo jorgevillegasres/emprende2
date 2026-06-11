@@ -84,4 +84,32 @@ describe("operational resource routes", () => {
 
     expect(response.statusCode).toBe(400);
   });
+
+  it("isolates resources by request tenant header", async () => {
+    const app = buildApp();
+
+    await app.inject({
+      method: "POST",
+      url: "/v1/products",
+      headers: { "x-emprendedos-tenant-id": "tenant-a", "x-emprendedos-user-id": "user-a" },
+      payload: { id: "tenant-a-product", name: "Producto A", stock: 1, minStock: 1, unitCost: 1000, price: 2000, unit: "un" }
+    });
+    await app.inject({
+      method: "POST",
+      url: "/v1/products",
+      headers: { "x-emprendedos-tenant-id": "tenant-b", "x-emprendedos-user-id": "user-b" },
+      payload: { id: "tenant-b-product", name: "Producto B", stock: 1, minStock: 1, unitCost: 1000, price: 2000, unit: "un" }
+    });
+
+    const response = await app.inject({
+      method: "GET",
+      url: "/v1/products",
+      headers: { "x-emprendedos-tenant-id": "tenant-a", "x-emprendedos-user-id": "user-a" }
+    });
+    const products = response.json();
+
+    expect(response.statusCode).toBe(200);
+    expect(products.map((product: { id: string }) => product.id)).toContain("tenant-a-product");
+    expect(products.map((product: { id: string }) => product.id)).not.toContain("tenant-b-product");
+  });
 });

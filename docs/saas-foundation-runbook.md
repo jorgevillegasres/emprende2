@@ -61,6 +61,16 @@ The current automated test suite uses memory mode so it can run without a local 
 
 All business data must be read through tenant-aware repositories. Never query business records without passing the active `tenantId`.
 
+## Demo Request Context
+
+Until real authentication is implemented, the API resolves request context from optional headers:
+
+- `x-emprendedos-tenant-id`
+- `x-emprendedos-user-id`
+- `x-emprendedos-role`
+
+When headers are missing, the API falls back to the demo tenant and demo owner user from `.env.example`. These headers are a development bridge only; production auth must verify users and memberships server-side before trusting tenant access.
+
 ## Current Limitations
 
 - Demo auth only.
