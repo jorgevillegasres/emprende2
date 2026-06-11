@@ -10,6 +10,9 @@
     "dev:api": "corepack pnpm --filter @emprendedos/api dev",
     "dev:web": "corepack pnpm --filter @emprendedos/web dev",
     "dev": "corepack pnpm --parallel dev",
+    "db:generate": "corepack pnpm --filter @emprendedos/api exec drizzle-kit generate --config ../../drizzle.config.ts",
+    "db:migrate": "corepack pnpm --filter @emprendedos/api exec drizzle-kit migrate --config ../../drizzle.config.ts",
+    "db:seed": "corepack pnpm --filter @emprendedos/api exec tsx src/db/seed-postgres.ts",
     "legacy:test": "node --test tests/domain.test.js"
   },
   "devDependencies": {

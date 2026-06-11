@@ -15,10 +15,36 @@ The API supports two data store modes:
 - `DATA_STORE=memory`: default mode, seeded demo data, no database required.
 - `DATA_STORE=postgres`: uses Drizzle ORM and `DATABASE_URL`.
 
-To inspect or generate Drizzle migration files, use:
+## Local PostgreSQL
+
+Start Postgres:
 
 ```bash
-corepack pnpm --filter @emprendedos/api exec drizzle-kit generate
+docker compose up -d postgres
+```
+
+Generate migrations after schema changes:
+
+```bash
+corepack pnpm db:generate
+```
+
+Apply migrations:
+
+```bash
+corepack pnpm db:migrate
+```
+
+Seed demo data:
+
+```bash
+corepack pnpm db:seed
+```
+
+Run the API against Postgres:
+
+```bash
+$env:DATA_STORE="postgres"; corepack pnpm --filter @emprendedos/api dev
 ```
 
 The current automated test suite uses memory mode so it can run without a local PostgreSQL service.
@@ -38,5 +64,5 @@ All business data must be read through tenant-aware repositories. Never query bu
 ## Current Limitations
 
 - Demo auth only.
-- PostgreSQL/Drizzle repositories are wired but migrations are not applied automatically.
+- PostgreSQL requires manual `docker compose up`, `db:migrate`, and `db:seed` locally.
 - Billing is not implemented.
