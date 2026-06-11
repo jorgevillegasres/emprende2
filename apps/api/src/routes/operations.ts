@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { resolveRequestContext } from "../auth/context.js";
@@ -69,9 +70,26 @@ export async function registerOperationRoutes(app: FastifyInstance) {
       return reply.code(409).send({ error: "Insufficient product stock", availableStock: product.stock });
     }
     const created = await repositories.sales.insert({ ...parsed.data, tenantId: context.tenantId });
-    await repositories.products.updateStock(context.tenantId, parsed.data.productId, product.stock - parsed.data.quantity);
+    const stockBefore = product.stock;
+    const stockAfter = stockBefore - parsed.data.quantity;
+    await repositories.products.updateStock(context.tenantId, parsed.data.productId, stockAfter);
+    await repositories.inventoryMovements.insert({
+      id: randomUUID(),
+      tenantId: context.tenantId,
+      itemType: "product",
+      itemId: parsed.data.productId,
+      movementType: "sale",
+      quantity: -parsed.data.quantity,
+      stockBefore,
+      stockAfter,
+      referenceType: "sale",
+      referenceId: randomUUID(),
+      note: `Venta registrada el ${parsed.data.date}`
+    });
     return reply.code(201).send(created);
   });
+
+  app.get("/v1/inventory-movements", async (request) => repositories.inventoryMovements.listByTenant(resolveRequestContext(request.headers).tenantId));
 
   app.get("/v1/expenses", async (request) => repositories.expenses.listByTenant(resolveRequestContext(request.headers).tenantId));
   app.post("/v1/expenses", async (request, reply) => {

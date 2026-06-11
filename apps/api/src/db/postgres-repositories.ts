@@ -1,8 +1,8 @@
 import { randomUUID } from "node:crypto";
-import { and, eq } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 import type { createPostgresClient } from "./client.js";
-import type { AuthIdentityRecord, ExpenseRecord, ProductRecord, Repositories, SaleRecord, SupplyRecord } from "./repositories.js";
-import { expenses, memberships, products, sales, supplies, tenants, users } from "./schema.js";
+import type { AuthIdentityRecord, ExpenseRecord, InventoryMovementRecord, ProductRecord, Repositories, SaleRecord, SupplyRecord } from "./repositories.js";
+import { expenses, inventoryMovements, memberships, products, sales, supplies, tenants, users } from "./schema.js";
 
 type Db = ReturnType<typeof createPostgresClient>["db"];
 
@@ -130,6 +130,17 @@ export function createPostgresRepositories(db: Db): Repositories {
         const rows = await db.select().from(expenses).where(eq(expenses.tenantId, tenantId));
         return rows.map(toExpenseRecord);
       }
+    },
+    inventoryMovements: {
+      async insert(record: InventoryMovementRecord) {
+        const values = { ...record, createdAt: undefined };
+        const [created] = await db.insert(inventoryMovements).values(values).returning();
+        return toInventoryMovementRecord(created);
+      },
+      async listByTenant(tenantId: string) {
+        const rows = await db.select().from(inventoryMovements).where(eq(inventoryMovements.tenantId, tenantId)).orderBy(desc(inventoryMovements.createdAt));
+        return rows.map(toInventoryMovementRecord);
+      }
     }
   };
 }
@@ -183,4 +194,30 @@ function toExpenseRecord(row: typeof expenses.$inferSelect): ExpenseRecord {
     category: row.category,
     amount: row.amount
   };
+}
+
+function toInventoryMovementRecord(row: typeof inventoryMovements.$inferSelect): InventoryMovementRecord {
+  return {
+    tenantId: row.tenantId,
+    id: row.id,
+    itemType: toInventoryItemType(row.itemType),
+    itemId: row.itemId,
+    movementType: toInventoryMovementType(row.movementType),
+    quantity: row.quantity,
+    stockBefore: row.stockBefore,
+    stockAfter: row.stockAfter,
+    referenceType: row.referenceType,
+    referenceId: row.referenceId,
+    note: row.note,
+    createdAt: row.createdAt.toISOString()
+  };
+}
+
+function toInventoryItemType(value: string): InventoryMovementRecord["itemType"] {
+  return value === "supply" ? "supply" : "product";
+}
+
+function toInventoryMovementType(value: string): InventoryMovementRecord["movementType"] {
+  if (value === "production" || value === "adjustment" || value === "purchase") return value;
+  return "sale";
 }

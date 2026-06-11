@@ -109,6 +109,28 @@ export const expenses = pgTable(
   })
 );
 
+export const inventoryMovements = pgTable(
+  "inventory_movements",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    tenantId: uuid("tenant_id").notNull().references(() => tenants.id),
+    itemType: text("item_type").notNull(),
+    itemId: text("item_id").notNull(),
+    movementType: text("movement_type").notNull(),
+    quantity: doublePrecision("quantity").notNull(),
+    stockBefore: doublePrecision("stock_before").notNull(),
+    stockAfter: doublePrecision("stock_after").notNull(),
+    referenceType: text("reference_type").notNull(),
+    referenceId: text("reference_id").notNull(),
+    note: text("note").notNull().default(""),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow()
+  },
+  (table) => ({
+    inventoryMovementsTenantItemIdx: index("inventory_movements_tenant_item_idx").on(table.tenantId, table.itemType, table.itemId),
+    inventoryMovementsTenantCreatedIdx: index("inventory_movements_tenant_created_idx").on(table.tenantId, table.createdAt)
+  })
+);
+
 export const schema = {
   tenants,
   users,
@@ -116,7 +138,8 @@ export const schema = {
   products,
   supplies,
   sales,
-  expenses
+  expenses,
+  inventoryMovements
 };
 
-export const databaseSchemaVersion = "2026-06-11-persistent-auth-identities";
+export const databaseSchemaVersion = "2026-06-11-inventory-movements";

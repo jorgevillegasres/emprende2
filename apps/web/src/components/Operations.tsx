@@ -5,10 +5,12 @@ import {
   createSale,
   createSupply,
   listExpenses,
+  listInventoryMovements,
   listProducts,
   listSales,
   listSupplies,
   type ExpenseRecord,
+  type InventoryMovementRecord,
   type ProductRecord,
   type SaleRecord,
   type SupplyRecord
@@ -108,6 +110,7 @@ export function Operations({ section, token }: { section: Exclude<AppSection, "d
   const config = resourceConfig[section];
   const templates = getTemplatesForSection(section);
   const [rows, setRows] = useState<Row[]>([]);
+  const [inventoryMovements, setInventoryMovements] = useState<InventoryMovementRecord[]>([]);
   const [productOptions, setProductOptions] = useState<ProductRecord[]>([]);
   const [selectedProductId, setSelectedProductId] = useState("");
   const [saleQuantity, setSaleQuantity] = useState(1);
@@ -145,6 +148,14 @@ export function Operations({ section, token }: { section: Exclude<AppSection, "d
       });
     }
 
+    if (section === "supplies") {
+      listInventoryMovements(token).then((movements) => {
+        if (isMounted) setInventoryMovements(movements);
+      }).catch(() => {
+        if (isMounted) setError("No se pudo cargar el kardex de inventario");
+      });
+    }
+
     return () => {
       isMounted = false;
     };
@@ -172,6 +183,7 @@ export function Operations({ section, token }: { section: Exclude<AppSection, "d
     try {
       await config.create(payload as never, token);
       setRows(await config.load(token));
+      if (isSalesSection) setProductOptions(await listProducts(token));
       event.currentTarget.reset();
       if (isSalesSection) setSaleQuantity(1);
     } catch {
@@ -319,6 +331,34 @@ export function Operations({ section, token }: { section: Exclude<AppSection, "d
           </div>
         </article>
       </section>
+
+      {section === "supplies" ? (
+        <section className="card movements-card">
+          <div className="card-head">
+            <div>
+              <p className="eyebrow">Kardex</p>
+              <h2>Movimientos recientes</h2>
+            </div>
+          </div>
+          {inventoryMovements.length ? (
+            <div className="movement-list">
+              {inventoryMovements.map((movement) => (
+                <div className="movement-row" key={movement.id}>
+                  <span className={`movement-badge ${movement.quantity < 0 ? "out" : "in"}`}>{movement.quantity < 0 ? "Salida" : "Entrada"}</span>
+                  <div>
+                    <strong>{movement.itemId}</strong>
+                    <small>{formatMovementType(movement.movementType)} - {movement.referenceType}</small>
+                  </div>
+                  <span>{movement.quantity}</span>
+                  <span>{movement.stockBefore} {"->"} {movement.stockAfter}</span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="empty-copy">Todavia no hay movimientos de inventario registrados.</p>
+          )}
+        </section>
+      ) : null}
     </main>
   );
 }
@@ -332,4 +372,11 @@ function rowKey(row: Row, index: number) {
 
 function money(value: number) {
   return new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 }).format(value);
+}
+
+function formatMovementType(type: InventoryMovementRecord["movementType"]) {
+  if (type === "sale") return "Venta";
+  if (type === "production") return "Produccion";
+  if (type === "purchase") return "Compra";
+  return "Ajuste";
 }

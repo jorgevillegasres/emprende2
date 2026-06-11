@@ -85,10 +85,29 @@ CREATE TABLE expenses (
 
 CREATE INDEX expenses_tenant_date_idx ON expenses(tenant_id, date);
 
+CREATE TABLE inventory_movements (
+  id uuid PRIMARY KEY,
+  tenant_id uuid NOT NULL REFERENCES tenants(id),
+  item_type text NOT NULL,
+  item_id text NOT NULL,
+  movement_type text NOT NULL,
+  quantity numeric(12, 2) NOT NULL,
+  stock_before numeric(12, 2) NOT NULL,
+  stock_after numeric(12, 2) NOT NULL,
+  reference_type text NOT NULL,
+  reference_id text NOT NULL,
+  note text NOT NULL DEFAULT '',
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE INDEX inventory_movements_tenant_item_idx ON inventory_movements(tenant_id, item_type, item_id);
+CREATE INDEX inventory_movements_tenant_created_idx ON inventory_movements(tenant_id, created_at);
+
 ALTER TABLE products ENABLE ROW LEVEL SECURITY;
 ALTER TABLE supplies ENABLE ROW LEVEL SECURITY;
 ALTER TABLE sales ENABLE ROW LEVEL SECURITY;
 ALTER TABLE expenses ENABLE ROW LEVEL SECURITY;
+ALTER TABLE inventory_movements ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY tenant_products_policy ON products
   USING (tenant_id::text = current_setting('app.current_tenant_id', true));
@@ -100,4 +119,7 @@ CREATE POLICY tenant_sales_policy ON sales
   USING (tenant_id::text = current_setting('app.current_tenant_id', true));
 
 CREATE POLICY tenant_expenses_policy ON expenses
+  USING (tenant_id::text = current_setting('app.current_tenant_id', true));
+
+CREATE POLICY tenant_inventory_movements_policy ON inventory_movements
   USING (tenant_id::text = current_setting('app.current_tenant_id', true));

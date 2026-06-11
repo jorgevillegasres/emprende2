@@ -88,6 +88,50 @@ describe("operational resource routes", () => {
     expect(products.find((product: { id: string }) => product.id === "stock-soap")?.stock).toBe(5);
   });
 
+  it("records an inventory movement when a sale decreases stock", async () => {
+    const app = buildApp();
+    const headers = { "x-emprendedos-tenant-id": "movement-tenant", "x-emprendedos-user-id": "movement-user" };
+
+    await app.inject({
+      method: "POST",
+      url: "/v1/products",
+      headers,
+      payload: { id: "movement-soap", name: "Jabon movimiento", stock: 8, minStock: 2, unitCost: 5000, price: 12000, unit: "un" }
+    });
+
+    const saleResponse = await app.inject({
+      method: "POST",
+      url: "/v1/sales",
+      headers,
+      payload: {
+        date: "2026-06-10",
+        productId: "movement-soap",
+        quantity: 3,
+        revenue: 36000,
+        cost: 15000,
+        grossProfit: 21000
+      }
+    });
+    const movementsResponse = await app.inject({ method: "GET", url: "/v1/inventory-movements", headers });
+    const movements = movementsResponse.json();
+
+    expect(saleResponse.statusCode).toBe(201);
+    expect(movementsResponse.statusCode).toBe(200);
+    expect(movements).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          itemType: "product",
+          itemId: "movement-soap",
+          movementType: "sale",
+          quantity: -3,
+          stockBefore: 8,
+          stockAfter: 5,
+          referenceType: "sale"
+        })
+      ])
+    );
+  });
+
   it("rejects sales that exceed available product stock", async () => {
     const app = buildApp();
     const headers = { "x-emprendedos-tenant-id": "limited-stock-tenant", "x-emprendedos-user-id": "limited-stock-user" };

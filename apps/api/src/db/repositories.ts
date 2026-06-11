@@ -8,6 +8,19 @@ export type ProductRecord = Product & TenantRecord;
 export type SupplyRecord = Supply & TenantRecord & { id: string };
 export type SaleRecord = Sale & TenantRecord;
 export type ExpenseRecord = Expense & TenantRecord;
+export type InventoryMovementRecord = TenantRecord & {
+  id: string;
+  itemType: "product" | "supply";
+  itemId: string;
+  movementType: "sale" | "production" | "adjustment" | "purchase";
+  quantity: number;
+  stockBefore: number;
+  stockAfter: number;
+  referenceType: string;
+  referenceId: string;
+  note?: string;
+  createdAt?: string;
+};
 
 export type AuthIdentityRecord = {
   userId: string;
@@ -45,6 +58,7 @@ export type Repositories = {
   supplies: TenantRepository<SupplyRecord>;
   sales: TenantRepository<SaleRecord>;
   expenses: TenantRepository<ExpenseRecord>;
+  inventoryMovements: TenantRepository<InventoryMovementRecord>;
 };
 
 export function createInMemoryRepositories(): Repositories {
@@ -52,6 +66,7 @@ export function createInMemoryRepositories(): Repositories {
   const supplies: SupplyRecord[] = [];
   const sales: SaleRecord[] = [];
   const expenses: ExpenseRecord[] = [];
+  const inventoryMovements: InventoryMovementRecord[] = [];
   const authIdentities: AuthIdentityRecord[] = [];
 
   return {
@@ -59,6 +74,7 @@ export function createInMemoryRepositories(): Repositories {
     supplies: createTenantRepository(supplies),
     sales: createTenantRepository(sales),
     expenses: createTenantRepository(expenses),
+    inventoryMovements: createTenantRepository(inventoryMovements),
     products: createProductRepository(products)
   };
 }
