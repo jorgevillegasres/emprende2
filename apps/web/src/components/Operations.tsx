@@ -1,6 +1,7 @@
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import {
   createExpense,
+  createInventoryAdjustment,
   createProduct,
   createSale,
   createSupply,
@@ -111,6 +112,11 @@ export function Operations({ section, token }: { section: Exclude<AppSection, "d
   const templates = getTemplatesForSection(section);
   const [rows, setRows] = useState<Row[]>([]);
   const [inventoryMovements, setInventoryMovements] = useState<InventoryMovementRecord[]>([]);
+  const [adjustmentProducts, setAdjustmentProducts] = useState<ProductRecord[]>([]);
+  const [adjustmentProductId, setAdjustmentProductId] = useState("");
+  const [adjustmentStockAfter, setAdjustmentStockAfter] = useState(0);
+  const [adjustmentNote, setAdjustmentNote] = useState("Conteo fisico");
+  const [isAdjusting, setIsAdjusting] = useState(false);
   const [productOptions, setProductOptions] = useState<ProductRecord[]>([]);
   const [selectedProductId, setSelectedProductId] = useState("");
   const [saleQuantity, setSaleQuantity] = useState(1);
@@ -123,6 +129,9 @@ export function Operations({ section, token }: { section: Exclude<AppSection, "d
   const isSalesSection = section === "sales";
   const canSubmitSale = Boolean(selectedProduct) && Number.isFinite(saleQuantity) && saleQuantity > 0 && saleQuantity <= (selectedProduct?.stock ?? 0);
   const salesDateDefault = resourceConfig.sales.fields.find((field) => field.name === "date")?.defaultValue;
+  const adjustmentProduct = adjustmentProducts.find((product) => product.id === adjustmentProductId);
+  const adjustmentDelta = adjustmentStockAfter - (adjustmentProduct?.stock ?? 0);
+  const canSubmitAdjustment = Boolean(adjustmentProduct) && Number.isFinite(adjustmentStockAfter) && adjustmentStockAfter >= 0 && adjustmentNote.trim().length > 0;
 
   useEffect(() => {
     let isMounted = true;
@@ -149,6 +158,19 @@ export function Operations({ section, token }: { section: Exclude<AppSection, "d
     }
 
     if (section === "supplies") {
+      listProducts(token).then((products) => {
+        if (!isMounted) return;
+
+        setAdjustmentProducts(products);
+        setAdjustmentProductId((currentId) => {
+          const nextId = products.some((product) => product.id === currentId) ? currentId : products[0]?.id ?? "";
+          setAdjustmentStockAfter(products.find((product) => product.id === nextId)?.stock ?? 0);
+          return nextId;
+        });
+      }).catch(() => {
+        if (isMounted) setError("No se pudo cargar el catalogo de productos");
+      });
+
       listInventoryMovements(token).then((movements) => {
         if (isMounted) setInventoryMovements(movements);
       }).catch(() => {
@@ -190,6 +212,34 @@ export function Operations({ section, token }: { section: Exclude<AppSection, "d
       setError("Revisa los campos e intenta guardar de nuevo");
     } finally {
       setIsSaving(false);
+    }
+  }
+
+  async function handleAdjustmentSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!canSubmitAdjustment) return;
+
+    setIsAdjusting(true);
+    setError("");
+    try {
+      await createInventoryAdjustment({
+        itemType: "product",
+        itemId: adjustmentProductId,
+        stockAfter: adjustmentStockAfter,
+        note: adjustmentNote.trim()
+      }, token);
+      const [products, movements] = await Promise.all([listProducts(token), listInventoryMovements(token)]);
+      setAdjustmentProducts(products);
+      setInventoryMovements(movements);
+      setAdjustmentProductId((currentId) => {
+        const nextId = products.some((product) => product.id === currentId) ? currentId : products[0]?.id ?? "";
+        setAdjustmentStockAfter(products.find((product) => product.id === nextId)?.stock ?? 0);
+        return nextId;
+      });
+    } catch {
+      setError("No se pudo registrar el ajuste de inventario");
+    } finally {
+      setIsAdjusting(false);
     }
   }
 
@@ -340,6 +390,51 @@ export function Operations({ section, token }: { section: Exclude<AppSection, "d
               <h2>Movimientos recientes</h2>
             </div>
           </div>
+          <form className="adjustment-panel" onSubmit={handleAdjustmentSubmit}>
+            <div>
+              <p className="eyebrow">Ajuste manual</p>
+              <h3>Corregir stock contado</h3>
+            </div>
+            {adjustmentProducts.length ? (
+              <div className="adjustment-grid">
+                <label>
+                  <span>Producto</span>
+                  <select
+                    value={adjustmentProductId}
+                    onChange={(event) => {
+                      const nextProduct = adjustmentProducts.find((product) => product.id === event.target.value);
+                      setAdjustmentProductId(event.target.value);
+                      setAdjustmentStockAfter(nextProduct?.stock ?? 0);
+                    }}
+                    required
+                  >
+                    {adjustmentProducts.map((product) => (
+                      <option key={product.id} value={product.id}>
+                        {product.name} - stock {product.stock}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label>
+                  <span>Stock contado</span>
+                  <input type="number" min={0} step={0.01} value={adjustmentStockAfter} onChange={(event) => setAdjustmentStockAfter(Number(event.target.value))} required />
+                </label>
+                <label>
+                  <span>Motivo</span>
+                  <input value={adjustmentNote} onChange={(event) => setAdjustmentNote(event.target.value)} required />
+                </label>
+                <div className="adjustment-delta">
+                  <span>Diferencia</span>
+                  <strong>{adjustmentDelta > 0 ? `+${adjustmentDelta}` : adjustmentDelta}</strong>
+                </div>
+                <button className="secondary-action adjustment-action" disabled={isAdjusting || !canSubmitAdjustment} type="submit">
+                  {isAdjusting ? "Ajustando..." : "Registrar ajuste"}
+                </button>
+              </div>
+            ) : (
+              <p className="empty-copy">Crea un producto para registrar ajustes manuales de inventario.</p>
+            )}
+          </form>
           {inventoryMovements.length ? (
             <div className="movement-list">
               {inventoryMovements.map((movement) => (

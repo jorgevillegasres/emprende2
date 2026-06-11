@@ -163,6 +163,51 @@ describe("operational resource routes", () => {
     expect(products.find((product: { id: string }) => product.id === "limited-soap")?.stock).toBe(2);
   });
 
+  it("adjusts product stock manually and records an inventory movement", async () => {
+    const app = buildApp();
+    const headers = { "x-emprendedos-tenant-id": "adjustment-tenant", "x-emprendedos-user-id": "adjustment-user" };
+
+    await app.inject({
+      method: "POST",
+      url: "/v1/products",
+      headers,
+      payload: { id: "adjusted-soap", name: "Jabon ajustado", stock: 10, minStock: 2, unitCost: 5000, price: 12000, unit: "un" }
+    });
+
+    const adjustmentResponse = await app.inject({
+      method: "POST",
+      url: "/v1/inventory-adjustments",
+      headers,
+      payload: {
+        itemType: "product",
+        itemId: "adjusted-soap",
+        stockAfter: 7,
+        note: "Conteo fisico"
+      }
+    });
+    const productsResponse = await app.inject({ method: "GET", url: "/v1/products", headers });
+    const movementsResponse = await app.inject({ method: "GET", url: "/v1/inventory-movements", headers });
+    const products = productsResponse.json();
+    const movements = movementsResponse.json();
+
+    expect(adjustmentResponse.statusCode).toBe(201);
+    expect(products.find((product: { id: string }) => product.id === "adjusted-soap")?.stock).toBe(7);
+    expect(movements).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          itemType: "product",
+          itemId: "adjusted-soap",
+          movementType: "adjustment",
+          quantity: -3,
+          stockBefore: 10,
+          stockAfter: 7,
+          referenceType: "manual-adjustment",
+          note: "Conteo fisico"
+        })
+      ])
+    );
+  });
+
   it("lists and creates tenant-scoped expenses", async () => {
     const app = buildApp();
 

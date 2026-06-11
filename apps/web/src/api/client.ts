@@ -80,6 +80,13 @@ export type InventoryMovementRecord = {
   createdAt?: string;
 };
 
+export type InventoryAdjustmentPayload = {
+  itemType: "product";
+  itemId: string;
+  stockAfter: number;
+  note: string;
+};
+
 export function createAuthHeaders(token: string | null | undefined): Record<string, string> {
   if (!token) return {};
   return { Authorization: `Bearer ${token}` };
@@ -91,6 +98,10 @@ export function getRegisterPath() {
 
 export function getInventoryMovementsPath() {
   return "/v1/inventory-movements";
+}
+
+export function getInventoryAdjustmentPath() {
+  return "/v1/inventory-adjustments";
 }
 
 export async function login(email: string, password: string): Promise<AuthSession> {
@@ -148,6 +159,10 @@ export async function createExpense(payload: ExpenseRecord, token?: string | nul
 
 export async function listInventoryMovements(token?: string | null): Promise<InventoryMovementRecord[]> {
   return getJson(getInventoryMovementsPath(), token);
+}
+
+export async function createInventoryAdjustment(payload: InventoryAdjustmentPayload, token?: string | null): Promise<InventoryMovementRecord> {
+  return postJson(getInventoryAdjustmentPath(), payload, token);
 }
 
 async function getJson<T>(path: string, token?: string | null): Promise<T> {

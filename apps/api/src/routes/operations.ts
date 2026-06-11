@@ -38,6 +38,13 @@ const expenseSchema = z.object({
   amount: z.number().nonnegative()
 });
 
+const inventoryAdjustmentSchema = z.object({
+  itemType: z.literal("product"),
+  itemId: z.string().min(1),
+  stockAfter: z.number().nonnegative(),
+  note: z.string().min(1).max(240)
+});
+
 export async function registerOperationRoutes(app: FastifyInstance) {
   const repositories = await getRepositories();
 
@@ -90,6 +97,33 @@ export async function registerOperationRoutes(app: FastifyInstance) {
   });
 
   app.get("/v1/inventory-movements", async (request) => repositories.inventoryMovements.listByTenant(resolveRequestContext(request.headers).tenantId));
+  app.post("/v1/inventory-adjustments", async (request, reply) => {
+    const context = resolveRequestContext(request.headers);
+    const parsed = inventoryAdjustmentSchema.safeParse(request.body);
+    if (!parsed.success) return reply.code(400).send({ error: "Invalid inventory adjustment payload", issues: parsed.error.issues });
+
+    const product = await repositories.products.findByTenantAndId(context.tenantId, parsed.data.itemId);
+    if (!product) return reply.code(404).send({ error: "Product not found" });
+
+    const stockBefore = product.stock;
+    const stockAfter = parsed.data.stockAfter;
+    await repositories.products.updateStock(context.tenantId, parsed.data.itemId, stockAfter);
+    const movement = await repositories.inventoryMovements.insert({
+      id: randomUUID(),
+      tenantId: context.tenantId,
+      itemType: parsed.data.itemType,
+      itemId: parsed.data.itemId,
+      movementType: "adjustment",
+      quantity: stockAfter - stockBefore,
+      stockBefore,
+      stockAfter,
+      referenceType: "manual-adjustment",
+      referenceId: randomUUID(),
+      note: parsed.data.note
+    });
+
+    return reply.code(201).send(movement);
+  });
 
   app.get("/v1/expenses", async (request) => repositories.expenses.listByTenant(resolveRequestContext(request.headers).tenantId));
   app.post("/v1/expenses", async (request, reply) => {

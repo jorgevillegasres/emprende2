@@ -865,6 +865,77 @@ h2 {
   min-width: 0;
 }
 
+.adjustment-panel {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 18px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #f8fbfc;
+}
+
+.adjustment-panel h3 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.adjustment-grid {
+  display: grid;
+  grid-template-columns: minmax(180px, 1.2fr) 140px minmax(180px, 1fr) 110px auto;
+  gap: 10px;
+  align-items: end;
+}
+
+.adjustment-grid label {
+  display: grid;
+  gap: 6px;
+}
+
+.adjustment-grid label span,
+.adjustment-delta span {
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 900;
+}
+
+.adjustment-grid input,
+.adjustment-grid select {
+  width: 100%;
+  min-height: 40px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 9px 10px;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+}
+
+.adjustment-grid input:focus,
+.adjustment-grid select:focus {
+  border-color: var(--blue);
+  outline: 3px solid rgba(38, 104, 232, 0.14);
+}
+
+.adjustment-delta {
+  min-height: 40px;
+  display: grid;
+  align-content: center;
+  gap: 2px;
+  border: 1px solid rgba(38, 104, 232, 0.2);
+  border-radius: 8px;
+  padding: 6px 10px;
+  background: var(--blue-soft);
+}
+
+.adjustment-delta strong {
+  font-size: 1.05rem;
+}
+
+.adjustment-action {
+  min-height: 40px;
+}
+
 .movement-list {
   display: grid;
   gap: 10px;
@@ -1002,5 +1073,13 @@ h2 {
 
   .movement-row > span:not(.movement-badge) {
     text-align: left;
+  }
+
+  .adjustment-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .adjustment-action {
+    width: 100%;
   }
 }
