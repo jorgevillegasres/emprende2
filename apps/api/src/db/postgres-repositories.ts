@@ -99,6 +99,14 @@ export function createPostgresRepositories(db: Db): Repositories {
           .where(and(eq(products.tenantId, tenantId), eq(products.id, id)))
           .returning();
         return updated ? toProductRecord(updated) : null;
+      },
+      async updateStockAndUnitCost(tenantId: string, id: string, stock: number, unitCost: number) {
+        const [updated] = await db
+          .update(products)
+          .set({ stock, unitCost, updatedAt: new Date() })
+          .where(and(eq(products.tenantId, tenantId), eq(products.id, id)))
+          .returning();
+        return updated ? toProductRecord(updated) : null;
       }
     },
     supplies: {

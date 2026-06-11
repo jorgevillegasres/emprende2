@@ -44,6 +44,7 @@ export type TenantRepository<TRecord extends TenantRecord> = {
 export type ProductRepository = TenantRepository<ProductRecord> & {
   findByTenantAndId(tenantId: string, id: string): Promise<ProductRecord | null>;
   updateStock(tenantId: string, id: string, stock: number): Promise<ProductRecord | null>;
+  updateStockAndUnitCost(tenantId: string, id: string, stock: number, unitCost: number): Promise<ProductRecord | null>;
 };
 
 export type SupplyRepository = TenantRepository<SupplyRecord> & {
@@ -122,6 +123,13 @@ function createProductRepository(records: ProductRecord[]): ProductRepository {
       const record = records.find((product) => product.tenantId === tenantId && product.id === id);
       if (!record) return null;
       record.stock = stock;
+      return record;
+    },
+    async updateStockAndUnitCost(tenantId: string, id: string, stock: number, unitCost: number) {
+      const record = records.find((product) => product.tenantId === tenantId && product.id === id);
+      if (!record) return null;
+      record.stock = stock;
+      record.unitCost = unitCost;
       return record;
     }
   };

@@ -4,6 +4,7 @@ import {
   createInventoryAdjustment,
   createInventoryPurchase,
   createProduct,
+  createProductionOrder,
   createSale,
   createSupply,
   listExpenses,
@@ -126,6 +127,14 @@ export function Operations({ section, token }: { section: Exclude<AppSection, "d
   const [purchaseUnitCost, setPurchaseUnitCost] = useState(0);
   const [purchaseNote, setPurchaseNote] = useState("Compra de inventario");
   const [isPurchasing, setIsPurchasing] = useState(false);
+  const [productionProductId, setProductionProductId] = useState("");
+  const [productionQuantity, setProductionQuantity] = useState(1);
+  const [productionSupplyOneId, setProductionSupplyOneId] = useState("");
+  const [productionSupplyOneQuantity, setProductionSupplyOneQuantity] = useState(1);
+  const [productionSupplyTwoId, setProductionSupplyTwoId] = useState("");
+  const [productionSupplyTwoQuantity, setProductionSupplyTwoQuantity] = useState(0);
+  const [productionNote, setProductionNote] = useState("Orden de produccion");
+  const [isProducing, setIsProducing] = useState(false);
   const [productOptions, setProductOptions] = useState<ProductRecord[]>([]);
   const [selectedProductId, setSelectedProductId] = useState("");
   const [saleQuantity, setSaleQuantity] = useState(1);
@@ -144,6 +153,20 @@ export function Operations({ section, token }: { section: Exclude<AppSection, "d
   const purchaseOptions = purchaseItemType === "product" ? purchaseProducts : purchaseSupplies;
   const purchaseItem = purchaseOptions.find((item) => item.id === purchaseItemId);
   const canSubmitPurchase = Boolean(purchaseItem) && Number.isFinite(purchaseQuantity) && purchaseQuantity > 0 && purchaseNote.trim().length > 0;
+  const productionProduct = purchaseProducts.find((product) => product.id === productionProductId);
+  const productionSupplyLines = [
+    { supplyId: productionSupplyOneId, quantity: productionSupplyOneQuantity },
+    { supplyId: productionSupplyTwoId, quantity: productionSupplyTwoQuantity }
+  ].filter((line) => line.supplyId && Number.isFinite(line.quantity) && line.quantity > 0);
+  const productionSupplyIds = new Set(productionSupplyLines.map((line) => line.supplyId));
+  const canSubmitProduction =
+    Boolean(productionProduct) &&
+    Number.isFinite(productionQuantity) &&
+    productionQuantity > 0 &&
+    productionSupplyLines.length > 0 &&
+    productionSupplyIds.size === productionSupplyLines.length &&
+    productionSupplyLines.every((line) => (purchaseSupplies.find((supply) => supply.id === line.supplyId)?.stock ?? 0) >= line.quantity) &&
+    productionNote.trim().length > 0;
 
   useEffect(() => {
     let isMounted = true;
@@ -183,6 +206,7 @@ export function Operations({ section, token }: { section: Exclude<AppSection, "d
         if (purchaseItemType === "product") {
           setPurchaseItemId((currentId) => products.some((product) => product.id === currentId) ? currentId : products[0]?.id ?? "");
         }
+        setProductionProductId((currentId) => products.some((product) => product.id === currentId) ? currentId : products[0]?.id ?? "");
       }).catch(() => {
         if (isMounted) setError("No se pudo cargar el catalogo de productos");
       });
@@ -194,6 +218,8 @@ export function Operations({ section, token }: { section: Exclude<AppSection, "d
         if (purchaseItemType === "supply") {
           setPurchaseItemId((currentId) => supplies.some((supply) => supply.id === currentId) ? currentId : supplies[0]?.id ?? "");
         }
+        setProductionSupplyOneId((currentId) => supplies.some((supply) => supply.id === currentId) ? currentId : supplies[0]?.id ?? "");
+        setProductionSupplyTwoId((currentId) => supplies.some((supply) => supply.id === currentId) ? currentId : supplies[1]?.id ?? "");
       }).catch(() => {
         if (isMounted) setError("No se pudo cargar el catalogo de insumos");
       });
@@ -299,6 +325,38 @@ export function Operations({ section, token }: { section: Exclude<AppSection, "d
       setError("No se pudo registrar la entrada de inventario");
     } finally {
       setIsPurchasing(false);
+    }
+  }
+
+  async function handleProductionSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!canSubmitProduction) return;
+
+    setIsProducing(true);
+    setError("");
+    try {
+      await createProductionOrder({
+        productId: productionProductId,
+        quantity: productionQuantity,
+        supplies: productionSupplyLines,
+        note: productionNote.trim()
+      }, token);
+      const [supplies, products, movements] = await Promise.all([listSupplies(token), listProducts(token), listInventoryMovements(token)]);
+      setRows(supplies);
+      setPurchaseSupplies(supplies);
+      setPurchaseProducts(products);
+      setAdjustmentProducts(products);
+      setInventoryMovements(movements);
+      setProductionProductId((currentId) => products.some((product) => product.id === currentId) ? currentId : products[0]?.id ?? "");
+      setProductionSupplyOneId((currentId) => supplies.some((supply) => supply.id === currentId) ? currentId : supplies[0]?.id ?? "");
+      setProductionSupplyTwoId((currentId) => supplies.some((supply) => supply.id === currentId) ? currentId : supplies[1]?.id ?? "");
+      setProductionQuantity(1);
+      setProductionSupplyOneQuantity(1);
+      setProductionSupplyTwoQuantity(0);
+    } catch {
+      setError("No se pudo registrar la orden de produccion");
+    } finally {
+      setIsProducing(false);
     }
   }
 
@@ -449,6 +507,68 @@ export function Operations({ section, token }: { section: Exclude<AppSection, "d
               <h2>Movimientos recientes</h2>
             </div>
           </div>
+          <form className="adjustment-panel" onSubmit={handleProductionSubmit}>
+            <div>
+              <p className="eyebrow">Produccion</p>
+              <h3>Convertir insumos en producto terminado</h3>
+            </div>
+            {purchaseProducts.length && purchaseSupplies.length ? (
+              <div className="production-grid">
+                <label>
+                  <span>Producto</span>
+                  <select value={productionProductId} onChange={(event) => setProductionProductId(event.target.value)} required>
+                    {purchaseProducts.map((product) => (
+                      <option key={product.id} value={product.id}>
+                        {product.name} - stock {product.stock}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label>
+                  <span>Cantidad lote</span>
+                  <input type="number" min={0.01} step={0.01} value={productionQuantity} onChange={(event) => setProductionQuantity(Number(event.target.value))} required />
+                </label>
+                <label>
+                  <span>Insumo 1</span>
+                  <select value={productionSupplyOneId} onChange={(event) => setProductionSupplyOneId(event.target.value)} required>
+                    {purchaseSupplies.map((supply) => (
+                      <option key={supply.id} value={supply.id}>
+                        {supply.name} - stock {supply.stock}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label>
+                  <span>Cant. 1</span>
+                  <input type="number" min={0.01} step={0.01} value={productionSupplyOneQuantity} onChange={(event) => setProductionSupplyOneQuantity(Number(event.target.value))} required />
+                </label>
+                <label>
+                  <span>Insumo 2</span>
+                  <select value={productionSupplyTwoId} onChange={(event) => setProductionSupplyTwoId(event.target.value)}>
+                    <option value="">Sin segundo insumo</option>
+                    {purchaseSupplies.map((supply) => (
+                      <option key={supply.id} value={supply.id}>
+                        {supply.name} - stock {supply.stock}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label>
+                  <span>Cant. 2</span>
+                  <input type="number" min={0} step={0.01} value={productionSupplyTwoQuantity} onChange={(event) => setProductionSupplyTwoQuantity(Number(event.target.value))} />
+                </label>
+                <label>
+                  <span>Nota</span>
+                  <input value={productionNote} onChange={(event) => setProductionNote(event.target.value)} required />
+                </label>
+                <button className="secondary-action adjustment-action" disabled={isProducing || !canSubmitProduction} type="submit">
+                  {isProducing ? "Produciendo..." : "Registrar produccion"}
+                </button>
+              </div>
+            ) : (
+              <p className="empty-copy">Crea al menos un producto y un insumo para registrar produccion.</p>
+            )}
+          </form>
           <form className="adjustment-panel" onSubmit={handlePurchaseSubmit}>
             <div>
               <p className="eyebrow">Entrada</p>

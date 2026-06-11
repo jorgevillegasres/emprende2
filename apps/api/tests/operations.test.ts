@@ -300,6 +300,136 @@ describe("operational resource routes", () => {
     );
   });
 
+  it("creates a production order that consumes supplies and increases finished product stock", async () => {
+    const app = buildApp();
+    const headers = { "x-emprendedos-tenant-id": "production-tenant", "x-emprendedos-user-id": "production-user" };
+
+    await app.inject({
+      method: "POST",
+      url: "/v1/products",
+      headers,
+      payload: { id: "finished-soap", name: "Jabon terminado", stock: 2, minStock: 1, unitCost: 5000, price: 12000, unit: "un" }
+    });
+    await app.inject({
+      method: "POST",
+      url: "/v1/supplies",
+      headers,
+      payload: { id: "olive-oil", name: "Aceite de oliva", stock: 100, minStock: 20, averageCost: 100, unit: "ml" }
+    });
+    await app.inject({
+      method: "POST",
+      url: "/v1/supplies",
+      headers,
+      payload: { id: "lye", name: "Soda caustica", stock: 20, minStock: 5, averageCost: 1000, unit: "g" }
+    });
+
+    const productionResponse = await app.inject({
+      method: "POST",
+      url: "/v1/production-orders",
+      headers,
+      payload: {
+        productId: "finished-soap",
+        quantity: 3,
+        supplies: [
+          { supplyId: "olive-oil", quantity: 30 },
+          { supplyId: "lye", quantity: 6 }
+        ],
+        note: "Lote piloto"
+      }
+    });
+    const order = productionResponse.json();
+    const productsResponse = await app.inject({ method: "GET", url: "/v1/products", headers });
+    const suppliesResponse = await app.inject({ method: "GET", url: "/v1/supplies", headers });
+    const movementsResponse = await app.inject({ method: "GET", url: "/v1/inventory-movements", headers });
+    const products = productsResponse.json();
+    const supplies = suppliesResponse.json();
+    const movements = movementsResponse.json();
+
+    expect(productionResponse.statusCode).toBe(201);
+    expect(order.totalCost).toBe(9000);
+    expect(order.unitCost).toBe(3000);
+    expect(products.find((product: { id: string }) => product.id === "finished-soap")?.stock).toBe(5);
+    expect(products.find((product: { id: string }) => product.id === "finished-soap")?.unitCost).toBe(3800);
+    expect(supplies.find((supply: { id: string }) => supply.id === "olive-oil")?.stock).toBe(70);
+    expect(supplies.find((supply: { id: string }) => supply.id === "lye")?.stock).toBe(14);
+    expect(movements).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          itemType: "product",
+          itemId: "finished-soap",
+          movementType: "production",
+          quantity: 3,
+          stockBefore: 2,
+          stockAfter: 5,
+          referenceType: "production-order",
+          referenceId: order.id,
+          note: "Lote piloto"
+        }),
+        expect.objectContaining({
+          itemType: "supply",
+          itemId: "olive-oil",
+          movementType: "production",
+          quantity: -30,
+          stockBefore: 100,
+          stockAfter: 70,
+          referenceType: "production-order",
+          referenceId: order.id
+        }),
+        expect.objectContaining({
+          itemType: "supply",
+          itemId: "lye",
+          movementType: "production",
+          quantity: -6,
+          stockBefore: 20,
+          stockAfter: 14,
+          referenceType: "production-order",
+          referenceId: order.id
+        })
+      ])
+    );
+  });
+
+  it("rejects production orders when a supply has insufficient stock", async () => {
+    const app = buildApp();
+    const headers = { "x-emprendedos-tenant-id": "production-limited-tenant", "x-emprendedos-user-id": "production-limited-user" };
+
+    await app.inject({
+      method: "POST",
+      url: "/v1/products",
+      headers,
+      payload: { id: "limited-finished-soap", name: "Jabon limitado", stock: 2, minStock: 1, unitCost: 5000, price: 12000, unit: "un" }
+    });
+    await app.inject({
+      method: "POST",
+      url: "/v1/supplies",
+      headers,
+      payload: { id: "limited-oil", name: "Aceite limitado", stock: 10, minStock: 2, averageCost: 100, unit: "ml" }
+    });
+
+    const productionResponse = await app.inject({
+      method: "POST",
+      url: "/v1/production-orders",
+      headers,
+      payload: {
+        productId: "limited-finished-soap",
+        quantity: 2,
+        supplies: [{ supplyId: "limited-oil", quantity: 30 }],
+        note: "Lote sin inventario"
+      }
+    });
+    const productsResponse = await app.inject({ method: "GET", url: "/v1/products", headers });
+    const suppliesResponse = await app.inject({ method: "GET", url: "/v1/supplies", headers });
+    const movementsResponse = await app.inject({ method: "GET", url: "/v1/inventory-movements", headers });
+    const products = productsResponse.json();
+    const supplies = suppliesResponse.json();
+    const movements = movementsResponse.json();
+
+    expect(productionResponse.statusCode).toBe(409);
+    expect(products.find((product: { id: string }) => product.id === "limited-finished-soap")?.stock).toBe(2);
+    expect(supplies.find((supply: { id: string }) => supply.id === "limited-oil")?.stock).toBe(10);
+    expect(movements).toHaveLength(0);
+  });
+
   it("lists and creates tenant-scoped expenses", async () => {
     const app = buildApp();
 

@@ -54,6 +54,18 @@ const inventoryPurchaseSchema = z.object({
   note: z.string().min(1).max(240)
 });
 
+const productionOrderSchema = z
+  .object({
+    productId: z.string().min(1),
+    quantity: z.number().positive(),
+    supplies: z.array(z.object({ supplyId: z.string().min(1), quantity: z.number().positive() })).min(1),
+    note: z.string().min(1).max(240)
+  })
+  .refine((order) => new Set(order.supplies.map((supply) => supply.supplyId)).size === order.supplies.length, {
+    message: "Supply lines must be unique",
+    path: ["supplies"]
+  });
+
 export async function registerOperationRoutes(app: FastifyInstance) {
   const repositories = await getRepositories();
 
@@ -181,6 +193,86 @@ export async function registerOperationRoutes(app: FastifyInstance) {
       note: parsed.data.note
     });
     return reply.code(201).send(movement);
+  });
+
+  app.post("/v1/production-orders", async (request, reply) => {
+    const context = resolveRequestContext(request.headers);
+    const parsed = productionOrderSchema.safeParse(request.body);
+    if (!parsed.success) return reply.code(400).send({ error: "Invalid production order payload", issues: parsed.error.issues });
+
+    const product = await repositories.products.findByTenantAndId(context.tenantId, parsed.data.productId);
+    if (!product) return reply.code(404).send({ error: "Product not found" });
+
+    const supplyRecords = [];
+    for (const line of parsed.data.supplies) {
+      const supply = await repositories.supplies.findByTenantAndId(context.tenantId, line.supplyId);
+      if (!supply) return reply.code(404).send({ error: "Supply not found", supplyId: line.supplyId });
+      supplyRecords.push({ ...line, supply });
+    }
+
+    const insufficient = supplyRecords.find((line) => line.supply.stock < line.quantity);
+    if (insufficient) {
+      return reply.code(409).send({
+        error: "Insufficient supply stock",
+        supplyId: insufficient.supplyId,
+        availableStock: insufficient.supply.stock
+      });
+    }
+
+    const orderId = randomUUID();
+    const totalCost = supplyRecords.reduce((sum, line) => sum + line.quantity * line.supply.averageCost, 0);
+    const unitCost = Math.round((totalCost / parsed.data.quantity + Number.EPSILON) * 100) / 100;
+    const productStockBefore = product.stock;
+    const productStockAfter = productStockBefore + parsed.data.quantity;
+    const productUnitCost = calculateWeightedAverageCost(productStockBefore, product.unitCost, parsed.data.quantity, totalCost);
+    const movements = [];
+
+    for (const line of supplyRecords) {
+      const stockBefore = line.supply.stock;
+      const stockAfter = stockBefore - line.quantity;
+      await repositories.supplies.updateStockAndAverageCost(context.tenantId, line.supplyId, stockAfter, line.supply.averageCost);
+      movements.push(
+        await repositories.inventoryMovements.insert({
+          id: randomUUID(),
+          tenantId: context.tenantId,
+          itemType: "supply",
+          itemId: line.supplyId,
+          movementType: "production",
+          quantity: -line.quantity,
+          stockBefore,
+          stockAfter,
+          referenceType: "production-order",
+          referenceId: orderId,
+          note: parsed.data.note
+        })
+      );
+    }
+
+    await repositories.products.updateStockAndUnitCost(context.tenantId, parsed.data.productId, productStockAfter, productUnitCost);
+    movements.push(
+      await repositories.inventoryMovements.insert({
+        id: randomUUID(),
+        tenantId: context.tenantId,
+        itemType: "product",
+        itemId: parsed.data.productId,
+        movementType: "production",
+        quantity: parsed.data.quantity,
+        stockBefore: productStockBefore,
+        stockAfter: productStockAfter,
+        referenceType: "production-order",
+        referenceId: orderId,
+        note: parsed.data.note
+      })
+    );
+
+    return reply.code(201).send({
+      id: orderId,
+      productId: parsed.data.productId,
+      quantity: parsed.data.quantity,
+      totalCost,
+      unitCost,
+      movements
+    });
   });
 
   app.get("/v1/expenses", async (request) => repositories.expenses.listByTenant(resolveRequestContext(request.headers).tenantId));

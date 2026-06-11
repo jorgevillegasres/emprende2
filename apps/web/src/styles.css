@@ -881,11 +881,16 @@ h2 {
 }
 
 .adjustment-grid,
-.purchase-grid {
+.purchase-grid,
+.production-grid {
   display: grid;
   grid-template-columns: minmax(180px, 1.2fr) 140px minmax(180px, 1fr) 110px auto;
   gap: 10px;
   align-items: end;
+}
+
+.production-grid {
+  grid-template-columns: minmax(180px, 1.1fr) 120px minmax(170px, 1fr) 90px minmax(170px, 1fr) 90px minmax(160px, 1fr) auto;
 }
 
 .purchase-grid {
@@ -893,13 +898,15 @@ h2 {
 }
 
 .adjustment-grid label,
-.purchase-grid label {
+.purchase-grid label,
+.production-grid label {
   display: grid;
   gap: 6px;
 }
 
 .adjustment-grid label span,
 .purchase-grid label span,
+.production-grid label span,
 .adjustment-delta span {
   color: var(--muted);
   font-size: 0.82rem;
@@ -909,7 +916,9 @@ h2 {
 .adjustment-grid input,
 .adjustment-grid select,
 .purchase-grid input,
-.purchase-grid select {
+.purchase-grid select,
+.production-grid input,
+.production-grid select {
   width: 100%;
   min-height: 40px;
   border: 1px solid var(--line);
@@ -923,7 +932,9 @@ h2 {
 .adjustment-grid input:focus,
 .adjustment-grid select:focus,
 .purchase-grid input:focus,
-.purchase-grid select:focus {
+.purchase-grid select:focus,
+.production-grid input:focus,
+.production-grid select:focus {
   border-color: var(--blue);
   outline: 3px solid rgba(38, 104, 232, 0.14);
 }
@@ -1087,7 +1098,8 @@ h2 {
   }
 
   .adjustment-grid,
-  .purchase-grid {
+  .purchase-grid,
+  .production-grid {
     grid-template-columns: 1fr;
   }
 
