@@ -1,8 +1,20 @@
 import { createInMemoryRepositories } from "./repositories.js";
+import { getConfig } from "../config.js";
+import { hashPassword } from "../auth/passwords.js";
 
 export async function createSeededRepositories() {
   const repositories = createInMemoryRepositories();
+  const config = getConfig();
   const tenantId = process.env.DEMO_TENANT_ID ?? "10000000-0000-0000-0000-000000000001";
+  const userId = process.env.DEMO_OWNER_USER_ID ?? "00000000-0000-0000-0000-000000000001";
+
+  await repositories.auth.insert({
+    userId,
+    tenantId,
+    email: "demo@emprendedos.local",
+    passwordHash: await hashPassword(config.demoAuthPassword),
+    role: "owner"
+  });
 
   await repositories.supplies.insert({
     tenantId,

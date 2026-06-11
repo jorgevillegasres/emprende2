@@ -14,6 +14,7 @@ export const users = pgTable("users", {
   id: uuid("id").primaryKey(),
   email: text("email").notNull().unique(),
   name: text("name").notNull(),
+  passwordHash: text("password_hash").notNull(),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow()
 });
 
@@ -118,4 +119,4 @@ export const schema = {
   expenses
 };
 
-export const databaseSchemaVersion = "2026-06-10-drizzle-persistence";
+export const databaseSchemaVersion = "2026-06-11-persistent-auth-identities";

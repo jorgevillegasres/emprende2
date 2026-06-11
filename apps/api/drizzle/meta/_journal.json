@@ -15,6 +15,13 @@
       "when": 1781144448584,
       "tag": "0001_oval_zarda",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1781184906074,
+      "tag": "0003_giant_scarlet_witch",
+      "breakpoints": true
     }
   ]
 }

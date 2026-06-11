@@ -38,6 +38,28 @@ describe("auth routes", () => {
     expect(response.statusCode).toBe(401);
   });
 
+  it("rejects a removed seeded identity even when demo config credentials match", async () => {
+    const originalEmail = process.env.DEMO_AUTH_EMAIL;
+    process.env.DEMO_AUTH_EMAIL = "missing@emprendedos.local";
+
+    try {
+      const app = buildApp();
+      const response = await app.inject({
+        method: "POST",
+        url: "/v1/auth/login",
+        payload: { email: "missing@emprendedos.local", password: "emprendedos-demo" }
+      });
+
+      expect(response.statusCode).toBe(401);
+    } finally {
+      if (originalEmail === undefined) {
+        delete process.env.DEMO_AUTH_EMAIL;
+      } else {
+        process.env.DEMO_AUTH_EMAIL = originalEmail;
+      }
+    }
+  });
+
   it("uses bearer token context before development headers", async () => {
     const app = buildApp();
     const loginResponse = await app.inject({

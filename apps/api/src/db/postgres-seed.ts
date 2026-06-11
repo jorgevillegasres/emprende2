@@ -1,5 +1,7 @@
 import type { createPostgresClient } from "./client.js";
 import { expenses, memberships, products, sales, supplies, tenants, users } from "./schema.js";
+import { getConfig } from "../config.js";
+import { hashPassword } from "../auth/passwords.js";
 
 type Db = ReturnType<typeof createPostgresClient>["db"];
 
@@ -7,6 +9,9 @@ const demoTenantId = process.env.DEMO_TENANT_ID ?? "10000000-0000-0000-0000-0000
 const demoUserId = process.env.DEMO_OWNER_USER_ID ?? "00000000-0000-0000-0000-000000000001";
 
 export async function seedPostgresDemoData(db: Db) {
+  const config = getConfig();
+  const demoPasswordHash = await hashPassword(config.demoAuthPassword);
+
   await db
     .insert(tenants)
     .values({
@@ -23,10 +28,18 @@ export async function seedPostgresDemoData(db: Db) {
     .insert(users)
     .values({
       id: demoUserId,
-      email: "demo@emprendedos.local",
-      name: "Usuario Demo"
+      email: config.demoAuthEmail,
+      name: "Usuario Demo",
+      passwordHash: demoPasswordHash
     })
-    .onConflictDoNothing();
+    .onConflictDoUpdate({
+      target: users.id,
+      set: {
+        email: config.demoAuthEmail,
+        name: "Usuario Demo",
+        passwordHash: demoPasswordHash
+      }
+    });
 
   await db
     .insert(memberships)

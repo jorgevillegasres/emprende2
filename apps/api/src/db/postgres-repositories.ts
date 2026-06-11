@@ -1,12 +1,58 @@
+import { randomUUID } from "node:crypto";
 import { eq } from "drizzle-orm";
 import type { createPostgresClient } from "./client.js";
-import type { ExpenseRecord, ProductRecord, Repositories, SaleRecord, SupplyRecord } from "./repositories.js";
-import { expenses, products, sales, supplies } from "./schema.js";
+import type { AuthIdentityRecord, ExpenseRecord, ProductRecord, Repositories, SaleRecord, SupplyRecord } from "./repositories.js";
+import { expenses, memberships, products, sales, supplies, users } from "./schema.js";
 
 type Db = ReturnType<typeof createPostgresClient>["db"];
 
 export function createPostgresRepositories(db: Db): Repositories {
   return {
+    auth: {
+      async insert(record: AuthIdentityRecord) {
+        await db
+          .insert(users)
+          .values({
+            id: record.userId,
+            email: record.email,
+            name: record.email,
+            passwordHash: record.passwordHash
+          })
+          .onConflictDoNothing();
+
+        await db
+          .insert(memberships)
+          .values({
+            id: randomUUID(),
+            tenantId: record.tenantId,
+            userId: record.userId,
+            role: record.role
+          })
+          .onConflictDoNothing();
+
+        return record;
+      },
+      async findByEmail(email: string) {
+        const [identity] = await db
+          .select({
+            userId: users.id,
+            email: users.email,
+            passwordHash: users.passwordHash,
+            tenantId: memberships.tenantId,
+            role: memberships.role
+          })
+          .from(users)
+          .innerJoin(memberships, eq(users.id, memberships.userId))
+          .where(eq(users.email, email.toLowerCase()))
+          .limit(1);
+
+        if (!identity) return null;
+        return {
+          ...identity,
+          role: toAuthRole(identity.role)
+        };
+      }
+    },
     products: {
       async insert(record: ProductRecord) {
         const [created] = await db.insert(products).values(record).returning();
@@ -48,6 +94,11 @@ export function createPostgresRepositories(db: Db): Repositories {
       }
     }
   };
+}
+
+function toAuthRole(role: string): AuthIdentityRecord["role"] {
+  if (role === "owner" || role === "admin" || role === "operator" || role === "viewer") return role;
+  return "viewer";
 }
 
 function toProductRecord(row: typeof products.$inferSelect): ProductRecord {
