@@ -520,6 +520,99 @@ describe("operational resource routes", () => {
     expect(createResponse.json()).toEqual(expect.objectContaining({ error: "Supply not found", supplyId: "missing-oil" }));
   });
 
+  it("creates a production order from a recipe with scaled ingredients", async () => {
+    const app = buildApp();
+    const headers = { "x-emprendedos-tenant-id": "recipe-production-tenant", "x-emprendedos-user-id": "recipe-production-user" };
+
+    await app.inject({
+      method: "POST",
+      url: "/v1/products",
+      headers,
+      payload: { id: "recipe-batch-soap", name: "Jabon receta lote", stock: 2, minStock: 1, unitCost: 5000, price: 12000, unit: "un" }
+    });
+    await app.inject({
+      method: "POST",
+      url: "/v1/supplies",
+      headers,
+      payload: { id: "recipe-batch-oil", name: "Aceite lote receta", stock: 100, minStock: 10, averageCost: 100, unit: "ml" }
+    });
+    await app.inject({
+      method: "POST",
+      url: "/v1/recipes",
+      headers,
+      payload: {
+        id: "scaled-soap-formula",
+        productId: "recipe-batch-soap",
+        name: "Formula escalable",
+        outputQuantity: 10,
+        ingredients: [{ supplyId: "recipe-batch-oil", quantity: 20 }],
+        note: "Base"
+      }
+    });
+
+    const productionResponse = await app.inject({
+      method: "POST",
+      url: "/v1/production-orders/from-recipe",
+      headers,
+      payload: {
+        recipeId: "scaled-soap-formula",
+        quantity: 25,
+        note: "Lote desde receta"
+      }
+    });
+    const order = productionResponse.json();
+    const products = (await app.inject({ method: "GET", url: "/v1/products", headers })).json();
+    const supplies = (await app.inject({ method: "GET", url: "/v1/supplies", headers })).json();
+    const movements = (await app.inject({ method: "GET", url: "/v1/inventory-movements", headers })).json();
+
+    expect(productionResponse.statusCode).toBe(201);
+    expect(order.productId).toBe("recipe-batch-soap");
+    expect(order.quantity).toBe(25);
+    expect(order.totalCost).toBe(5000);
+    expect(order.unitCost).toBe(200);
+    expect(products.find((product: { id: string }) => product.id === "recipe-batch-soap")?.stock).toBe(27);
+    expect(supplies.find((supply: { id: string }) => supply.id === "recipe-batch-oil")?.stock).toBe(50);
+    expect(movements).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          itemType: "supply",
+          itemId: "recipe-batch-oil",
+          movementType: "production",
+          quantity: -50,
+          referenceType: "production-order",
+          referenceId: order.id
+        }),
+        expect.objectContaining({
+          itemType: "product",
+          itemId: "recipe-batch-soap",
+          movementType: "production",
+          quantity: 25,
+          referenceType: "production-order",
+          referenceId: order.id
+        })
+      ])
+    );
+  });
+
+  it("rejects production from a missing recipe", async () => {
+    const app = buildApp();
+    const headers = { "x-emprendedos-tenant-id": "missing-production-recipe-tenant", "x-emprendedos-user-id": "missing-production-recipe-user" };
+
+    const productionResponse = await app.inject({
+      method: "POST",
+      url: "/v1/production-orders/from-recipe",
+      headers,
+      payload: {
+        recipeId: "does-not-exist",
+        quantity: 10,
+        note: "Debe fallar"
+      }
+    });
+
+    expect(productionResponse.statusCode).toBe(404);
+    expect(productionResponse.json()).toEqual(expect.objectContaining({ error: "Recipe not found" }));
+  });
+
   it("lists and creates tenant-scoped expenses", async () => {
     const app = buildApp();
 

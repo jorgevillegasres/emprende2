@@ -102,6 +102,12 @@ export type ProductionOrderPayload = {
   note: string;
 };
 
+export type ProductionFromRecipePayload = {
+  recipeId: string;
+  quantity: number;
+  note: string;
+};
+
 export type ProductionOrderRecord = {
   id: string;
   productId: string;
@@ -158,6 +164,10 @@ export function getInventoryPurchasePath() {
 
 export function getProductionOrderPath() {
   return "/v1/production-orders";
+}
+
+export function getProductionFromRecipePath() {
+  return "/v1/production-orders/from-recipe";
 }
 
 export function getRecipesPath() {
@@ -231,6 +241,10 @@ export async function createInventoryPurchase(payload: InventoryPurchasePayload,
 
 export async function createProductionOrder(payload: ProductionOrderPayload, token?: string | null): Promise<ProductionOrderRecord> {
   return postJson(getProductionOrderPath(), payload, token);
+}
+
+export async function createProductionFromRecipe(payload: ProductionFromRecipePayload, token?: string | null): Promise<ProductionOrderRecord> {
+  return postJson(getProductionFromRecipePath(), payload, token);
 }
 
 export async function listRecipes(token?: string | null): Promise<RecipeRecord[]> {

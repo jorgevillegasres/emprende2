@@ -202,6 +202,19 @@ export function createPostgresRepositories(db: Db): Repositories {
             .filter((ingredient) => ingredient.recipeId === recipe.id)
             .map((ingredient) => ({ supplyId: ingredient.supplyId, quantity: ingredient.quantity }))
         }));
+      },
+      async findByTenantAndId(tenantId: string, id: string) {
+        const [recipe] = await db.select().from(recipes).where(and(eq(recipes.tenantId, tenantId), eq(recipes.id, id))).limit(1);
+        if (!recipe) return null;
+        const ingredientRows = await db
+          .select()
+          .from(recipeIngredients)
+          .where(and(eq(recipeIngredients.tenantId, tenantId), eq(recipeIngredients.recipeId, id)));
+
+        return {
+          ...toRecipeRecord(recipe),
+          ingredients: ingredientRows.map((ingredient) => ({ supplyId: ingredient.supplyId, quantity: ingredient.quantity }))
+        };
       }
     }
   };

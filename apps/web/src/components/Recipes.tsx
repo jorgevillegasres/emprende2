@@ -1,5 +1,5 @@
 import { FormEvent, useEffect, useState } from "react";
-import { createRecipe, listProducts, listRecipes, listSupplies, type ProductRecord, type RecipeRecord, type SupplyRecord } from "../api/client";
+import { createProductionFromRecipe, createRecipe, listProducts, listRecipes, listSupplies, type ProductRecord, type RecipeRecord, type SupplyRecord } from "../api/client";
 
 export function Recipes({ token }: { token: string }) {
   const [recipes, setRecipes] = useState<RecipeRecord[]>([]);
@@ -14,8 +14,12 @@ export function Recipes({ token }: { token: string }) {
   const [supplyTwoId, setSupplyTwoId] = useState("");
   const [supplyTwoQuantity, setSupplyTwoQuantity] = useState(0);
   const [note, setNote] = useState("");
+  const [productionRecipeId, setProductionRecipeId] = useState("");
+  const [productionQuantity, setProductionQuantity] = useState(10);
+  const [productionNote, setProductionNote] = useState("Produccion desde receta");
   const [error, setError] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const [isProducing, setIsProducing] = useState(false);
 
   const ingredientLines = [
     { supplyId: supplyOneId, quantity: supplyOneQuantity },
@@ -30,6 +34,8 @@ export function Recipes({ token }: { token: string }) {
     outputQuantity > 0 &&
     ingredientLines.length > 0 &&
     uniqueIngredientIds.size === ingredientLines.length;
+  const productionRecipe = recipes.find((recipe) => recipe.id === productionRecipeId);
+  const canProduce = Boolean(productionRecipe) && Number.isFinite(productionQuantity) && productionQuantity > 0 && productionNote.trim().length > 0;
 
   useEffect(() => {
     let isMounted = true;
@@ -41,6 +47,7 @@ export function Recipes({ token }: { token: string }) {
         setRecipes(loadedRecipes);
         setProducts(loadedProducts);
         setSupplies(loadedSupplies);
+        setProductionRecipeId((currentId) => loadedRecipes.some((recipe) => recipe.id === currentId) ? currentId : loadedRecipes[0]?.id ?? "");
         setProductId((currentId) => loadedProducts.some((product) => product.id === currentId) ? currentId : loadedProducts[0]?.id ?? "");
         setSupplyOneId((currentId) => loadedSupplies.some((supply) => supply.id === currentId) ? currentId : loadedSupplies[0]?.id ?? "");
         setSupplyTwoId((currentId) => loadedSupplies.some((supply) => supply.id === currentId) ? currentId : loadedSupplies[1]?.id ?? "");
@@ -69,7 +76,9 @@ export function Recipes({ token }: { token: string }) {
         ingredients: ingredientLines,
         note: note.trim()
       }, token);
-      setRecipes(await listRecipes(token));
+      const loadedRecipes = await listRecipes(token);
+      setRecipes(loadedRecipes);
+      setProductionRecipeId((currentId) => loadedRecipes.some((recipe) => recipe.id === currentId) ? currentId : loadedRecipes[0]?.id ?? "");
       setRecipeId("");
       setName("");
       setOutputQuantity(10);
@@ -80,6 +89,31 @@ export function Recipes({ token }: { token: string }) {
       setError("No se pudo guardar la receta. Revisa producto, insumos y codigo.");
     } finally {
       setIsSaving(false);
+    }
+  }
+
+  async function handleProductionSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!canProduce) return;
+
+    setIsProducing(true);
+    setError("");
+    try {
+      await createProductionFromRecipe({
+        recipeId: productionRecipeId,
+        quantity: productionQuantity,
+        note: productionNote.trim()
+      }, token);
+      const [loadedRecipes, loadedProducts, loadedSupplies] = await Promise.all([listRecipes(token), listProducts(token), listSupplies(token)]);
+      setRecipes(loadedRecipes);
+      setProducts(loadedProducts);
+      setSupplies(loadedSupplies);
+      setProductionRecipeId((currentId) => loadedRecipes.some((recipe) => recipe.id === currentId) ? currentId : loadedRecipes[0]?.id ?? "");
+      setProductionQuantity(productionRecipe?.outputQuantity ?? 10);
+    } catch {
+      setError("No se pudo producir desde la receta. Revisa stock de insumos.");
+    } finally {
+      setIsProducing(false);
     }
   }
 
@@ -100,7 +134,55 @@ export function Recipes({ token }: { token: string }) {
       {error ? <div className="system-panel">{error}</div> : null}
 
       <section className="recipes-grid">
-        <form className="card recipe-form" onSubmit={handleSubmit}>
+        <div className="recipe-workspace">
+          <form className="card recipe-production-form" onSubmit={handleProductionSubmit}>
+            <div>
+              <p className="eyebrow">Produccion guiada</p>
+              <h2>Producir desde receta</h2>
+            </div>
+            {recipes.length ? (
+              <div className="recipe-form-grid compact">
+                <label>
+                  <span>Receta</span>
+                  <select value={productionRecipeId} onChange={(event) => setProductionRecipeId(event.target.value)} required>
+                    {recipes.map((recipe) => (
+                      <option key={recipe.id} value={recipe.id}>
+                        {recipe.name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label>
+                  <span>Cantidad a producir</span>
+                  <input type="number" min={0.01} step={0.01} value={productionQuantity} onChange={(event) => setProductionQuantity(Number(event.target.value))} required />
+                </label>
+                <label>
+                  <span>Nota</span>
+                  <input value={productionNote} onChange={(event) => setProductionNote(event.target.value)} required />
+                </label>
+                <button className="primary-action" disabled={isProducing || !canProduce} type="submit">
+                  {isProducing ? "Produciendo..." : "Producir lote"}
+                </button>
+              </div>
+            ) : (
+              <p className="empty-copy">Guarda una receta para producir automaticamente desde ella.</p>
+            )}
+            {productionRecipe ? (
+              <div className="recipe-scale-preview">
+                <span>Consumo estimado</span>
+                <strong>{productionRecipe.name}</strong>
+                <ul>
+                  {productionRecipe.ingredients.map((ingredient) => (
+                    <li key={ingredient.supplyId}>
+                      {ingredient.supplyId}: {roundQuantity((ingredient.quantity * productionQuantity) / productionRecipe.outputQuantity)}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
+          </form>
+
+          <form className="card recipe-form" onSubmit={handleSubmit}>
           <div>
             <p className="eyebrow">Nueva formula</p>
             <h2>Receta base</h2>
@@ -165,7 +247,8 @@ export function Recipes({ token }: { token: string }) {
           <button className="primary-action" disabled={isSaving || !canSubmit} type="submit">
             {isSaving ? "Guardando..." : "Guardar receta"}
           </button>
-        </form>
+          </form>
+        </div>
 
         <section className="card recipes-list-card">
           <div className="card-head">
@@ -200,4 +283,8 @@ export function Recipes({ token }: { token: string }) {
       </section>
     </main>
   );
+}
+
+function roundQuantity(value: number) {
+  return Math.round((value + Number.EPSILON) * 100) / 100;
 }

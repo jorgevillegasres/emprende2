@@ -71,7 +71,9 @@ export type AuthRepository = {
   registerOwner(record: AuthIdentityRecord): Promise<AuthIdentityRecord>;
 };
 
-export type RecipeRepository = TenantRepository<RecipeRecord>;
+export type RecipeRepository = TenantRepository<RecipeRecord> & {
+  findByTenantAndId(tenantId: string, id: string): Promise<RecipeRecord | null>;
+};
 
 export type Repositories = {
   auth: AuthRepository;
@@ -127,6 +129,14 @@ function createRecipeRepository(records: RecipeRecord[]): RecipeRepository {
         ...record,
         ingredients: record.ingredients.map((ingredient) => ({ ...ingredient }))
       }));
+    },
+    async findByTenantAndId(tenantId: string, id: string) {
+      const record = records.find((recipe) => recipe.tenantId === tenantId && recipe.id === id);
+      if (!record) return null;
+      return {
+        ...record,
+        ingredients: record.ingredients.map((ingredient) => ({ ...ingredient }))
+      };
     }
   };
 }

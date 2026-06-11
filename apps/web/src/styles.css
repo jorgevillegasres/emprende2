@@ -1021,6 +1021,16 @@ h2 {
   align-items: start;
 }
 
+.recipe-workspace {
+  display: grid;
+  gap: 18px;
+}
+
+.recipe-production-form {
+  display: grid;
+  gap: 14px;
+}
+
 .recipe-form {
   display: grid;
   gap: 16px;
@@ -1030,6 +1040,11 @@ h2 {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 12px;
+}
+
+.recipe-form-grid.compact {
+  grid-template-columns: minmax(180px, 1.4fr) 150px minmax(180px, 1fr) auto;
+  align-items: end;
 }
 
 .recipe-form-grid label {
@@ -1115,6 +1130,37 @@ h2 {
   padding: 6px 9px;
 }
 
+.recipe-scale-preview {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid rgba(10, 159, 106, 0.24);
+  border-radius: 8px;
+  background: var(--green-soft);
+}
+
+.recipe-scale-preview span,
+.recipe-scale-preview li {
+  color: var(--muted);
+  font-size: 0.84rem;
+  font-weight: 800;
+}
+
+.recipe-scale-preview ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.recipe-scale-preview li {
+  border-radius: 999px;
+  background: #fff;
+  padding: 6px 9px;
+}
+
 @media (max-width: 1060px) {
   .metric-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1126,6 +1172,10 @@ h2 {
   }
 
   .recipe-form-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .recipe-form-grid.compact {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
@@ -1210,6 +1260,10 @@ h2 {
   }
 
   .recipe-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .recipe-form-grid.compact {
     grid-template-columns: 1fr;
   }
 

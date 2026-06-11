@@ -66,6 +66,12 @@ const productionOrderSchema = z
     path: ["supplies"]
   });
 
+const productionFromRecipeSchema = z.object({
+  recipeId: z.string().min(1),
+  quantity: z.number().positive(),
+  note: z.string().min(1).max(240)
+});
+
 const recipeSchema = z
   .object({
     id: z.string().min(1),
@@ -82,6 +88,88 @@ const recipeSchema = z
 
 export async function registerOperationRoutes(app: FastifyInstance) {
   const repositories = await getRepositories();
+
+  async function executeProductionOrder(tenantId: string, order: z.infer<typeof productionOrderSchema>) {
+    const product = await repositories.products.findByTenantAndId(tenantId, order.productId);
+    if (!product) return { statusCode: 404, body: { error: "Product not found" } };
+
+    const supplyRecords = [];
+    for (const line of order.supplies) {
+      const supply = await repositories.supplies.findByTenantAndId(tenantId, line.supplyId);
+      if (!supply) return { statusCode: 404, body: { error: "Supply not found", supplyId: line.supplyId } };
+      supplyRecords.push({ ...line, supply });
+    }
+
+    const insufficient = supplyRecords.find((line) => line.supply.stock < line.quantity);
+    if (insufficient) {
+      return {
+        statusCode: 409,
+        body: {
+          error: "Insufficient supply stock",
+          supplyId: insufficient.supplyId,
+          availableStock: insufficient.supply.stock
+        }
+      };
+    }
+
+    const orderId = randomUUID();
+    const totalCost = supplyRecords.reduce((sum, line) => sum + line.quantity * line.supply.averageCost, 0);
+    const unitCost = Math.round((totalCost / order.quantity + Number.EPSILON) * 100) / 100;
+    const productStockBefore = product.stock;
+    const productStockAfter = productStockBefore + order.quantity;
+    const productUnitCost = calculateWeightedAverageCost(productStockBefore, product.unitCost, order.quantity, totalCost);
+    const movements = [];
+
+    for (const line of supplyRecords) {
+      const stockBefore = line.supply.stock;
+      const stockAfter = stockBefore - line.quantity;
+      await repositories.supplies.updateStockAndAverageCost(tenantId, line.supplyId, stockAfter, line.supply.averageCost);
+      movements.push(
+        await repositories.inventoryMovements.insert({
+          id: randomUUID(),
+          tenantId,
+          itemType: "supply",
+          itemId: line.supplyId,
+          movementType: "production",
+          quantity: -line.quantity,
+          stockBefore,
+          stockAfter,
+          referenceType: "production-order",
+          referenceId: orderId,
+          note: order.note
+        })
+      );
+    }
+
+    await repositories.products.updateStockAndUnitCost(tenantId, order.productId, productStockAfter, productUnitCost);
+    movements.push(
+      await repositories.inventoryMovements.insert({
+        id: randomUUID(),
+        tenantId,
+        itemType: "product",
+        itemId: order.productId,
+        movementType: "production",
+        quantity: order.quantity,
+        stockBefore: productStockBefore,
+        stockAfter: productStockAfter,
+        referenceType: "production-order",
+        referenceId: orderId,
+        note: order.note
+      })
+    );
+
+    return {
+      statusCode: 201,
+      body: {
+        id: orderId,
+        productId: order.productId,
+        quantity: order.quantity,
+        totalCost,
+        unitCost,
+        movements
+      }
+    };
+  }
 
   app.get("/v1/products", async (request) => repositories.products.listByTenant(resolveRequestContext(request.headers).tenantId));
   app.post("/v1/products", async (request, reply) => {
@@ -242,79 +330,30 @@ export async function registerOperationRoutes(app: FastifyInstance) {
     const parsed = productionOrderSchema.safeParse(request.body);
     if (!parsed.success) return reply.code(400).send({ error: "Invalid production order payload", issues: parsed.error.issues });
 
-    const product = await repositories.products.findByTenantAndId(context.tenantId, parsed.data.productId);
-    if (!product) return reply.code(404).send({ error: "Product not found" });
+    const result = await executeProductionOrder(context.tenantId, parsed.data);
+    return reply.code(result.statusCode).send(result.body);
+  });
 
-    const supplyRecords = [];
-    for (const line of parsed.data.supplies) {
-      const supply = await repositories.supplies.findByTenantAndId(context.tenantId, line.supplyId);
-      if (!supply) return reply.code(404).send({ error: "Supply not found", supplyId: line.supplyId });
-      supplyRecords.push({ ...line, supply });
-    }
+  app.post("/v1/production-orders/from-recipe", async (request, reply) => {
+    const context = resolveRequestContext(request.headers);
+    const parsed = productionFromRecipeSchema.safeParse(request.body);
+    if (!parsed.success) return reply.code(400).send({ error: "Invalid production from recipe payload", issues: parsed.error.issues });
 
-    const insufficient = supplyRecords.find((line) => line.supply.stock < line.quantity);
-    if (insufficient) {
-      return reply.code(409).send({
-        error: "Insufficient supply stock",
-        supplyId: insufficient.supplyId,
-        availableStock: insufficient.supply.stock
-      });
-    }
+    const recipe = await repositories.recipes.findByTenantAndId(context.tenantId, parsed.data.recipeId);
+    if (!recipe) return reply.code(404).send({ error: "Recipe not found" });
 
-    const orderId = randomUUID();
-    const totalCost = supplyRecords.reduce((sum, line) => sum + line.quantity * line.supply.averageCost, 0);
-    const unitCost = Math.round((totalCost / parsed.data.quantity + Number.EPSILON) * 100) / 100;
-    const productStockBefore = product.stock;
-    const productStockAfter = productStockBefore + parsed.data.quantity;
-    const productUnitCost = calculateWeightedAverageCost(productStockBefore, product.unitCost, parsed.data.quantity, totalCost);
-    const movements = [];
-
-    for (const line of supplyRecords) {
-      const stockBefore = line.supply.stock;
-      const stockAfter = stockBefore - line.quantity;
-      await repositories.supplies.updateStockAndAverageCost(context.tenantId, line.supplyId, stockAfter, line.supply.averageCost);
-      movements.push(
-        await repositories.inventoryMovements.insert({
-          id: randomUUID(),
-          tenantId: context.tenantId,
-          itemType: "supply",
-          itemId: line.supplyId,
-          movementType: "production",
-          quantity: -line.quantity,
-          stockBefore,
-          stockAfter,
-          referenceType: "production-order",
-          referenceId: orderId,
-          note: parsed.data.note
-        })
-      );
-    }
-
-    await repositories.products.updateStockAndUnitCost(context.tenantId, parsed.data.productId, productStockAfter, productUnitCost);
-    movements.push(
-      await repositories.inventoryMovements.insert({
-        id: randomUUID(),
-        tenantId: context.tenantId,
-        itemType: "product",
-        itemId: parsed.data.productId,
-        movementType: "production",
-        quantity: parsed.data.quantity,
-        stockBefore: productStockBefore,
-        stockAfter: productStockAfter,
-        referenceType: "production-order",
-        referenceId: orderId,
-        note: parsed.data.note
-      })
-    );
-
-    return reply.code(201).send({
-      id: orderId,
-      productId: parsed.data.productId,
+    const scale = parsed.data.quantity / recipe.outputQuantity;
+    const result = await executeProductionOrder(context.tenantId, {
+      productId: recipe.productId,
       quantity: parsed.data.quantity,
-      totalCost,
-      unitCost,
-      movements
+      note: parsed.data.note,
+      supplies: recipe.ingredients.map((ingredient) => ({
+        supplyId: ingredient.supplyId,
+        quantity: Math.round((ingredient.quantity * scale + Number.EPSILON) * 100) / 100
+      }))
     });
+
+    return reply.code(result.statusCode).send(result.body);
   });
 
   app.get("/v1/expenses", async (request) => repositories.expenses.listByTenant(resolveRequestContext(request.headers).tenantId));
