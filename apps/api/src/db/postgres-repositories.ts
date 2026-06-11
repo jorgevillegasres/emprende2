@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import type { createPostgresClient } from "./client.js";
 import type { AuthIdentityRecord, ExpenseRecord, ProductRecord, Repositories, SaleRecord, SupplyRecord } from "./repositories.js";
 import { expenses, memberships, products, sales, supplies, tenants, users } from "./schema.js";
@@ -87,6 +87,18 @@ export function createPostgresRepositories(db: Db): Repositories {
       async listByTenant(tenantId: string) {
         const rows = await db.select().from(products).where(eq(products.tenantId, tenantId));
         return rows.map(toProductRecord);
+      },
+      async findByTenantAndId(tenantId: string, id: string) {
+        const [row] = await db.select().from(products).where(and(eq(products.tenantId, tenantId), eq(products.id, id))).limit(1);
+        return row ? toProductRecord(row) : null;
+      },
+      async updateStock(tenantId: string, id: string, stock: number) {
+        const [updated] = await db
+          .update(products)
+          .set({ stock, updatedAt: new Date() })
+          .where(and(eq(products.tenantId, tenantId), eq(products.id, id)))
+          .returning();
+        return updated ? toProductRecord(updated) : null;
       }
     },
     supplies: {

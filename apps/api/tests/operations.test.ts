@@ -57,6 +57,68 @@ describe("operational resource routes", () => {
     expect(sales.some((sale: { productId: string; revenue: number }) => sale.productId === "shampoo-romero" && sale.revenue === 16000)).toBe(true);
   });
 
+  it("decrements product stock when a sale is created", async () => {
+    const app = buildApp();
+    const headers = { "x-emprendedos-tenant-id": "stock-tenant", "x-emprendedos-user-id": "stock-user" };
+
+    await app.inject({
+      method: "POST",
+      url: "/v1/products",
+      headers,
+      payload: { id: "stock-soap", name: "Jabon stock", stock: 8, minStock: 2, unitCost: 5000, price: 12000, unit: "un" }
+    });
+
+    const saleResponse = await app.inject({
+      method: "POST",
+      url: "/v1/sales",
+      headers,
+      payload: {
+        date: "2026-06-10",
+        productId: "stock-soap",
+        quantity: 3,
+        revenue: 36000,
+        cost: 15000,
+        grossProfit: 21000
+      }
+    });
+    const productsResponse = await app.inject({ method: "GET", url: "/v1/products", headers });
+    const products = productsResponse.json();
+
+    expect(saleResponse.statusCode).toBe(201);
+    expect(products.find((product: { id: string }) => product.id === "stock-soap")?.stock).toBe(5);
+  });
+
+  it("rejects sales that exceed available product stock", async () => {
+    const app = buildApp();
+    const headers = { "x-emprendedos-tenant-id": "limited-stock-tenant", "x-emprendedos-user-id": "limited-stock-user" };
+
+    await app.inject({
+      method: "POST",
+      url: "/v1/products",
+      headers,
+      payload: { id: "limited-soap", name: "Jabon limitado", stock: 2, minStock: 1, unitCost: 5000, price: 12000, unit: "un" }
+    });
+
+    const saleResponse = await app.inject({
+      method: "POST",
+      url: "/v1/sales",
+      headers,
+      payload: {
+        date: "2026-06-10",
+        productId: "limited-soap",
+        quantity: 3,
+        revenue: 36000,
+        cost: 15000,
+        grossProfit: 21000
+      }
+    });
+    const productsResponse = await app.inject({ method: "GET", url: "/v1/products", headers });
+    const products = productsResponse.json();
+
+    expect(saleResponse.statusCode).toBe(409);
+    expect(products.find((product: { id: string }) => product.id === "limited-soap")?.stock).toBe(2);
+  });
+
   it("lists and creates tenant-scoped expenses", async () => {
     const app = buildApp();
 

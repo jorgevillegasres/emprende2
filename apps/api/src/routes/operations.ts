@@ -63,7 +63,13 @@ export async function registerOperationRoutes(app: FastifyInstance) {
     const context = resolveRequestContext(request.headers);
     const parsed = saleSchema.safeParse(request.body);
     if (!parsed.success) return reply.code(400).send({ error: "Invalid sale payload", issues: parsed.error.issues });
+    const product = await repositories.products.findByTenantAndId(context.tenantId, parsed.data.productId);
+    if (!product) return reply.code(404).send({ error: "Product not found" });
+    if (product.stock < parsed.data.quantity) {
+      return reply.code(409).send({ error: "Insufficient product stock", availableStock: product.stock });
+    }
     const created = await repositories.sales.insert({ ...parsed.data, tenantId: context.tenantId });
+    await repositories.products.updateStock(context.tenantId, parsed.data.productId, product.stock - parsed.data.quantity);
     return reply.code(201).send(created);
   });
 

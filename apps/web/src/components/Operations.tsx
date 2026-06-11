@@ -118,7 +118,7 @@ export function Operations({ section, token }: { section: Exclude<AppSection, "d
   const selectedProduct = productOptions.find((product) => product.id === selectedProductId);
   const saleTotals = calculateSaleTotals(selectedProduct, saleQuantity);
   const isSalesSection = section === "sales";
-  const canSubmitSale = Boolean(selectedProduct) && Number.isFinite(saleQuantity) && saleQuantity > 0;
+  const canSubmitSale = Boolean(selectedProduct) && Number.isFinite(saleQuantity) && saleQuantity > 0 && saleQuantity <= (selectedProduct?.stock ?? 0);
   const salesDateDefault = resourceConfig.sales.fields.find((field) => field.name === "date")?.defaultValue;
 
   useEffect(() => {
@@ -236,7 +236,7 @@ export function Operations({ section, token }: { section: Exclude<AppSection, "d
                     <select value={selectedProductId} onChange={(event) => setSelectedProductId(event.target.value)} required>
                       {productOptions.map((product) => (
                         <option key={product.id} value={product.id}>
-                          {product.name} - {money(product.price)}
+                          {product.name} - {money(product.price)} - stock {product.stock}
                         </option>
                       ))}
                     </select>
@@ -246,6 +246,10 @@ export function Operations({ section, token }: { section: Exclude<AppSection, "d
                     <input name="quantity" type="number" min={0.01} step={0.01} value={saleQuantity} onChange={(event) => setSaleQuantity(Number(event.target.value))} required />
                   </label>
                   <div className="sales-summary" aria-live="polite">
+                    <div>
+                      <span>Disponible</span>
+                      <strong>{selectedProduct?.stock ?? 0} {selectedProduct?.unit ?? "un"}</strong>
+                    </div>
                     <div>
                       <span>Ingreso</span>
                       <strong>{money(saleTotals.revenue)}</strong>
@@ -259,6 +263,9 @@ export function Operations({ section, token }: { section: Exclude<AppSection, "d
                       <strong>{money(saleTotals.grossProfit)}</strong>
                     </div>
                   </div>
+                  {selectedProduct && saleQuantity > selectedProduct.stock ? (
+                    <p className="form-error">No hay stock suficiente para esta venta.</p>
+                  ) : null}
                 </>
               ) : (
                 <div className="empty-helper">

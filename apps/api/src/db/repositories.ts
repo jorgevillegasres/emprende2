@@ -28,6 +28,11 @@ export type TenantRepository<TRecord extends TenantRecord> = {
   listByTenant(tenantId: string): Promise<TRecord[]>;
 };
 
+export type ProductRepository = TenantRepository<ProductRecord> & {
+  findByTenantAndId(tenantId: string, id: string): Promise<ProductRecord | null>;
+  updateStock(tenantId: string, id: string, stock: number): Promise<ProductRecord | null>;
+};
+
 export type AuthRepository = {
   insert(record: AuthIdentityRecord): Promise<AuthIdentityRecord>;
   findByEmail(email: string): Promise<AuthIdentityRecord | null>;
@@ -36,7 +41,7 @@ export type AuthRepository = {
 
 export type Repositories = {
   auth: AuthRepository;
-  products: TenantRepository<ProductRecord>;
+  products: ProductRepository;
   supplies: TenantRepository<SupplyRecord>;
   sales: TenantRepository<SaleRecord>;
   expenses: TenantRepository<ExpenseRecord>;
@@ -54,7 +59,7 @@ export function createInMemoryRepositories(): Repositories {
     supplies: createTenantRepository(supplies),
     sales: createTenantRepository(sales),
     expenses: createTenantRepository(expenses),
-    products: createTenantRepository(products)
+    products: createProductRepository(products)
   };
 }
 
@@ -66,6 +71,21 @@ function createTenantRepository<TRecord extends TenantRecord>(records: TRecord[]
     },
     async listByTenant(tenantId: string) {
       return records.filter((record) => record.tenantId === tenantId);
+    }
+  };
+}
+
+function createProductRepository(records: ProductRecord[]): ProductRepository {
+  return {
+    ...createTenantRepository(records),
+    async findByTenantAndId(tenantId: string, id: string) {
+      return records.find((record) => record.tenantId === tenantId && record.id === id) ?? null;
+    },
+    async updateStock(tenantId: string, id: string, stock: number) {
+      const record = records.find((product) => product.tenantId === tenantId && product.id === id);
+      if (!record) return null;
+      record.stock = stock;
+      return record;
     }
   };
 }
