@@ -97,12 +97,12 @@ const resourceConfig = {
   description: string;
   fields: Field[];
   headers: string[];
-  load: () => Promise<Row[]>;
-  create: (payload: never) => Promise<Row>;
+  load: (token?: string | null) => Promise<Row[]>;
+  create: (payload: never, token?: string | null) => Promise<Row>;
   toCells: (row: never) => Array<string | number>;
 }>;
 
-export function Operations({ section }: { section: Exclude<AppSection, "dashboard"> }) {
+export function Operations({ section, token }: { section: Exclude<AppSection, "dashboard">; token: string }) {
   const config = resourceConfig[section];
   const [rows, setRows] = useState<Row[]>([]);
   const [error, setError] = useState("");
@@ -111,8 +111,8 @@ export function Operations({ section }: { section: Exclude<AppSection, "dashboar
 
   useEffect(() => {
     setError("");
-    config.load().then(setRows).catch(() => setError("No se pudo cargar la informacion"));
-  }, [config]);
+    config.load(token).then(setRows).catch(() => setError("No se pudo cargar la informacion"));
+  }, [config, token]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -127,8 +127,8 @@ export function Operations({ section }: { section: Exclude<AppSection, "dashboar
     );
 
     try {
-      await config.create(payload as never);
-      setRows(await config.load());
+      await config.create(payload as never, token);
+      setRows(await config.load(token));
       event.currentTarget.reset();
     } catch {
       setError("Revisa los campos e intenta guardar de nuevo");

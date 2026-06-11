@@ -12,11 +12,15 @@ const navItems: Array<{ section: AppSection; label: string }> = [
 
 export function Shell({
   activeSection,
+  onLogout,
   onSectionChange,
+  userLabel,
   children
 }: {
   activeSection: AppSection;
+  onLogout?: () => void;
   onSectionChange: (section: AppSection) => void;
+  userLabel?: string;
   children: ReactNode;
 }) {
   return (
@@ -45,7 +49,13 @@ export function Shell({
         </nav>
         <div className="top-actions">
           <span className="today-pill">Junio 2026</span>
+          {userLabel ? <span className="user-pill">{userLabel}</span> : null}
           <button className="primary-action">Registrar venta</button>
+          {onLogout ? (
+            <button className="secondary-action" onClick={onLogout} type="button">
+              Salir
+            </button>
+          ) : null}
         </div>
       </header>
       {children}

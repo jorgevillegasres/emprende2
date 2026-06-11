@@ -15,6 +15,13 @@ export type DashboardMetrics = {
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://127.0.0.1:3001";
 
+export type AuthSession = {
+  token: string;
+  userId: string;
+  tenantId: string;
+  role: string;
+};
+
 export type ProductRecord = {
   id: string;
   name: string;
@@ -49,54 +56,72 @@ export type ExpenseRecord = {
   amount: number;
 };
 
-export async function getDashboardMetrics(): Promise<DashboardMetrics> {
-  const response = await fetch(`${API_BASE_URL}/v1/dashboard`);
+export function createAuthHeaders(token: string | null | undefined): Record<string, string> {
+  if (!token) return {};
+  return { Authorization: `Bearer ${token}` };
+}
+
+export async function login(email: string, password: string): Promise<AuthSession> {
+  return postJson("/v1/auth/login", { email, password });
+}
+
+export async function getCurrentUser(token: string): Promise<AuthSession> {
+  const session = await getJson<Omit<AuthSession, "token">>("/v1/auth/me", token);
+  return { ...session, token };
+}
+
+export async function getDashboardMetrics(token?: string | null): Promise<DashboardMetrics> {
+  const response = await fetch(`${API_BASE_URL}/v1/dashboard`, {
+    headers: createAuthHeaders(token)
+  });
   if (!response.ok) throw new Error("No se pudo cargar el dashboard");
   return response.json();
 }
 
-export async function listProducts(): Promise<ProductRecord[]> {
-  return getJson("/v1/products");
+export async function listProducts(token?: string | null): Promise<ProductRecord[]> {
+  return getJson("/v1/products", token);
 }
 
-export async function createProduct(payload: ProductRecord): Promise<ProductRecord> {
-  return postJson("/v1/products", payload);
+export async function createProduct(payload: ProductRecord, token?: string | null): Promise<ProductRecord> {
+  return postJson("/v1/products", payload, token);
 }
 
-export async function listSupplies(): Promise<SupplyRecord[]> {
-  return getJson("/v1/supplies");
+export async function listSupplies(token?: string | null): Promise<SupplyRecord[]> {
+  return getJson("/v1/supplies", token);
 }
 
-export async function createSupply(payload: SupplyRecord): Promise<SupplyRecord> {
-  return postJson("/v1/supplies", payload);
+export async function createSupply(payload: SupplyRecord, token?: string | null): Promise<SupplyRecord> {
+  return postJson("/v1/supplies", payload, token);
 }
 
-export async function listSales(): Promise<SaleRecord[]> {
-  return getJson("/v1/sales");
+export async function listSales(token?: string | null): Promise<SaleRecord[]> {
+  return getJson("/v1/sales", token);
 }
 
-export async function createSale(payload: SaleRecord): Promise<SaleRecord> {
-  return postJson("/v1/sales", payload);
+export async function createSale(payload: SaleRecord, token?: string | null): Promise<SaleRecord> {
+  return postJson("/v1/sales", payload, token);
 }
 
-export async function listExpenses(): Promise<ExpenseRecord[]> {
-  return getJson("/v1/expenses");
+export async function listExpenses(token?: string | null): Promise<ExpenseRecord[]> {
+  return getJson("/v1/expenses", token);
 }
 
-export async function createExpense(payload: ExpenseRecord): Promise<ExpenseRecord> {
-  return postJson("/v1/expenses", payload);
+export async function createExpense(payload: ExpenseRecord, token?: string | null): Promise<ExpenseRecord> {
+  return postJson("/v1/expenses", payload, token);
 }
 
-async function getJson<T>(path: string): Promise<T> {
-  const response = await fetch(`${API_BASE_URL}${path}`);
+async function getJson<T>(path: string, token?: string | null): Promise<T> {
+  const response = await fetch(`${API_BASE_URL}${path}`, {
+    headers: createAuthHeaders(token)
+  });
   if (!response.ok) throw new Error("No se pudo cargar la informacion");
   return response.json();
 }
 
-async function postJson<T>(path: string, payload: unknown): Promise<T> {
+async function postJson<T>(path: string, payload: unknown, token?: string | null): Promise<T> {
   const response = await fetch(`${API_BASE_URL}${path}`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...createAuthHeaders(token) },
     body: JSON.stringify(payload)
   });
   if (!response.ok) throw new Error("No se pudo guardar el registro");
