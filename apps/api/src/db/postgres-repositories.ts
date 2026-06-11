@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import { eq } from "drizzle-orm";
 import type { createPostgresClient } from "./client.js";
 import type { AuthIdentityRecord, ExpenseRecord, ProductRecord, Repositories, SaleRecord, SupplyRecord } from "./repositories.js";
-import { expenses, memberships, products, sales, supplies, users } from "./schema.js";
+import { expenses, memberships, products, sales, supplies, tenants, users } from "./schema.js";
 
 type Db = ReturnType<typeof createPostgresClient>["db"];
 
@@ -51,6 +51,32 @@ export function createPostgresRepositories(db: Db): Repositories {
           ...identity,
           role: toAuthRole(identity.role)
         };
+      },
+      async registerOwner(record: AuthIdentityRecord) {
+        await db.insert(tenants).values({
+          id: record.tenantId,
+          name: record.tenantName ?? "Nuevo emprendimiento",
+          slug: record.tenantSlug ?? record.tenantId,
+          businessType: record.businessType ?? "Emprendimiento",
+          country: record.country ?? "CO",
+          currency: record.currency ?? "COP"
+        });
+
+        await db.insert(users).values({
+          id: record.userId,
+          email: record.email,
+          name: record.userName ?? record.email,
+          passwordHash: record.passwordHash
+        });
+
+        await db.insert(memberships).values({
+          id: randomUUID(),
+          tenantId: record.tenantId,
+          userId: record.userId,
+          role: record.role
+        });
+
+        return record;
       }
     },
     products: {

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getCurrentUser, getDashboardMetrics, login, type AuthSession, type DashboardMetrics } from "./api/client";
+import { getCurrentUser, getDashboardMetrics, login, registerOwner, type AuthSession, type DashboardMetrics, type RegisterPayload } from "./api/client";
 import { Dashboard } from "./components/Dashboard";
 import { Login } from "./components/Login";
 import { Operations } from "./components/Operations";
@@ -61,6 +61,22 @@ export function App() {
     }
   }
 
+  async function handleRegister(payload: RegisterPayload) {
+    setIsLoginLoading(true);
+    setAuthError("");
+    try {
+      const session = await registerOwner(payload);
+      persistSession(session);
+      setAuthSession(session);
+      setActiveSection("dashboard");
+      await loadDashboard(session.token);
+    } catch {
+      setAuthError("No pudimos crear la cuenta. Revisa el correo o intenta con otro.");
+    } finally {
+      setIsLoginLoading(false);
+    }
+  }
+
   function handleLogout() {
     clearStoredSession();
     setAuthSession(null);
@@ -75,7 +91,7 @@ export function App() {
   }
 
   if (!authSession) {
-    return <Login error={authError} isLoading={isLoginLoading} onLogin={handleLogin} />;
+    return <Login error={authError} isLoading={isLoginLoading} onLogin={handleLogin} onRegister={handleRegister} />;
   }
 
   return (

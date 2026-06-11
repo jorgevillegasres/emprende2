@@ -1,20 +1,46 @@
 import { FormEvent, useState } from "react";
+import type { RegisterPayload } from "../api/client";
 
 export function Login({
   error,
   isLoading,
-  onLogin
+  onLogin,
+  onRegister
 }: {
   error: string;
   isLoading: boolean;
   onLogin: (email: string, password: string) => Promise<void>;
+  onRegister: (payload: RegisterPayload) => Promise<void>;
 }) {
+  const [mode, setMode] = useState<"login" | "register">("login");
   const [email, setEmail] = useState("demo@emprendedos.local");
   const [password, setPassword] = useState("emprendedos-demo");
+  const [ownerName, setOwnerName] = useState("");
+  const [businessName, setBusinessName] = useState("");
+  const [businessType, setBusinessType] = useState("Productos fisicos");
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  function switchMode(nextMode: "login" | "register") {
+    setMode(nextMode);
+    setEmail(nextMode === "login" ? "demo@emprendedos.local" : "");
+    setPassword(nextMode === "login" ? "emprendedos-demo" : "");
+  }
+
+  async function handleLoginSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     await onLogin(email, password);
+  }
+
+  async function handleRegisterSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    await onRegister({
+      ownerName,
+      email,
+      password,
+      businessName,
+      businessType,
+      country: "CO",
+      currency: "COP"
+    });
   }
 
   return (
@@ -32,18 +58,42 @@ export function Login({
           </div>
           <div>
             <p className="eyebrow">Centro de mando</p>
-            <h1>Entra a tu espacio de crecimiento</h1>
+            <h1>{mode === "login" ? "Entra a tu espacio de crecimiento" : "Crea el centro de mando de tu emprendimiento"}</h1>
             <p>
               Ventas, inventario, gastos y decisiones en un mismo lugar para que cada emprendedor vea su negocio con claridad.
             </p>
           </div>
         </div>
 
-        <form className="card login-form" onSubmit={handleSubmit}>
+        <form className="card login-form" onSubmit={mode === "login" ? handleLoginSubmit : handleRegisterSubmit}>
           <div>
             <p className="eyebrow">Acceso</p>
-            <h2>Iniciar sesion</h2>
+            <h2>{mode === "login" ? "Iniciar sesion" : "Crear cuenta"}</h2>
           </div>
+          <div className="mode-tabs">
+            <button className={mode === "login" ? "active" : ""} onClick={() => switchMode("login")} type="button">
+              Entrar
+            </button>
+            <button className={mode === "register" ? "active" : ""} onClick={() => switchMode("register")} type="button">
+              Crear
+            </button>
+          </div>
+          {mode === "register" ? (
+            <>
+              <label>
+                <span>Tu nombre</span>
+                <input autoComplete="name" name="ownerName" onChange={(event) => setOwnerName(event.target.value)} required type="text" value={ownerName} />
+              </label>
+              <label>
+                <span>Emprendimiento</span>
+                <input name="businessName" onChange={(event) => setBusinessName(event.target.value)} required type="text" value={businessName} />
+              </label>
+              <label>
+                <span>Tipo de negocio</span>
+                <input name="businessType" onChange={(event) => setBusinessType(event.target.value)} required type="text" value={businessType} />
+              </label>
+            </>
+          ) : null}
           <label>
             <span>Correo</span>
             <input autoComplete="email" name="email" onChange={(event) => setEmail(event.target.value)} required type="email" value={email} />
@@ -54,7 +104,7 @@ export function Login({
           </label>
           {error ? <p className="form-error">{error}</p> : null}
           <button className="primary-action form-action" disabled={isLoading} type="submit">
-            {isLoading ? "Validando..." : "Entrar"}
+            {isLoading ? "Validando..." : mode === "login" ? "Entrar" : "Crear mi espacio"}
           </button>
         </form>
       </section>

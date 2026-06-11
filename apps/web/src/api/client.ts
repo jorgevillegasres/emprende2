@@ -22,6 +22,16 @@ export type AuthSession = {
   role: string;
 };
 
+export type RegisterPayload = {
+  ownerName: string;
+  email: string;
+  password: string;
+  businessName: string;
+  businessType: string;
+  country: string;
+  currency: string;
+};
+
 export type ProductRecord = {
   id: string;
   name: string;
@@ -61,8 +71,16 @@ export function createAuthHeaders(token: string | null | undefined): Record<stri
   return { Authorization: `Bearer ${token}` };
 }
 
+export function getRegisterPath() {
+  return "/v1/auth/register";
+}
+
 export async function login(email: string, password: string): Promise<AuthSession> {
   return postJson("/v1/auth/login", { email, password });
+}
+
+export async function registerOwner(payload: RegisterPayload): Promise<AuthSession> {
+  return postJson(getRegisterPath(), payload);
 }
 
 export async function getCurrentUser(token: string): Promise<AuthSession> {

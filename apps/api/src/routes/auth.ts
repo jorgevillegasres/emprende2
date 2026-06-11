@@ -1,8 +1,9 @@
+import { randomUUID } from "node:crypto";
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { getConfig } from "../config.js";
 import { resolveRequestContext } from "../auth/context.js";
-import { verifyPassword } from "../auth/passwords.js";
+import { hashPassword, verifyPassword } from "../auth/passwords.js";
 import { signAuthToken } from "../auth/tokens.js";
 import { getRepositories } from "../db/store.js";
 
@@ -11,7 +12,41 @@ const loginSchema = z.object({
   password: z.string().min(1)
 });
 
+const registerSchema = z.object({
+  ownerName: z.string().min(2),
+  email: z.string().email(),
+  password: z.string().min(8),
+  businessName: z.string().min(2),
+  businessType: z.string().min(2),
+  country: z.string().min(2).default("CO"),
+  currency: z.string().min(3).default("COP")
+});
+
 export async function registerAuthRoutes(app: FastifyInstance) {
+  app.post("/v1/auth/register", async (request, reply) => {
+    const parsed = registerSchema.safeParse(request.body);
+    if (!parsed.success) return reply.code(400).send({ error: "Invalid register payload", issues: parsed.error.issues });
+
+    const repositories = await getRepositories();
+    const existingIdentity = await repositories.auth.findByEmail(parsed.data.email);
+    if (existingIdentity) return reply.code(409).send({ error: "Email already registered" });
+
+    const identity = await repositories.auth.registerOwner({
+      userId: randomUUID(),
+      userName: parsed.data.ownerName,
+      email: parsed.data.email.toLowerCase(),
+      passwordHash: await hashPassword(parsed.data.password),
+      tenantId: randomUUID(),
+      tenantName: parsed.data.businessName,
+      tenantSlug: createSlug(parsed.data.businessName),
+      businessType: parsed.data.businessType,
+      country: parsed.data.country,
+      currency: parsed.data.currency,
+      role: "owner"
+    });
+    return signSession(identity);
+  });
+
   app.post("/v1/auth/login", async (request, reply) => {
     const parsed = loginSchema.safeParse(request.body);
     if (!parsed.success) return reply.code(400).send({ error: "Invalid login payload", issues: parsed.error.issues });
@@ -24,15 +59,28 @@ export async function registerAuthRoutes(app: FastifyInstance) {
       return reply.code(401).send({ error: "Invalid credentials" });
     }
 
-    const config = getConfig();
-    const context = {
-      userId: identity.userId,
-      tenantId: identity.tenantId,
-      role: identity.role
-    };
-    const token = signAuthToken(context, { secret: config.authSecret });
-    return { token, ...context };
+    return signSession(identity);
   });
 
   app.get("/v1/auth/me", async (request) => resolveRequestContext(request.headers));
+}
+
+function signSession(identity: { userId: string; tenantId: string; role: "owner" | "admin" | "operator" | "viewer" }) {
+  const context = {
+    userId: identity.userId,
+    tenantId: identity.tenantId,
+    role: identity.role
+  };
+  const token = signAuthToken(context, { secret: getConfig().authSecret });
+  return { token, ...context };
+}
+
+function createSlug(value: string) {
+  const slug = value
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
+  return `${slug || "emprendimiento"}-${randomUUID().slice(0, 8)}`;
 }

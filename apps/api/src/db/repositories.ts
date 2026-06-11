@@ -11,9 +11,15 @@ export type ExpenseRecord = Expense & TenantRecord;
 
 export type AuthIdentityRecord = {
   userId: string;
+  userName?: string;
   email: string;
   passwordHash: string;
   tenantId: string;
+  tenantName?: string;
+  tenantSlug?: string;
+  businessType?: string;
+  country?: string;
+  currency?: string;
   role: "owner" | "admin" | "operator" | "viewer";
 };
 
@@ -25,6 +31,7 @@ export type TenantRepository<TRecord extends TenantRecord> = {
 export type AuthRepository = {
   insert(record: AuthIdentityRecord): Promise<AuthIdentityRecord>;
   findByEmail(email: string): Promise<AuthIdentityRecord | null>;
+  registerOwner(record: AuthIdentityRecord): Promise<AuthIdentityRecord>;
 };
 
 export type Repositories = {
@@ -71,6 +78,12 @@ function createAuthRepository(records: AuthIdentityRecord[]): AuthRepository {
     },
     async findByEmail(email: string) {
       return records.find((record) => record.email.toLowerCase() === email.toLowerCase()) ?? null;
+    },
+    async registerOwner(record: AuthIdentityRecord) {
+      const exists = records.some((existing) => existing.email.toLowerCase() === record.email.toLowerCase());
+      if (exists) throw new Error("Email already registered");
+      records.push(record);
+      return record;
     }
   };
 }

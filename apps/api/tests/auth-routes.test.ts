@@ -2,6 +2,41 @@ import { describe, expect, it } from "vitest";
 import { buildApp } from "../src/app.js";
 
 describe("auth routes", () => {
+  it("registers an owner with a new tenant and returns a usable token", async () => {
+    const app = buildApp();
+    const registerResponse = await app.inject({
+      method: "POST",
+      url: "/v1/auth/register",
+      payload: {
+        ownerName: "Ana Emprende",
+        email: "ana@example.com",
+        password: "super-segura-123",
+        businessName: "Casa Ana",
+        businessType: "Productos artesanales",
+        country: "CO",
+        currency: "COP"
+      }
+    });
+    const registerBody = registerResponse.json();
+
+    const meResponse = await app.inject({
+      method: "GET",
+      url: "/v1/auth/me",
+      headers: { authorization: `Bearer ${registerBody.token}` }
+    });
+
+    expect(registerResponse.statusCode).toBe(200);
+    expect(registerBody.token).toEqual(expect.any(String));
+    expect(registerBody.role).toBe("owner");
+    expect(registerBody.userId).toEqual(expect.any(String));
+    expect(registerBody.tenantId).toEqual(expect.any(String));
+    expect(meResponse.json()).toMatchObject({
+      userId: registerBody.userId,
+      tenantId: registerBody.tenantId,
+      role: "owner"
+    });
+  });
+
   it("logs in with demo credentials and returns current user context", async () => {
     const app = buildApp();
     const loginResponse = await app.inject({
