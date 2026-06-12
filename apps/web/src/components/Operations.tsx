@@ -18,6 +18,7 @@ import {
   type SaleRecord,
   type SupplyRecord
 } from "../api/client";
+import { buildCsvFromTable, createExportFilename, downloadCsv } from "./csvExport";
 import { getTemplatesForSection } from "./operationTemplates";
 import { calculateSaleTotals } from "./salesCalculator";
 import type { AppSection } from "./Shell";
@@ -383,6 +384,29 @@ export function Operations({ focusSignal = 0, section, token }: { focusSignal?: 
     });
   }
 
+  function handleExportRows() {
+    const csv = buildCsvFromTable(config.headers, rows.map((row) => config.toCells(row as never)));
+    downloadCsv(createExportFilename(config.title), csv);
+  }
+
+  function handleExportInventoryMovements() {
+    const csv = buildCsvFromTable(
+      ["Fecha", "Tipo item", "Item", "Movimiento", "Cantidad", "Stock antes", "Stock despues", "Referencia", "Nota"],
+      inventoryMovements.map((movement) => [
+        movement.createdAt ?? "",
+        movement.itemType === "product" ? "Producto" : "Insumo",
+        movement.itemId,
+        formatMovementType(movement.movementType),
+        movement.quantity,
+        movement.stockBefore,
+        movement.stockAfter,
+        movement.referenceType,
+        movement.note ?? ""
+      ])
+    );
+    downloadCsv(createExportFilename("movimientos de inventario"), csv);
+  }
+
   return (
     <main className="operations-page">
       <section className="operations-hero">
@@ -486,6 +510,9 @@ export function Operations({ focusSignal = 0, section, token }: { focusSignal?: 
               <p className="eyebrow">Listado</p>
               <h2>Registros actuales</h2>
             </div>
+            <button className="secondary-action export-action" disabled={!rows.length} onClick={handleExportRows} type="button">
+              Exportar CSV
+            </button>
           </div>
           <div className="table-wrap">
             <table className="data-table">
@@ -517,6 +544,9 @@ export function Operations({ focusSignal = 0, section, token }: { focusSignal?: 
               <p className="eyebrow">Kardex</p>
               <h2>Movimientos recientes</h2>
             </div>
+            <button className="secondary-action export-action" disabled={!inventoryMovements.length} onClick={handleExportInventoryMovements} type="button">
+              Exportar CSV
+            </button>
           </div>
           <form className="adjustment-panel" onSubmit={handleProductionSubmit}>
             <div>

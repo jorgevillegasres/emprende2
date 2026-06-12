@@ -152,6 +152,10 @@ button {
   background: #eef3f6;
 }
 
+.export-action {
+  flex: 0 0 auto;
+}
+
 .user-pill {
   color: #05754c;
   background: var(--green-soft);

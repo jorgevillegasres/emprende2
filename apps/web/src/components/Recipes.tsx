@@ -11,6 +11,7 @@ import {
   type RecipeRecord,
   type SupplyRecord
 } from "../api/client";
+import { buildCsvFromTable, createExportFilename, downloadCsv } from "./csvExport";
 
 export function Recipes({ token }: { token: string }) {
   const [recipes, setRecipes] = useState<RecipeRecord[]>([]);
@@ -134,6 +135,22 @@ export function Recipes({ token }: { token: string }) {
     } finally {
       setIsProducing(false);
     }
+  }
+
+  function handleExportProductionOrders() {
+    const csv = buildCsvFromTable(
+      ["Fecha", "Producto", "Cantidad", "Costo total", "Costo unitario", "Receta", "Nota"],
+      productionOrders.map((order) => [
+        order.createdAt ?? "",
+        products.find((product) => product.id === order.productId)?.name ?? order.productId,
+        order.quantity,
+        money(order.totalCost),
+        money(order.unitCost),
+        order.recipeId ? recipes.find((recipe) => recipe.id === order.recipeId)?.name ?? order.recipeId : "Produccion manual",
+        order.note ?? ""
+      ])
+    );
+    downloadCsv(createExportFilename("historial de lotes producidos"), csv);
   }
 
   return (
@@ -307,6 +324,9 @@ export function Recipes({ token }: { token: string }) {
             <p className="eyebrow">Trazabilidad</p>
             <h2>Historial de lotes producidos</h2>
           </div>
+          <button className="secondary-action export-action" disabled={!productionOrders.length} onClick={handleExportProductionOrders} type="button">
+            Exportar CSV
+          </button>
         </div>
         {productionOrders.length ? (
           <div className="production-history-list">
