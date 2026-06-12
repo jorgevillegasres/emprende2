@@ -120,41 +120,43 @@ export function Dashboard({ metrics, onSectionChange, token }: { metrics: Dashbo
           <p className="score-note">Margen, caja operativa, inventario y foco comercial en una sola lectura.</p>
         </article>
 
-        <section className="executive-metrics" aria-label="Indicadores principales">
-          <Metric label="Ventas del mes" value={money(metrics.monthlyRevenue)} detail="Ingresos registrados" accent="blue" />
-          <Metric label="Utilidad bruta" value={money(metrics.monthlyGrossProfit)} detail={`${metrics.averageMarginPercent}% margen`} accent="green" />
-          <Metric label="Resultado operativo" value={money(metrics.netAfterExpenses)} detail="Utilidad menos gastos" accent="ink" />
-          <Metric label="Inventario valorizado" value={money(metrics.totalInventoryValue)} detail="Insumos + productos" accent="yellow" />
-        </section>
-
-        <article className="card decisions-card executive-decisions">
-          <div className="decisions-head">
-            <div>
-              <p className="eyebrow">Prioridades</p>
-              <h2>Tus 3 decisiones de esta semana</h2>
-              <p>
-                Ventas por <b>{money(metrics.monthlyRevenue)}</b> con margen promedio de <b>{metrics.averageMarginPercent}%</b>.
-              </p>
+        <div className="executive-panel">
+          <article className="card decisions-card executive-decisions">
+            <div className="decisions-head">
+              <div>
+                <p className="eyebrow">Prioridades</p>
+                <h2>Tus 3 decisiones de esta semana</h2>
+                <p>
+                  Ventas por <b>{money(metrics.monthlyRevenue)}</b> con margen promedio de <b>{metrics.averageMarginPercent}%</b>.
+                </p>
+              </div>
             </div>
-          </div>
-          <div className="decision-list">
-            {metrics.growthActions.slice(0, 3).map((action) => (
-              <article className={`decision d-${action.tone}`} key={action.title}>
-                <span>{toneLabels[action.tone] ?? "Actuar"}</span>
-                <strong>{action.title}</strong>
-                <p>{action.detail}</p>
-                <button
-                  className="decision-plan-action"
-                  disabled={isSavingDecision || Boolean(findMatchingDecision(decisions, buildGrowthDecisionPayload(action, decisionOwner)))}
-                  onClick={() => void handleSaveGrowthDecision(action)}
-                  type="button"
-                >
-                  {findMatchingDecision(decisions, buildGrowthDecisionPayload(action, decisionOwner)) ? "En plan" : "Agregar al plan"}
-                </button>
-              </article>
-            ))}
-          </div>
-        </article>
+            <div className="decision-list">
+              {metrics.growthActions.slice(0, 3).map((action) => (
+                <article className={`decision d-${action.tone}`} key={action.title}>
+                  <span>{toneLabels[action.tone] ?? "Actuar"}</span>
+                  <strong>{action.title}</strong>
+                  <p>{action.detail}</p>
+                  <button
+                    className="decision-plan-action"
+                    disabled={isSavingDecision || Boolean(findMatchingDecision(decisions, buildGrowthDecisionPayload(action, decisionOwner)))}
+                    onClick={() => void handleSaveGrowthDecision(action)}
+                    type="button"
+                  >
+                    {findMatchingDecision(decisions, buildGrowthDecisionPayload(action, decisionOwner)) ? "En plan" : "Agregar al plan"}
+                  </button>
+                </article>
+              ))}
+            </div>
+          </article>
+
+          <section className="executive-metrics" aria-label="Indicadores principales">
+            <Metric label="Ventas del mes" value={money(metrics.monthlyRevenue)} detail="Ingresos registrados" accent="blue" />
+            <Metric label="Utilidad bruta" value={money(metrics.monthlyGrossProfit)} detail={`${metrics.averageMarginPercent}% margen`} accent="green" />
+            <Metric label="Resultado operativo" value={money(metrics.netAfterExpenses)} detail="Utilidad menos gastos" accent="ink" />
+            <Metric label="Inventario valorizado" value={money(metrics.totalInventoryValue)} detail="Insumos + productos" accent="yellow" />
+          </section>
+        </div>
       </section>
 
       <section className="dashboard-analysis">
@@ -229,7 +231,7 @@ export function Dashboard({ metrics, onSectionChange, token }: { metrics: Dashbo
           )}
         </article>
 
-        <article className="card chart-card">
+        <article className="card chart-card sales-chart-card">
           <div className="card-head">
             <div>
               <p className="eyebrow">Ritmo comercial</p>
@@ -249,7 +251,7 @@ export function Dashboard({ metrics, onSectionChange, token }: { metrics: Dashbo
           </div>
         </article>
 
-        <article className="card chart-card">
+        <article className="card chart-card expense-chart-card">
           <div className="card-head">
             <div>
               <p className="eyebrow">Control de gastos</p>
@@ -303,7 +305,7 @@ export function Dashboard({ metrics, onSectionChange, token }: { metrics: Dashbo
           </div>
         </article>
 
-        <article className="card list-card">
+        <article className="card list-card decisions-panel-card">
           <div className="card-head">
             <div>
               <p className="eyebrow">Decisiones</p>
@@ -336,7 +338,7 @@ export function Dashboard({ metrics, onSectionChange, token }: { metrics: Dashbo
           </div>
         </article>
 
-        <article className="card list-card">
+        <article className="card list-card stock-alerts-card">
           <div className="card-head">
             <div>
               <p className="eyebrow">Inventario</p>

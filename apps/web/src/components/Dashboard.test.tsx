@@ -44,8 +44,10 @@ describe("Dashboard", () => {
     const markup = renderToStaticMarkup(<Dashboard metrics={metrics} token="token" />);
 
     expect(markup).toContain('class="executive-overview"');
+    expect(markup).toContain('class="executive-panel"');
     expect(markup).toContain('class="executive-metrics"');
     expect(markup).toContain('class="dashboard-analysis"');
     expect(markup.indexOf("Salud del negocio")).toBeLessThan(markup.indexOf("Simulador de margen"));
+    expect(markup.indexOf("Tus 3 decisiones de esta semana")).toBeLessThan(markup.indexOf("Ventas del mes"));
   });
 });
