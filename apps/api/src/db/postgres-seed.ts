@@ -1,5 +1,5 @@
 import type { createPostgresClient } from "./client.js";
-import { expenses, memberships, products, recipeIngredients, recipes, sales, supplies, tenants, users } from "./schema.js";
+import { expenses, inventoryMovements, memberships, productionOrders, products, recipeIngredients, recipes, sales, supplies, tenants, users } from "./schema.js";
 import { getConfig } from "../config.js";
 import { hashPassword } from "../auth/passwords.js";
 
@@ -134,6 +134,69 @@ export async function seedPostgresDemoData(db: Db) {
         revenue: 48000,
         cost: 14400,
         grossProfit: 33600
+      }
+    ])
+    .onConflictDoNothing();
+
+  await db
+    .insert(productionOrders)
+    .values({
+      id: "60000000-0000-0000-0000-000000000001",
+      tenantId: demoTenantId,
+      productId: "shampoo-romero",
+      quantity: 10,
+      totalCost: 15000,
+      unitCost: 1500,
+      recipeId: "shampoo-romero-base",
+      note: "Lote demo producido desde receta",
+      createdAt: new Date("2026-06-10T09:00:00.000Z")
+    })
+    .onConflictDoNothing();
+
+  await db
+    .insert(inventoryMovements)
+    .values([
+      {
+        id: "70000000-0000-0000-0000-000000000001",
+        tenantId: demoTenantId,
+        itemType: "product",
+        itemId: "shampoo-romero",
+        movementType: "production",
+        quantity: 10,
+        stockBefore: 2,
+        stockAfter: 12,
+        referenceType: "production_order",
+        referenceId: "60000000-0000-0000-0000-000000000001",
+        note: "Entrada de lote demo",
+        createdAt: new Date("2026-06-10T09:00:00.000Z")
+      },
+      {
+        id: "70000000-0000-0000-0000-000000000002",
+        tenantId: demoTenantId,
+        itemType: "supply",
+        itemId: "envase-vidrio",
+        movementType: "production",
+        quantity: -10,
+        stockBefore: 40,
+        stockAfter: 30,
+        referenceType: "production_order",
+        referenceId: "60000000-0000-0000-0000-000000000001",
+        note: "Consumo de lote demo",
+        createdAt: new Date("2026-06-10T09:00:00.000Z")
+      },
+      {
+        id: "70000000-0000-0000-0000-000000000003",
+        tenantId: demoTenantId,
+        itemType: "supply",
+        itemId: "etiqueta-kraft",
+        movementType: "production",
+        quantity: -10,
+        stockBefore: 76,
+        stockAfter: 66,
+        referenceType: "production_order",
+        referenceId: "60000000-0000-0000-0000-000000000001",
+        note: "Consumo de lote demo",
+        createdAt: new Date("2026-06-10T09:00:00.000Z")
       }
     ])
     .onConflictDoNothing();

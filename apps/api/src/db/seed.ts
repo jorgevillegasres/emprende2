@@ -121,6 +121,59 @@ export async function createSeededRepositories() {
     cost: 14400,
     grossProfit: 33600
   });
+  await repositories.productionOrders.insert({
+    tenantId,
+    id: "60000000-0000-0000-0000-000000000001",
+    productId: "shampoo-romero",
+    quantity: 10,
+    totalCost: 15000,
+    unitCost: 1500,
+    recipeId: "shampoo-romero-base",
+    note: "Lote demo producido desde receta",
+    createdAt: "2026-06-10T09:00:00.000Z"
+  });
+  await repositories.inventoryMovements.insert({
+    tenantId,
+    id: "70000000-0000-0000-0000-000000000001",
+    itemType: "product",
+    itemId: "shampoo-romero",
+    movementType: "production",
+    quantity: 10,
+    stockBefore: 2,
+    stockAfter: 12,
+    referenceType: "production_order",
+    referenceId: "60000000-0000-0000-0000-000000000001",
+    note: "Entrada de lote demo",
+    createdAt: "2026-06-10T09:00:00.000Z"
+  });
+  await repositories.inventoryMovements.insert({
+    tenantId,
+    id: "70000000-0000-0000-0000-000000000002",
+    itemType: "supply",
+    itemId: "envase-vidrio",
+    movementType: "production",
+    quantity: -10,
+    stockBefore: 40,
+    stockAfter: 30,
+    referenceType: "production_order",
+    referenceId: "60000000-0000-0000-0000-000000000001",
+    note: "Consumo de lote demo",
+    createdAt: "2026-06-10T09:00:00.000Z"
+  });
+  await repositories.inventoryMovements.insert({
+    tenantId,
+    id: "70000000-0000-0000-0000-000000000003",
+    itemType: "supply",
+    itemId: "etiqueta-kraft",
+    movementType: "production",
+    quantity: -10,
+    stockBefore: 76,
+    stockAfter: 66,
+    referenceType: "production_order",
+    referenceId: "60000000-0000-0000-0000-000000000001",
+    note: "Consumo de lote demo",
+    createdAt: "2026-06-10T09:00:00.000Z"
+  });
   await repositories.expenses.insert({ tenantId, date: "2026-06-02", category: "Servicios", amount: 68000 });
   await repositories.expenses.insert({ tenantId, date: "2026-06-05", category: "Herramientas", amount: 78000 });
 

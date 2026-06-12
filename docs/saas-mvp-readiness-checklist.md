@@ -48,7 +48,7 @@ Quedan fuera de este cierre:
 
 ## Evidencia De Verificacion
 
-- `corepack pnpm test`: 20 archivos de test, 78 tests passing.
+- `corepack pnpm test`: 21 archivos de test, 79 tests passing.
 - `corepack pnpm typecheck`: web, api y domain passing.
 - `corepack pnpm --filter @emprendedos/web build`: build Vite passing.
 - `Invoke-WebRequest -UseBasicParsing http://127.0.0.1:3001/v1/health`: HTTP 200 con `{"ok":true,"service":"emprendedos-api"}`.
