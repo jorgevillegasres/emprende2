@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { createDecision, listDecisions, updateDecisionStatus, type DashboardMetrics, type DecisionRecord } from "../api/client";
+import { buildGrowthDecisionPayload, buildPricingDecisionPayload, findMatchingDecision, type GrowthAction } from "./dashboardDecisions";
 import type { AppSection } from "./Shell";
 import { isNewBusiness, onboardingSteps } from "./onboarding";
 
@@ -51,28 +52,35 @@ export function Dashboard({ metrics, onSectionChange, token }: { metrics: Dashbo
       .catch(() => setDecisionMessage("No pudimos cargar tus decisiones."));
   }, [token]);
 
-  async function handleSaveDecision() {
-    if (!simulatedScenario) return;
+  async function handleCreateDecision(payload: ReturnType<typeof buildGrowthDecisionPayload>) {
+    const existing = findMatchingDecision(decisions, payload);
+    if (existing) {
+      setDecisionStatusFilter(existing.status);
+      setDecisionMessage(existing.status === "open" ? "Esta accion ya esta en tu plan." : `Esta accion ya existe como ${statusLabels[existing.status].toLowerCase()}.`);
+      return;
+    }
+
     setIsSavingDecision(true);
     setDecisionMessage("");
     try {
-      const created = await createDecision(
-        {
-          title: `${simulatedScenario.recommendation.title}: ${simulatedScenario.name}`,
-          detail: simulatedScenario.recommendation.detail,
-          source: "pricing",
-          priority: simulatedScenario.recommendation.action === "maintain" ? "low" : "high",
-          owner: decisionOwner.trim() || "owner"
-        },
-        token
-      );
+      const created = await createDecision(payload, token);
       setDecisions((current) => [created, ...current]);
+      setDecisionStatusFilter("open");
       setDecisionMessage("Decision guardada.");
     } catch {
       setDecisionMessage("No pudimos guardar la decision.");
     } finally {
       setIsSavingDecision(false);
     }
+  }
+
+  async function handleSavePricingDecision() {
+    if (!simulatedScenario) return;
+    await handleCreateDecision(buildPricingDecisionPayload(simulatedScenario, decisionOwner));
+  }
+
+  async function handleSaveGrowthDecision(action: GrowthAction) {
+    await handleCreateDecision(buildGrowthDecisionPayload(action, decisionOwner));
   }
 
   async function handleCompleteDecision(id: string) {
@@ -126,6 +134,14 @@ export function Dashboard({ metrics, onSectionChange, token }: { metrics: Dashbo
                 <span>{toneLabels[action.tone] ?? "Actuar"}</span>
                 <strong>{action.title}</strong>
                 <p>{action.detail}</p>
+                <button
+                  className="decision-plan-action"
+                  disabled={isSavingDecision || Boolean(findMatchingDecision(decisions, buildGrowthDecisionPayload(action, decisionOwner)))}
+                  onClick={() => void handleSaveGrowthDecision(action)}
+                  type="button"
+                >
+                  {findMatchingDecision(decisions, buildGrowthDecisionPayload(action, decisionOwner)) ? "En plan" : "Agregar al plan"}
+                </button>
               </article>
             ))}
           </div>
@@ -197,8 +213,13 @@ export function Dashboard({ metrics, onSectionChange, token }: { metrics: Dashbo
                 Responsable
                 <input maxLength={80} onChange={(event) => setDecisionOwner(event.target.value)} type="text" value={decisionOwner} />
               </label>
-              <button className="secondary-action inline-decision-action" disabled={isSavingDecision} onClick={handleSaveDecision} type="button">
-                {isSavingDecision ? "Guardando..." : "Guardar decision"}
+              <button
+                className="secondary-action inline-decision-action"
+                disabled={isSavingDecision || Boolean(findMatchingDecision(decisions, buildPricingDecisionPayload(simulatedScenario, decisionOwner)))}
+                onClick={() => void handleSavePricingDecision()}
+                type="button"
+              >
+                {isSavingDecision ? "Guardando..." : findMatchingDecision(decisions, buildPricingDecisionPayload(simulatedScenario, decisionOwner)) ? "Ya esta en el plan" : "Guardar decision"}
               </button>
               {decisionMessage ? <p className="decision-message">{decisionMessage}</p> : null}
             </div>
@@ -392,7 +413,12 @@ function calculateScenario(name: string, currentPrice: number, unitCost: number,
   };
 }
 
-function getScenarioRecommendation(priceDelta: number, priceDeltaPercent: number) {
+function getScenarioRecommendation(priceDelta: number, priceDeltaPercent: number): {
+  action: "raise-price" | "reduce-cost" | "maintain";
+  tone: "growth" | "focus" | "steady";
+  title: string;
+  detail: string;
+} {
   if (priceDelta <= 0) {
     return {
       action: "maintain",

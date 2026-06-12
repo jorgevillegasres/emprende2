@@ -497,6 +497,25 @@ h2 {
   line-height: 1.35;
 }
 
+.decision-plan-action {
+  width: fit-content;
+  align-self: end;
+  min-height: 34px;
+  border: 1px solid rgba(23, 33, 43, 0.12);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--ink);
+  padding: 6px 10px;
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 950;
+}
+
+.decision-plan-action:disabled {
+  cursor: default;
+  opacity: 0.68;
+}
+
 .metric-grid {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
