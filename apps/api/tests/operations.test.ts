@@ -2,6 +2,45 @@ import { describe, expect, it } from "vitest";
 import { buildApp } from "../src/app.js";
 
 describe("operational resource routes", () => {
+  it("creates, lists, and completes tenant-scoped decisions", async () => {
+    const app = buildApp();
+    const headers = { "x-emprendedos-tenant-id": "decision-tenant", "x-emprendedos-user-id": "decision-user" };
+
+    const createResponse = await app.inject({
+      method: "POST",
+      url: "/v1/decisions",
+      headers,
+      payload: {
+        title: "Subir precio de shampoo",
+        detail: "Necesita subir $ 2.500 para llegar al margen objetivo.",
+        source: "pricing",
+        priority: "high",
+        dueDate: "2026-06-20"
+      }
+    });
+    const created = createResponse.json();
+    const listResponse = await app.inject({ method: "GET", url: "/v1/decisions", headers });
+    const completeResponse = await app.inject({
+      method: "PATCH",
+      url: `/v1/decisions/${created.id}`,
+      headers,
+      payload: { status: "done" }
+    });
+
+    expect(createResponse.statusCode).toBe(201);
+    expect(created).toMatchObject({
+      id: expect.any(String),
+      title: "Subir precio de shampoo",
+      status: "open",
+      priority: "high",
+      dueDate: "2026-06-20"
+    });
+    expect(listResponse.statusCode).toBe(200);
+    expect(listResponse.json()).toEqual([expect.objectContaining({ id: created.id, tenantId: "decision-tenant" })]);
+    expect(completeResponse.statusCode).toBe(200);
+    expect(completeResponse.json()).toMatchObject({ id: created.id, status: "done" });
+  });
+
   it("lists and creates tenant-scoped products", async () => {
     const app = buildApp();
 

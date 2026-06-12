@@ -182,6 +182,26 @@ export const productionOrders = pgTable(
   })
 );
 
+export const decisions = pgTable(
+  "decisions",
+  {
+    id: uuid("id").primaryKey(),
+    tenantId: uuid("tenant_id").notNull().references(() => tenants.id),
+    title: text("title").notNull(),
+    detail: text("detail").notNull(),
+    source: text("source").notNull(),
+    priority: text("priority").notNull().default("medium"),
+    status: text("status").notNull().default("open"),
+    dueDate: date("due_date", { mode: "string" }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow()
+  },
+  (table) => ({
+    decisionsTenantStatusIdx: index("decisions_tenant_status_idx").on(table.tenantId, table.status),
+    decisionsTenantCreatedIdx: index("decisions_tenant_created_idx").on(table.tenantId, table.createdAt)
+  })
+);
+
 export const schema = {
   tenants,
   users,
@@ -193,7 +213,8 @@ export const schema = {
   inventoryMovements,
   recipes,
   recipeIngredients,
-  productionOrders
+  productionOrders,
+  decisions
 };
 
-export const databaseSchemaVersion = "2026-06-11-production-history";
+export const databaseSchemaVersion = "2026-06-11-decisions";

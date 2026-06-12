@@ -701,6 +701,17 @@ h2 {
   overflow-wrap: anywhere;
 }
 
+.inline-decision-action {
+  width: 100%;
+}
+
+.decision-message {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.84rem;
+  font-weight: 850;
+}
+
 .pricing-advice {
   display: grid;
   gap: 4px;
@@ -734,6 +745,65 @@ h2 {
 
 .advice-steady {
   border-left-color: var(--blue);
+}
+
+.decision-task-list {
+  display: grid;
+  gap: 10px;
+}
+
+.decision-task-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.decision-task-row:last-child {
+  border-bottom: 0;
+}
+
+.decision-task-row div {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+
+.decision-task-row span {
+  width: fit-content;
+  padding: 3px 7px;
+  border-radius: 999px;
+  background: #edf6f2;
+  color: var(--green);
+  font-size: 0.72rem;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.decision-task-row strong,
+.decision-task-row small {
+  overflow-wrap: anywhere;
+}
+
+.decision-task-row small {
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 800;
+  line-height: 1.35;
+}
+
+.decision-task-row button {
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 950;
+  padding: 8px 10px;
+  cursor: pointer;
 }
 
 .profitability-card {

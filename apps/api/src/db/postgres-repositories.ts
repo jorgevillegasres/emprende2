@@ -1,8 +1,8 @@
 import { randomUUID } from "node:crypto";
 import { and, desc, eq } from "drizzle-orm";
 import type { createPostgresClient } from "./client.js";
-import type { AuthIdentityRecord, ExpenseRecord, InventoryMovementRecord, ProductRecord, ProductionOrderRecord, RecipeRecord, Repositories, SaleRecord, SupplyRecord } from "./repositories.js";
-import { expenses, inventoryMovements, memberships, productionOrders, products, recipeIngredients, recipes, sales, supplies, tenants, users } from "./schema.js";
+import type { AuthIdentityRecord, DecisionRecord, DecisionStatus, ExpenseRecord, InventoryMovementRecord, ProductRecord, ProductionOrderRecord, RecipeRecord, Repositories, SaleRecord, SupplyRecord } from "./repositories.js";
+import { decisions, expenses, inventoryMovements, memberships, productionOrders, products, recipeIngredients, recipes, sales, supplies, tenants, users } from "./schema.js";
 
 type Db = ReturnType<typeof createPostgresClient>["db"];
 
@@ -238,6 +238,36 @@ export function createPostgresRepositories(db: Db): Repositories {
         const rows = await db.select().from(productionOrders).where(eq(productionOrders.tenantId, tenantId)).orderBy(desc(productionOrders.createdAt));
         return rows.map(toProductionOrderRecord);
       }
+    },
+    decisions: {
+      async insert(record: DecisionRecord) {
+        const [created] = await db
+          .insert(decisions)
+          .values({
+            id: record.id,
+            tenantId: record.tenantId,
+            title: record.title,
+            detail: record.detail,
+            source: record.source,
+            priority: record.priority,
+            status: record.status,
+            dueDate: record.dueDate ?? null
+          })
+          .returning();
+        return toDecisionRecord(created);
+      },
+      async listByTenant(tenantId: string) {
+        const rows = await db.select().from(decisions).where(eq(decisions.tenantId, tenantId)).orderBy(desc(decisions.createdAt));
+        return rows.map(toDecisionRecord);
+      },
+      async updateStatus(tenantId: string, id: string, status: DecisionStatus) {
+        const [updated] = await db
+          .update(decisions)
+          .set({ status, updatedAt: new Date() })
+          .where(and(eq(decisions.tenantId, tenantId), eq(decisions.id, id)))
+          .returning();
+        return updated ? toDecisionRecord(updated) : null;
+      }
     }
   };
 }
@@ -334,6 +364,31 @@ function toProductionOrderRecord(row: typeof productionOrders.$inferSelect): Pro
     note: row.note,
     createdAt: row.createdAt.toISOString()
   };
+}
+
+function toDecisionRecord(row: typeof decisions.$inferSelect): DecisionRecord {
+  return {
+    tenantId: row.tenantId,
+    id: row.id,
+    title: row.title,
+    detail: row.detail,
+    source: row.source,
+    priority: toDecisionPriority(row.priority),
+    status: toDecisionStatus(row.status),
+    dueDate: row.dueDate,
+    createdAt: row.createdAt.toISOString(),
+    updatedAt: row.updatedAt.toISOString()
+  };
+}
+
+function toDecisionPriority(value: string): DecisionRecord["priority"] {
+  if (value === "low" || value === "high") return value;
+  return "medium";
+}
+
+function toDecisionStatus(value: string): DecisionRecord["status"] {
+  if (value === "done" || value === "dismissed") return value;
+  return "open";
 }
 
 function toInventoryItemType(value: string): InventoryMovementRecord["itemType"] {

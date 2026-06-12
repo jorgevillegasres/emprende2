@@ -8,6 +8,7 @@ import {
   getProductionOrderPath,
   getProductionOrdersPath,
   getRecipesPath,
+  getDecisionsPath,
   getRegisterPath
 } from "./client";
 
@@ -68,5 +69,11 @@ describe("getProductionFromRecipePath", () => {
 describe("getRecipesPath", () => {
   it("targets the recipes endpoint", () => {
     expect(getRecipesPath()).toBe("/v1/recipes");
+  });
+});
+
+describe("getDecisionsPath", () => {
+  it("targets the decisions endpoint", () => {
+    expect(getDecisionsPath()).toBe("/v1/decisions");
   });
 });

@@ -1,5 +1,5 @@
-import { useMemo, useState } from "react";
-import type { DashboardMetrics } from "../api/client";
+import { useEffect, useMemo, useState } from "react";
+import { createDecision, listDecisions, updateDecisionStatus, type DashboardMetrics, type DecisionRecord } from "../api/client";
 import type { AppSection } from "./Shell";
 import { isNewBusiness, onboardingSteps } from "./onboarding";
 
@@ -13,9 +13,12 @@ function money(value: number) {
   return new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 }).format(value);
 }
 
-export function Dashboard({ metrics, onSectionChange }: { metrics: DashboardMetrics; onSectionChange?: (section: AppSection) => void }) {
+export function Dashboard({ metrics, onSectionChange, token }: { metrics: DashboardMetrics; onSectionChange?: (section: AppSection) => void; token: string }) {
   const [targetMargin, setTargetMargin] = useState(60);
   const [selectedProductName, setSelectedProductName] = useState(metrics.priceScenarios[0]?.name ?? "");
+  const [decisions, setDecisions] = useState<DecisionRecord[]>([]);
+  const [decisionMessage, setDecisionMessage] = useState("");
+  const [isSavingDecision, setIsSavingDecision] = useState(false);
   const score = metrics.businessHealthScore ?? getScore(metrics);
   const circumference = 389.56;
   const offset = circumference - (score / 100) * circumference;
@@ -27,6 +30,45 @@ export function Dashboard({ metrics, onSectionChange }: { metrics: DashboardMetr
     () => (selectedScenario ? calculateScenario(selectedScenario.name, selectedScenario.currentPrice, selectedScenario.unitCost, targetMargin) : null),
     [selectedScenario, targetMargin]
   );
+  const openDecisions = decisions.filter((decision) => decision.status === "open");
+
+  useEffect(() => {
+    listDecisions(token)
+      .then(setDecisions)
+      .catch(() => setDecisionMessage("No pudimos cargar tus decisiones."));
+  }, [token]);
+
+  async function handleSaveDecision() {
+    if (!simulatedScenario) return;
+    setIsSavingDecision(true);
+    setDecisionMessage("");
+    try {
+      const created = await createDecision(
+        {
+          title: `${simulatedScenario.recommendation.title}: ${simulatedScenario.name}`,
+          detail: simulatedScenario.recommendation.detail,
+          source: "pricing",
+          priority: simulatedScenario.recommendation.action === "maintain" ? "low" : "high"
+        },
+        token
+      );
+      setDecisions((current) => [created, ...current]);
+      setDecisionMessage("Decision guardada.");
+    } catch {
+      setDecisionMessage("No pudimos guardar la decision.");
+    } finally {
+      setIsSavingDecision(false);
+    }
+  }
+
+  async function handleCompleteDecision(id: string) {
+    try {
+      const updated = await updateDecisionStatus(id, "done", token);
+      setDecisions((current) => current.map((decision) => (decision.id === id ? updated : decision)));
+    } catch {
+      setDecisionMessage("No pudimos actualizar la decision.");
+    }
+  }
 
   return (
     <main>
@@ -137,6 +179,10 @@ export function Dashboard({ metrics, onSectionChange }: { metrics: DashboardMetr
                 <span>{simulatedScenario.recommendation.title}</span>
                 <p>{simulatedScenario.recommendation.detail}</p>
               </div>
+              <button className="secondary-action inline-decision-action" disabled={isSavingDecision} onClick={handleSaveDecision} type="button">
+                {isSavingDecision ? "Guardando..." : "Guardar decision"}
+              </button>
+              {decisionMessage ? <p className="decision-message">{decisionMessage}</p> : null}
             </div>
           ) : (
             <p className="empty-note">Crea productos con costo y precio para simular margen.</p>
@@ -213,6 +259,31 @@ export function Dashboard({ metrics, onSectionChange }: { metrics: DashboardMetr
               ))
             ) : (
               <p className="empty-note">Registra ventas para ver margen, utilidad y productos lideres.</p>
+            )}
+          </div>
+        </article>
+
+        <article className="card list-card">
+          <div className="card-head">
+            <div>
+              <p className="eyebrow">Decisiones</p>
+              <h2>Acciones abiertas</h2>
+            </div>
+          </div>
+          <div className="decision-task-list">
+            {openDecisions.length > 0 ? (
+              openDecisions.slice(0, 4).map((decision) => (
+                <div className="decision-task-row" key={decision.id}>
+                  <div>
+                    <span>{decision.priority}</span>
+                    <strong>{decision.title}</strong>
+                    <small>{decision.detail}</small>
+                  </div>
+                  <button onClick={() => void handleCompleteDecision(decision.id)} type="button">Hecha</button>
+                </div>
+              ))
+            ) : (
+              <p className="empty-note">Guarda una recomendacion para convertirla en accion.</p>
             )}
           </div>
         </article>

@@ -86,6 +86,18 @@ const recipeSchema = z
     path: ["ingredients"]
   });
 
+const decisionSchema = z.object({
+  title: z.string().min(1).max(120),
+  detail: z.string().min(1).max(300),
+  source: z.string().min(1).max(40),
+  priority: z.enum(["low", "medium", "high"]).default("medium"),
+  dueDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional()
+});
+
+const decisionStatusSchema = z.object({
+  status: z.enum(["open", "done", "dismissed"])
+});
+
 type ExecutableProductionOrder = z.infer<typeof productionOrderSchema> & {
   recipeId?: string | null;
 };
@@ -231,6 +243,32 @@ export async function registerOperationRoutes(app: FastifyInstance) {
 
   app.get("/v1/inventory-movements", async (request) => repositories.inventoryMovements.listByTenant(resolveRequestContext(request.headers).tenantId));
   app.get("/v1/production-orders", async (request) => repositories.productionOrders.listByTenant(resolveRequestContext(request.headers).tenantId));
+  app.get("/v1/decisions", async (request) => repositories.decisions.listByTenant(resolveRequestContext(request.headers).tenantId));
+  app.post("/v1/decisions", async (request, reply) => {
+    const context = resolveRequestContext(request.headers);
+    const parsed = decisionSchema.safeParse(request.body);
+    if (!parsed.success) return reply.code(400).send({ error: "Invalid decision payload", issues: parsed.error.issues });
+    const created = await repositories.decisions.insert({
+      id: randomUUID(),
+      tenantId: context.tenantId,
+      title: parsed.data.title,
+      detail: parsed.data.detail,
+      source: parsed.data.source,
+      priority: parsed.data.priority,
+      status: "open",
+      dueDate: parsed.data.dueDate ?? null
+    });
+    return reply.code(201).send(created);
+  });
+  app.patch("/v1/decisions/:id", async (request, reply) => {
+    const context = resolveRequestContext(request.headers);
+    const params = z.object({ id: z.string().min(1) }).parse(request.params);
+    const parsed = decisionStatusSchema.safeParse(request.body);
+    if (!parsed.success) return reply.code(400).send({ error: "Invalid decision status payload", issues: parsed.error.issues });
+    const updated = await repositories.decisions.updateStatus(context.tenantId, params.id, parsed.data.status);
+    if (!updated) return reply.code(404).send({ error: "Decision not found" });
+    return updated;
+  });
 
   app.get("/v1/recipes", async (request) => repositories.recipes.listByTenant(resolveRequestContext(request.headers).tenantId));
   app.post("/v1/recipes", async (request, reply) => {

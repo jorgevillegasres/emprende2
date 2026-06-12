@@ -174,6 +174,30 @@ export type RecipePayload = {
   note?: string;
 };
 
+export type DecisionStatus = "open" | "done" | "dismissed";
+export type DecisionPriority = "low" | "medium" | "high";
+
+export type DecisionRecord = {
+  id: string;
+  tenantId?: string;
+  title: string;
+  detail: string;
+  source: string;
+  priority: DecisionPriority;
+  status: DecisionStatus;
+  dueDate?: string | null;
+  createdAt?: string;
+  updatedAt?: string;
+};
+
+export type DecisionPayload = {
+  title: string;
+  detail: string;
+  source: string;
+  priority: DecisionPriority;
+  dueDate?: string;
+};
+
 export function createAuthHeaders(token: string | null | undefined): Record<string, string> {
   if (!token) return {};
   return { Authorization: `Bearer ${token}` };
@@ -209,6 +233,10 @@ export function getProductionFromRecipePath() {
 
 export function getRecipesPath() {
   return "/v1/recipes";
+}
+
+export function getDecisionsPath() {
+  return "/v1/decisions";
 }
 
 export async function login(email: string, password: string): Promise<AuthSession> {
@@ -296,6 +324,18 @@ export async function createRecipe(payload: RecipePayload, token?: string | null
   return postJson(getRecipesPath(), payload, token);
 }
 
+export async function listDecisions(token?: string | null): Promise<DecisionRecord[]> {
+  return getJson(getDecisionsPath(), token);
+}
+
+export async function createDecision(payload: DecisionPayload, token?: string | null): Promise<DecisionRecord> {
+  return postJson(getDecisionsPath(), payload, token);
+}
+
+export async function updateDecisionStatus(id: string, status: DecisionStatus, token?: string | null): Promise<DecisionRecord> {
+  return patchJson(`${getDecisionsPath()}/${id}`, { status }, token);
+}
+
 async function getJson<T>(path: string, token?: string | null): Promise<T> {
   const response = await fetch(`${API_BASE_URL}${path}`, {
     headers: createAuthHeaders(token)
@@ -311,5 +351,15 @@ async function postJson<T>(path: string, payload: unknown, token?: string | null
     body: JSON.stringify(payload)
   });
   if (!response.ok) throw new Error("No se pudo guardar el registro");
+  return response.json();
+}
+
+async function patchJson<T>(path: string, payload: unknown, token?: string | null): Promise<T> {
+  const response = await fetch(`${API_BASE_URL}${path}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", ...createAuthHeaders(token) },
+    body: JSON.stringify(payload)
+  });
+  if (!response.ok) throw new Error("No se pudo actualizar el registro");
   return response.json();
 }

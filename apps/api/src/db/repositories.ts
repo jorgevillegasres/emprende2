@@ -44,6 +44,19 @@ export type ProductionOrderRecord = TenantRecord & {
   note?: string;
   createdAt?: string;
 };
+export type DecisionStatus = "open" | "done" | "dismissed";
+export type DecisionPriority = "low" | "medium" | "high";
+export type DecisionRecord = TenantRecord & {
+  id: string;
+  title: string;
+  detail: string;
+  source: string;
+  priority: DecisionPriority;
+  status: DecisionStatus;
+  dueDate?: string | null;
+  createdAt?: string;
+  updatedAt?: string;
+};
 
 export type AuthIdentityRecord = {
   userId: string;
@@ -85,6 +98,9 @@ export type RecipeRepository = TenantRepository<RecipeRecord> & {
   findByTenantAndId(tenantId: string, id: string): Promise<RecipeRecord | null>;
 };
 export type ProductionOrderRepository = TenantRepository<ProductionOrderRecord>;
+export type DecisionRepository = TenantRepository<DecisionRecord> & {
+  updateStatus(tenantId: string, id: string, status: DecisionStatus): Promise<DecisionRecord | null>;
+};
 
 export type Repositories = {
   auth: AuthRepository;
@@ -95,6 +111,7 @@ export type Repositories = {
   inventoryMovements: TenantRepository<InventoryMovementRecord>;
   recipes: RecipeRepository;
   productionOrders: ProductionOrderRepository;
+  decisions: DecisionRepository;
 };
 
 export function createInMemoryRepositories(): Repositories {
@@ -105,6 +122,7 @@ export function createInMemoryRepositories(): Repositories {
   const inventoryMovements: InventoryMovementRecord[] = [];
   const recipes: RecipeRecord[] = [];
   const productionOrders: ProductionOrderRecord[] = [];
+  const decisions: DecisionRecord[] = [];
   const authIdentities: AuthIdentityRecord[] = [];
 
   return {
@@ -115,6 +133,7 @@ export function createInMemoryRepositories(): Repositories {
     inventoryMovements: createTenantRepository(inventoryMovements),
     recipes: createRecipeRepository(recipes),
     productionOrders: createTenantRepository(productionOrders),
+    decisions: createDecisionRepository(decisions),
     products: createProductRepository(products)
   };
 }
@@ -151,6 +170,27 @@ function createRecipeRepository(records: RecipeRecord[]): RecipeRepository {
         ...record,
         ingredients: record.ingredients.map((ingredient) => ({ ...ingredient }))
       };
+    }
+  };
+}
+
+function createDecisionRepository(records: DecisionRecord[]): DecisionRepository {
+  return {
+    async insert(record: DecisionRecord) {
+      const now = new Date().toISOString();
+      const stored = { ...record, createdAt: record.createdAt ?? now, updatedAt: record.updatedAt ?? now };
+      records.push(stored);
+      return stored;
+    },
+    async listByTenant(tenantId: string) {
+      return records.filter((record) => record.tenantId === tenantId).sort((a, b) => (b.createdAt ?? "").localeCompare(a.createdAt ?? ""));
+    },
+    async updateStatus(tenantId: string, id: string, status: DecisionStatus) {
+      const record = records.find((decision) => decision.tenantId === tenantId && decision.id === id);
+      if (!record) return null;
+      record.status = status;
+      record.updatedAt = new Date().toISOString();
+      return record;
     }
   };
 }
