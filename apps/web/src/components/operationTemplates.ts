@@ -6,7 +6,9 @@ export type OperationTemplate = {
   values: Record<string, string | number>;
 };
 
-const templates: Partial<Record<Exclude<AppSection, "dashboard">, OperationTemplate[]>> = {
+type TemplateSection = Exclude<AppSection, "dashboard" | "plan">;
+
+const templates: Partial<Record<TemplateSection, OperationTemplate[]>> = {
   products: [
     {
       label: "Producto listo",
@@ -84,6 +86,6 @@ const templates: Partial<Record<Exclude<AppSection, "dashboard">, OperationTempl
   sales: []
 };
 
-export function getTemplatesForSection(section: Exclude<AppSection, "dashboard">) {
+export function getTemplatesForSection(section: TemplateSection) {
   return templates[section] ?? [];
 }

@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 
-export type AppSection = "dashboard" | "products" | "supplies" | "sales" | "expenses" | "recipes";
+export type AppSection = "dashboard" | "products" | "supplies" | "sales" | "expenses" | "recipes" | "plan";
 
 const navItems: Array<{ section: AppSection; label: string }> = [
   { section: "dashboard", label: "Mi negocio" },
@@ -8,7 +8,8 @@ const navItems: Array<{ section: AppSection; label: string }> = [
   { section: "supplies", label: "Inventario" },
   { section: "sales", label: "Ventas" },
   { section: "expenses", label: "Gastos" },
-  { section: "recipes", label: "Recetas" }
+  { section: "recipes", label: "Recetas" },
+  { section: "plan", label: "Plan" }
 ];
 
 export function Shell({

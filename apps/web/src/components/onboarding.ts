@@ -4,7 +4,7 @@ import type { DashboardMetrics } from "../api/client";
 export type OnboardingStep = {
   title: string;
   detail: string;
-  section: Exclude<AppSection, "dashboard">;
+  section: Exclude<AppSection, "dashboard" | "plan">;
 };
 
 export const onboardingSteps: OnboardingStep[] = [

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { getCurrentUser, getDashboardMetrics, login, registerOwner, type AuthSession, type DashboardMetrics, type RegisterPayload } from "./api/client";
+import { ActionPlan } from "./components/ActionPlanView";
 import { Dashboard } from "./components/Dashboard";
 import { Login } from "./components/Login";
 import { Operations } from "./components/Operations";
@@ -105,6 +106,8 @@ export function App() {
         </>
       ) : activeSection === "recipes" ? (
         <Recipes token={authSession.token} />
+      ) : activeSection === "plan" ? (
+        <ActionPlan token={authSession.token} />
       ) : (
         <Operations section={activeSection} token={authSession.token} />
       )}
