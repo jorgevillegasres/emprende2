@@ -4,9 +4,10 @@
 
 1. Copy `.env.example` to `.env`.
 2. Run `corepack pnpm install`.
-3. Run `corepack pnpm --filter @emprendedos/api dev`.
-4. Run `corepack pnpm --filter @emprendedos/web dev -- --port 5173`.
-5. Open `http://127.0.0.1:5173`.
+3. Keep `DATA_STORE=memory` for the fastest demo, or switch to `DATA_STORE=postgres` after following the Local PostgreSQL section.
+4. Run `corepack pnpm --filter @emprendedos/api dev`.
+5. Run `corepack pnpm --filter @emprendedos/web dev -- --port 5173`.
+6. Open `http://127.0.0.1:5173`.
 
 ## Data Store Modes
 
@@ -49,11 +50,23 @@ $env:DATA_STORE="postgres"; corepack pnpm --filter @emprendedos/api dev
 
 The current automated test suite uses memory mode so it can run without a local PostgreSQL service.
 
+## Shared Demo Instance
+
+Use this mode when showing Emprendedos to another entrepreneur or potential partner:
+
+1. Set `DATA_STORE=postgres`.
+2. Set a non-demo `AUTH_SECRET`.
+3. Keep `ALLOW_DEV_REQUEST_CONTEXT=false`.
+4. Run `corepack pnpm db:migrate`.
+5. Run `corepack pnpm db:seed`.
+6. Start the API and web app with `VITE_API_BASE_URL` pointing to the API URL.
+7. Verify login, dashboard, inventory, recipes and CSV exports before sharing the URL.
+
+The seed gives the demo tenant enough sales, expenses, products, supplies, recipes and production history to tell a complete operating story.
+
 ## Verification
 
-- `corepack pnpm test`
-- `corepack pnpm typecheck`
-- `corepack pnpm --filter @emprendedos/web build`
+- `corepack pnpm verify:saas`
 - `Invoke-WebRequest -UseBasicParsing http://127.0.0.1:3001/v1/health`
 - `Invoke-WebRequest -UseBasicParsing http://127.0.0.1:3001/v1/dashboard`
 
@@ -103,9 +116,7 @@ Use `docs/demo-flow.md` as the canonical demo script. The demo tenant should alw
 Before calling a build SaaS MVP ready, run:
 
 ```bash
-corepack pnpm test
-corepack pnpm typecheck
-corepack pnpm --filter @emprendedos/web build
+corepack pnpm verify:saas
 ```
 
 Then manually verify:

@@ -12,3 +12,16 @@ Emprendedos is a SaaS product for entrepreneurs who produce and sell physical go
 ## Run SaaS Foundation
 
 See `docs/saas-foundation-runbook.md`.
+
+Fast local verification:
+
+```bash
+corepack pnpm verify:saas
+```
+
+Fast local demo:
+
+```bash
+corepack pnpm --filter @emprendedos/api dev
+corepack pnpm --filter @emprendedos/web dev -- --port 5173
+```
