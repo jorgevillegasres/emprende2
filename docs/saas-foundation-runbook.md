@@ -64,9 +64,12 @@ Use this mode when showing Emprendedos to another entrepreneur or potential part
 
 The seed gives the demo tenant enough sales, expenses, products, supplies, recipes and production history to tell a complete operating story.
 
+For the hosted private demo path, use `docs/deployment-render-vercel.md`.
+
 ## Verification
 
 - `corepack pnpm verify:saas`
+- `corepack pnpm --filter @emprendedos/api build`
 - `Invoke-WebRequest -UseBasicParsing http://127.0.0.1:3001/v1/health`
 - `Invoke-WebRequest -UseBasicParsing http://127.0.0.1:3001/v1/dashboard`
 

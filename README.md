@@ -13,6 +13,10 @@ Emprendedos is a SaaS product for entrepreneurs who produce and sell physical go
 
 See `docs/saas-foundation-runbook.md`.
 
+## Deploy Private Demo
+
+Use `docs/deployment-render-vercel.md` for the approved Render API/PostgreSQL + Vercel web path.
+
 Fast local verification:
 
 ```bash

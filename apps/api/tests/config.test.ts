@@ -8,7 +8,14 @@ describe("getConfig", () => {
     const config = getConfig({});
 
     expect(config.dataStore).toBe("memory");
+    expect(config.host).toBe("127.0.0.1");
     expect(config.databaseUrl).toBe("postgres://postgres:postgres@127.0.0.1:5432/emprendedos");
+  });
+
+  it("uses an explicit API host when provided by the deployment platform", () => {
+    const config = getConfig({ API_HOST: "0.0.0.0" });
+
+    expect(config.host).toBe("0.0.0.0");
   });
 
   it("uses postgres data store when requested", () => {
@@ -27,6 +34,7 @@ describe("getConfig", () => {
     expect(envExample).toContain("DATA_STORE=memory");
     expect(envExample).toContain("DATABASE_URL=postgres://postgres:postgres@127.0.0.1:5432/emprendedos");
     expect(envExample).toContain("API_PORT=3001");
+    expect(envExample).toContain("API_HOST=127.0.0.1");
     expect(envExample).toContain("WEB_ORIGIN=http://127.0.0.1:5173");
     expect(envExample).toContain("VITE_API_BASE_URL=http://127.0.0.1:3001");
     expect(envExample).toContain("AUTH_SECRET=");

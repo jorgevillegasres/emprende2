@@ -48,9 +48,10 @@ Quedan fuera de este cierre:
 
 ## Evidencia De Verificacion
 
-- `corepack pnpm test`: 23 archivos de test, 82 tests passing.
+- `corepack pnpm test`: 23 archivos de test, 83 tests passing.
 - `corepack pnpm typecheck`: web, api y domain passing.
 - `corepack pnpm --filter @emprendedos/web build`: build Vite passing.
+- `corepack pnpm --filter @emprendedos/api build`: API TypeScript build passing.
 - `Invoke-WebRequest -UseBasicParsing http://127.0.0.1:3001/v1/health`: HTTP 200 con `{"ok":true,"service":"emprendedos-api"}`.
 - Browser QA desktop: dashboard, Ventas, Inventario y Recetas sin paneles de error; exportaciones CSV visibles segun estado de datos.
 - Browser QA mobile `390x844`: dashboard, Ventas, Inventario y Recetas sin paneles de error ni errores de consola; la navegacion horizontal movil conserva overflow esperado.
