@@ -11,6 +11,16 @@ export type DashboardMetrics = {
   growthActions: Array<{ title: string; detail: string; tone: string }>;
   lowStockItems: Array<{ name: string; type: string; stock: number; minStock: number; unit?: string }>;
   topProductsByRevenue: Array<{ name: string; quantity: number; revenue: number; grossProfit: number }>;
+  productProfitability: Array<{
+    productId: string;
+    name: string;
+    quantity: number;
+    revenue: number;
+    cost: number;
+    grossProfit: number;
+    marginPercent: number;
+    unitProfit: number;
+  }>;
 };
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://127.0.0.1:3001";

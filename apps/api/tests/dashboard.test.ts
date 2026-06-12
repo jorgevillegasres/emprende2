@@ -11,5 +11,12 @@ describe("dashboard endpoint", () => {
     expect(body.monthlyRevenue).toBeGreaterThan(0);
     expect(body.growthActions.length).toBeGreaterThan(0);
     expect(body.lowStockItems.length).toBeGreaterThan(0);
+    expect(body.productProfitability[0]).toMatchObject({
+      name: expect.any(String),
+      revenue: expect.any(Number),
+      grossProfit: expect.any(Number),
+      marginPercent: expect.any(Number),
+      unitProfit: expect.any(Number)
+    });
   });
 });

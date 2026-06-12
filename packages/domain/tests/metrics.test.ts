@@ -22,6 +22,28 @@ describe("calculateDashboardMetrics", () => {
     expect(result.monthlyRevenue).toBe(27000);
     expect(result.averageMarginPercent).toBe(51.85);
     expect(result.weeklyRevenue.map((week) => week.revenue)).toEqual([18000, 9000, 0, 0, 0]);
+    expect(result.productProfitability).toEqual([
+      {
+        productId: "soap",
+        name: "Jabon",
+        quantity: 2,
+        revenue: 18000,
+        cost: 6000,
+        grossProfit: 12000,
+        marginPercent: 66.67,
+        unitProfit: 6000
+      },
+      {
+        productId: "balm",
+        name: "Balsamo",
+        quantity: 1,
+        revenue: 9000,
+        cost: 7000,
+        grossProfit: 2000,
+        marginPercent: 22.22,
+        unitProfit: 2000
+      }
+    ]);
     expect(result.growthActions).toHaveLength(3);
   });
 });

@@ -60,6 +60,7 @@ export function calculateDashboardMetrics(state: DashboardState, today: string) 
   const weeklyRevenue = getWeeklyRevenue(monthlySales, today);
   const expensesByCategory = getExpensesByCategory(monthlyExpensesList);
   const topProductsByRevenue = getTopProductsByRevenue(monthlySales, state.products);
+  const productProfitability = getProductProfitability(monthlySales, state.products);
   const marginLeaders = state.products
     .map((product) => ({
       ...product,
@@ -81,6 +82,7 @@ export function calculateDashboardMetrics(state: DashboardState, today: string) 
     weeklyRevenue,
     expensesByCategory,
     topProductsByRevenue,
+    productProfitability,
     marginLeaders,
     growthActions: getGrowthActions(lowStockItems, marginLeaders, expensesByCategory, topProductsByRevenue, averageMarginPercent)
   };
@@ -123,6 +125,41 @@ function getTopProductsByRevenue(sales: Sale[], products: Product[]) {
     totals.set(sale.productId, current);
   }
   return [...totals.values()].sort((a, b) => b.revenue - a.revenue).slice(0, 5);
+}
+
+function getProductProfitability(sales: Sale[], products: Product[]) {
+  const productNames = new Map(products.map((product) => [product.id, product.name]));
+  const totals = new Map<
+    string,
+    { productId: string; name: string; quantity: number; revenue: number; cost: number; grossProfit: number }
+  >();
+  for (const sale of sales) {
+    const current = totals.get(sale.productId) ?? {
+      productId: sale.productId,
+      name: productNames.get(sale.productId) ?? sale.productId,
+      quantity: 0,
+      revenue: 0,
+      cost: 0,
+      grossProfit: 0
+    };
+    current.quantity += sale.quantity;
+    current.revenue += sale.revenue;
+    current.cost += sale.cost;
+    current.grossProfit += sale.grossProfit;
+    totals.set(sale.productId, current);
+  }
+
+  return [...totals.values()]
+    .map((product) => ({
+      ...product,
+      revenue: round(product.revenue),
+      cost: round(product.cost),
+      grossProfit: round(product.grossProfit),
+      marginPercent: product.revenue === 0 ? 0 : round((product.grossProfit / product.revenue) * 100),
+      unitProfit: product.quantity === 0 ? 0 : round(product.grossProfit / product.quantity)
+    }))
+    .sort((a, b) => b.grossProfit - a.grossProfit)
+    .slice(0, 5);
 }
 
 function getGrowthActions(

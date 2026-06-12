@@ -14,7 +14,8 @@ const emptyMetrics: DashboardMetrics = {
   expensesByCategory: [],
   growthActions: [],
   lowStockItems: [],
-  topProductsByRevenue: []
+  topProductsByRevenue: [],
+  productProfitability: []
 };
 
 describe("isNewBusiness", () => {

@@ -18,6 +18,7 @@ export function Dashboard({ metrics, onSectionChange }: { metrics: DashboardMetr
   const offset = circumference - (score / 100) * circumference;
   const weeklyMax = Math.max(...metrics.weeklyRevenue.map((week) => week.revenue), 1);
   const expenseMax = Math.max(...metrics.expensesByCategory.map((expense) => expense.amount), 1);
+  const profitMax = Math.max(...metrics.productProfitability.map((product) => product.grossProfit), 1);
 
   return (
     <main>
@@ -115,6 +116,38 @@ export function Dashboard({ metrics, onSectionChange }: { metrics: DashboardMetr
                 </div>
               </div>
             ))}
+          </div>
+        </article>
+
+        <article className="card profitability-card">
+          <div className="card-head">
+            <div>
+              <p className="eyebrow">Rentabilidad</p>
+              <h2>Productos que mas dejan</h2>
+            </div>
+          </div>
+          <div className="profitability-list">
+            {metrics.productProfitability.length > 0 ? (
+              metrics.productProfitability.map((product) => (
+                <div className="profitability-row" key={product.productId}>
+                  <div className="profitability-copy">
+                    <strong>{product.name}</strong>
+                    <span>
+                      {product.marginPercent}% margen · {money(product.unitProfit)} por unidad
+                    </span>
+                  </div>
+                  <div className="profitability-numbers">
+                    <strong>{money(product.grossProfit)}</strong>
+                    <span>{money(product.revenue)} ventas</span>
+                  </div>
+                  <div className="bar-track">
+                    <span className="bar-fill profit-fill" style={{ width: `${Math.max((product.grossProfit / profitMax) * 100, 8)}%` }} />
+                  </div>
+                </div>
+              ))
+            ) : (
+              <p className="empty-note">Registra ventas para ver margen, utilidad y productos lideres.</p>
+            )}
           </div>
         </article>
 
