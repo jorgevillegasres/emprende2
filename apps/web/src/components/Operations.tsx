@@ -110,7 +110,7 @@ const resourceConfig = {
   toCells: (row: never) => Array<string | number>;
 }>;
 
-export function Operations({ section, token }: { section: OperationSection; token: string }) {
+export function Operations({ focusSignal = 0, section, token }: { focusSignal?: number; section: OperationSection; token: string }) {
   const config = resourceConfig[section];
   const templates = getTemplatesForSection(section);
   const [rows, setRows] = useState<Row[]>([]);
@@ -236,6 +236,16 @@ export function Operations({ section, token }: { section: OperationSection; toke
       isMounted = false;
     };
   }, [config, section, token]);
+
+  useEffect(() => {
+    if (section !== "sales" || focusSignal === 0) return;
+
+    formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    const firstInput = formRef.current?.querySelector("input, select");
+    if (firstInput instanceof HTMLInputElement || firstInput instanceof HTMLSelectElement) {
+      firstInput.focus();
+    }
+  }, [focusSignal, productOptions.length, section]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();

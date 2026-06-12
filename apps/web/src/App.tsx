@@ -17,6 +17,7 @@ export function App() {
   const [isAuthLoading, setIsAuthLoading] = useState(true);
   const [isLoginLoading, setIsLoginLoading] = useState(false);
   const [activeSection, setActiveSection] = useState<AppSection>("dashboard");
+  const [salesFocusSignal, setSalesFocusSignal] = useState(0);
 
   useEffect(() => {
     const storedSession = readStoredSession();
@@ -88,6 +89,11 @@ export function App() {
     setActiveSection("dashboard");
   }
 
+  function handlePrimaryAction() {
+    setActiveSection("sales");
+    setSalesFocusSignal((current) => current + 1);
+  }
+
   if (isAuthLoading) {
     return <div className="system-panel boot-panel">Preparando tu espacio Emprendedos...</div>;
   }
@@ -97,7 +103,7 @@ export function App() {
   }
 
   return (
-    <Shell activeSection={activeSection} onLogout={handleLogout} onSectionChange={setActiveSection} userLabel={authSession.role}>
+    <Shell activeSection={activeSection} onLogout={handleLogout} onPrimaryAction={handlePrimaryAction} onSectionChange={setActiveSection} userLabel={authSession.role}>
       {activeSection === "dashboard" ? (
         <>
           {error ? <div className="system-panel">{error}</div> : null}
@@ -109,7 +115,7 @@ export function App() {
       ) : activeSection === "plan" ? (
         <ActionPlan token={authSession.token} />
       ) : (
-        <Operations section={activeSection} token={authSession.token} />
+        <Operations focusSignal={activeSection === "sales" ? salesFocusSignal : 0} section={activeSection} token={authSession.token} />
       )}
     </Shell>
   );

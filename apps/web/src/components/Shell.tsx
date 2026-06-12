@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { getPrimaryActionSection } from "./shellActions";
 
 export type AppSection = "dashboard" | "products" | "supplies" | "sales" | "expenses" | "recipes" | "plan";
 
@@ -14,12 +15,14 @@ const navItems: Array<{ section: AppSection; label: string }> = [
 
 export function Shell({
   activeSection,
+  onPrimaryAction,
   onLogout,
   onSectionChange,
   userLabel,
   children
 }: {
   activeSection: AppSection;
+  onPrimaryAction?: () => void;
   onLogout?: () => void;
   onSectionChange: (section: AppSection) => void;
   userLabel?: string;
@@ -52,7 +55,9 @@ export function Shell({
         <div className="top-actions">
           <span className="today-pill">Junio 2026</span>
           {userLabel ? <span className="user-pill">{userLabel}</span> : null}
-          <button className="primary-action">Registrar venta</button>
+          <button className="primary-action" onClick={onPrimaryAction ?? (() => onSectionChange(getPrimaryActionSection()))} type="button">
+            Registrar venta
+          </button>
           {onLogout ? (
             <button className="secondary-action" onClick={onLogout} type="button">
               Salir
