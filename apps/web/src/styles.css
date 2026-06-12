@@ -300,9 +300,29 @@ button {
   line-height: 1.48;
 }
 
+.onboarding-progress {
+  width: min(420px, 100%);
+  height: 10px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(23, 33, 43, 0.1);
+}
+
+.onboarding-progress span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--green);
+}
+
+.onboarding-next-action {
+  width: fit-content;
+  margin-top: 16px;
+}
+
 .onboarding-steps {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 10px;
 }
 
@@ -325,15 +345,26 @@ button {
   transform: translateY(-1px);
 }
 
+.onboarding-step.completed {
+  border-color: rgba(10, 159, 106, 0.28);
+  background: #f7fffb;
+}
+
 .onboarding-step span {
   display: grid;
   place-items: center;
-  width: 30px;
+  min-width: 30px;
+  width: fit-content;
   height: 30px;
   border-radius: 8px;
   background: var(--ink);
   color: #fff;
+  padding: 0 8px;
   font-weight: 950;
+}
+
+.onboarding-step.completed span {
+  background: var(--green);
 }
 
 .onboarding-step strong {

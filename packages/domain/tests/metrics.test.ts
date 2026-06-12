@@ -20,6 +20,12 @@ describe("calculateDashboardMetrics", () => {
     );
 
     expect(result.monthlyRevenue).toBe(27000);
+    expect(result.operationalCounts).toEqual({
+      products: 2,
+      supplies: 1,
+      sales: 2,
+      expenses: 1
+    });
     expect(result.averageMarginPercent).toBe(51.85);
     expect(result.weeklyRevenue.map((week) => week.revenue)).toEqual([18000, 9000, 0, 0, 0]);
     expect(result.productProfitability).toEqual([

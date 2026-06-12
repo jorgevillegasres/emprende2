@@ -77,6 +77,12 @@ export function calculateDashboardMetrics(state: DashboardState, today: string) 
     monthlyGrossProfit,
     monthlyExpenses,
     averageMarginPercent,
+    operationalCounts: {
+      products: state.products.length,
+      supplies: state.supplies.length,
+      sales: state.sales.length,
+      expenses: state.expenses.length
+    },
     supplyInventoryValue,
     productInventoryValue,
     totalInventoryValue: round(supplyInventoryValue + productInventoryValue),

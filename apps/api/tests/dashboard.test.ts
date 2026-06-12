@@ -9,6 +9,12 @@ describe("dashboard endpoint", () => {
 
     expect(response.statusCode).toBe(200);
     expect(body.monthlyRevenue).toBeGreaterThan(0);
+    expect(body.operationalCounts).toMatchObject({
+      products: expect.any(Number),
+      supplies: expect.any(Number),
+      sales: expect.any(Number),
+      expenses: expect.any(Number)
+    });
     expect(body.growthActions.length).toBeGreaterThan(0);
     expect(body.lowStockItems.length).toBeGreaterThan(0);
     expect(body.productProfitability[0]).toMatchObject({

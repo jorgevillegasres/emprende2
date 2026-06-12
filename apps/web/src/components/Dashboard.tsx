@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { createDecision, listDecisions, updateDecisionStatus, type DashboardMetrics, type DecisionRecord } from "../api/client";
 import { buildGrowthDecisionPayload, buildPricingDecisionPayload, findMatchingDecision, type GrowthAction } from "./dashboardDecisions";
 import type { AppSection } from "./Shell";
-import { isNewBusiness, onboardingSteps } from "./onboarding";
+import { getOnboardingProgress } from "./onboarding";
 
 const toneLabels: Record<string, string> = {
   growth: "Crecer",
@@ -35,6 +35,7 @@ export function Dashboard({ metrics, onSectionChange, token }: { metrics: Dashbo
   const expenseMax = Math.max(...metrics.expensesByCategory.map((expense) => expense.amount), 1);
   const profitMax = Math.max(...metrics.productProfitability.map((product) => product.grossProfit), 1);
   const selectedScenario = metrics.priceScenarios.find((scenario) => scenario.name === selectedProductName) ?? metrics.priceScenarios[0];
+  const onboardingProgress = getOnboardingProgress(metrics);
   const simulatedScenario = useMemo(
     () => (selectedScenario ? calculateScenario(selectedScenario.name, selectedScenario.currentPrice, selectedScenario.unitCost, targetMargin) : null),
     [selectedScenario, targetMargin]
@@ -94,7 +95,7 @@ export function Dashboard({ metrics, onSectionChange, token }: { metrics: Dashbo
 
   return (
     <main>
-      {isNewBusiness(metrics) ? <OnboardingPanel onSectionChange={onSectionChange} /> : null}
+      {onboardingProgress.percent < 100 ? <OnboardingPanel onSectionChange={onSectionChange} progress={onboardingProgress} /> : null}
 
       <section className="hero-grid">
         <article className="card score-card">
@@ -359,18 +360,35 @@ export function Dashboard({ metrics, onSectionChange, token }: { metrics: Dashbo
   );
 }
 
-function OnboardingPanel({ onSectionChange }: { onSectionChange?: (section: AppSection) => void }) {
+function OnboardingPanel({
+  onSectionChange,
+  progress
+}: {
+  onSectionChange?: (section: AppSection) => void;
+  progress: ReturnType<typeof getOnboardingProgress>;
+}) {
   return (
     <section className="onboarding-band">
       <div className="onboarding-copy">
-        <p className="eyebrow">Primeras 3 cargas</p>
-        <h1>Convierte tu espacio en un tablero con datos reales</h1>
-        <p>Empieza por lo minimo: productos, insumos y gastos. Con eso Emprendedos ya puede mostrar margen, stock y resultado operativo.</p>
+        <p className="eyebrow">Primeras cargas</p>
+        <h1>Activa tu tablero con datos reales</h1>
+        <p>
+          Lleva {progress.completed} de {progress.total} pasos. Cuando completes esta base, Emprendedos puede mostrar margen,
+          stock, ventas y resultado operativo con mucha mas claridad.
+        </p>
+        <div className="onboarding-progress" aria-label="Progreso de configuracion">
+          <span style={{ width: `${progress.percent}%` }} />
+        </div>
+        {progress.nextStep ? (
+          <button className="primary-action onboarding-next-action" onClick={() => onSectionChange?.(progress.nextStep!.section)} type="button">
+            Siguiente: {progress.nextStep.title}
+          </button>
+        ) : null}
       </div>
       <div className="onboarding-steps">
-        {onboardingSteps.map((step, index) => (
-          <button className="onboarding-step" key={step.section} onClick={() => onSectionChange?.(step.section)} type="button">
-            <span>{index + 1}</span>
+        {progress.steps.map((step, index) => (
+          <button className={`onboarding-step ${step.completed ? "completed" : ""}`} key={step.section} onClick={() => onSectionChange?.(step.section)} type="button">
+            <span>{step.completed ? "OK" : index + 1}</span>
             <strong>{step.title}</strong>
             <small>{step.detail}</small>
           </button>

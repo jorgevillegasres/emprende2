@@ -6,6 +6,12 @@ export type DashboardMetrics = {
   totalInventoryValue: number;
   netAfterExpenses: number;
   businessHealthScore?: number;
+  operationalCounts?: {
+    products: number;
+    supplies: number;
+    sales: number;
+    expenses: number;
+  };
   weeklyRevenue: Array<{ label: string; revenue: number }>;
   expensesByCategory: Array<{ category: string; amount: number }>;
   growthActions: Array<{ title: string; detail: string; tone: string }>;
