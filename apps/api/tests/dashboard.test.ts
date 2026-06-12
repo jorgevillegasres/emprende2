@@ -23,7 +23,13 @@ describe("dashboard endpoint", () => {
       currentPrice: expect.any(Number),
       unitCost: expect.any(Number),
       currentMarginPercent: expect.any(Number),
-      suggestedPrice: expect.any(Number)
+      suggestedPrice: expect.any(Number),
+      recommendation: {
+        action: expect.any(String),
+        tone: expect.any(String),
+        title: expect.any(String),
+        detail: expect.any(String)
+      }
     });
   });
 });

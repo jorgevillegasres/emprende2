@@ -32,6 +32,12 @@ export type DashboardMetrics = {
     suggestedUnitProfit: number;
     priceDelta: number;
     priceDeltaPercent: number;
+    recommendation: {
+      action: "raise-price" | "reduce-cost" | "maintain";
+      tone: "growth" | "focus" | "steady";
+      title: string;
+      detail: string;
+    };
   }>;
 };
 

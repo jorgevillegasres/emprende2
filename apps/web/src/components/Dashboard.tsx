@@ -133,6 +133,10 @@ export function Dashboard({ metrics, onSectionChange }: { metrics: DashboardMetr
                   Utilidad/un
                 </span>
               </div>
+              <div className={`pricing-advice advice-${simulatedScenario.recommendation.tone}`}>
+                <span>{simulatedScenario.recommendation.title}</span>
+                <p>{simulatedScenario.recommendation.detail}</p>
+              </div>
             </div>
           ) : (
             <p className="empty-note">Crea productos con costo y precio para simular margen.</p>
@@ -195,7 +199,7 @@ export function Dashboard({ metrics, onSectionChange }: { metrics: DashboardMetr
                   <div className="profitability-copy">
                     <strong>{product.name}</strong>
                     <span>
-                      {product.marginPercent}% margen · {money(product.unitProfit)} por unidad
+                      {product.marginPercent}% margen - {money(product.unitProfit)} por unidad
                     </span>
                   </div>
                   <div className="profitability-numbers">
@@ -286,10 +290,39 @@ function calculateScenario(name: string, currentPrice: number, unitCost: number,
     targetMarginPercent,
     suggestedPrice,
     suggestedUnitProfit: round(suggestedPrice - unitCost),
-    priceDelta
+    priceDelta,
+    recommendation: getScenarioRecommendation(priceDelta, currentPrice <= 0 ? 0 : round((priceDelta / currentPrice) * 100))
+  };
+}
+
+function getScenarioRecommendation(priceDelta: number, priceDeltaPercent: number) {
+  if (priceDelta <= 0) {
+    return {
+      action: "maintain",
+      tone: "steady",
+      title: "Mantener precio",
+      detail: "El precio actual ya supera el margen objetivo."
+    };
+  }
+
+  if (priceDeltaPercent > 25) {
+    return {
+      action: "reduce-cost",
+      tone: "focus",
+      title: "Revisar costo",
+      detail: "La subida sugerida supera 25%; conviene revisar insumos, receta o empaque."
+    };
+  }
+
+  return {
+    action: "raise-price",
+    tone: "growth",
+    title: "Subir precio",
+    detail: `Necesita subir ${money(priceDelta)} para llegar al margen objetivo.`
   };
 }
 
 function round(value: number) {
   return Math.round((value + Number.EPSILON) * 100) / 100;
 }
+

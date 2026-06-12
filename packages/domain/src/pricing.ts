@@ -12,6 +12,14 @@ export type PriceScenario = PriceScenarioInput & {
   suggestedUnitProfit: number;
   priceDelta: number;
   priceDeltaPercent: number;
+  recommendation: PriceRecommendation;
+};
+
+export type PriceRecommendation = {
+  action: "raise-price" | "reduce-cost" | "maintain";
+  tone: "growth" | "focus" | "steady";
+  title: string;
+  detail: string;
 };
 
 export function calculatePriceScenario(input: PriceScenarioInput): PriceScenario {
@@ -30,8 +38,40 @@ export function calculatePriceScenario(input: PriceScenarioInput): PriceScenario
     suggestedPrice,
     suggestedUnitProfit,
     priceDelta,
-    priceDeltaPercent
+    priceDeltaPercent,
+    recommendation: getPriceRecommendation(priceDelta, priceDeltaPercent)
   };
+}
+
+function getPriceRecommendation(priceDelta: number, priceDeltaPercent: number): PriceRecommendation {
+  if (priceDelta <= 0) {
+    return {
+      action: "maintain",
+      tone: "steady",
+      title: "Mantener precio",
+      detail: "El precio actual ya supera el margen objetivo."
+    };
+  }
+
+  if (priceDeltaPercent > 25) {
+    return {
+      action: "reduce-cost",
+      tone: "focus",
+      title: "Revisar costo",
+      detail: "La subida sugerida supera 25%; conviene revisar insumos, receta o empaque."
+    };
+  }
+
+  return {
+    action: "raise-price",
+    tone: "growth",
+    title: "Subir precio",
+    detail: `Necesita subir ${formatCurrency(priceDelta)} para llegar al margen objetivo.`
+  };
+}
+
+function formatCurrency(value: number) {
+  return new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 }).format(value).replace(/\s/u, " ");
 }
 
 function round(value: number) {
