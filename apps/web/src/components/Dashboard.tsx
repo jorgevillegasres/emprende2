@@ -98,8 +98,8 @@ export function Dashboard({ metrics, onSectionChange, token }: { metrics: Dashbo
     <main>
       {onboardingProgress.percent < 100 ? <OnboardingPanel onSectionChange={onSectionChange} progress={onboardingProgress} /> : null}
 
-      <section className="hero-grid">
-        <article className="card score-card">
+      <section className="executive-overview">
+        <article className="card score-card executive-score">
           <div className="card-head">
             <div>
               <p className="eyebrow">Pulso operativo</p>
@@ -120,7 +120,14 @@ export function Dashboard({ metrics, onSectionChange, token }: { metrics: Dashbo
           <p className="score-note">Margen, caja operativa, inventario y foco comercial en una sola lectura.</p>
         </article>
 
-        <article className="card decisions-card">
+        <section className="executive-metrics" aria-label="Indicadores principales">
+          <Metric label="Ventas del mes" value={money(metrics.monthlyRevenue)} detail="Ingresos registrados" accent="blue" />
+          <Metric label="Utilidad bruta" value={money(metrics.monthlyGrossProfit)} detail={`${metrics.averageMarginPercent}% margen`} accent="green" />
+          <Metric label="Resultado operativo" value={money(metrics.netAfterExpenses)} detail="Utilidad menos gastos" accent="ink" />
+          <Metric label="Inventario valorizado" value={money(metrics.totalInventoryValue)} detail="Insumos + productos" accent="yellow" />
+        </section>
+
+        <article className="card decisions-card executive-decisions">
           <div className="decisions-head">
             <div>
               <p className="eyebrow">Prioridades</p>
@@ -150,15 +157,7 @@ export function Dashboard({ metrics, onSectionChange, token }: { metrics: Dashbo
         </article>
       </section>
 
-      <section className="metric-grid" aria-label="Indicadores principales">
-        <Metric label="Ventas del mes" value={money(metrics.monthlyRevenue)} detail="Ingresos registrados" accent="blue" />
-        <Metric label="Utilidad bruta" value={money(metrics.monthlyGrossProfit)} detail={`${metrics.averageMarginPercent}% margen`} accent="green" />
-        <Metric label="Inventario valorizado" value={money(metrics.totalInventoryValue)} detail="Insumos + productos" accent="yellow" />
-        <Metric label="Gastos del mes" value={money(metrics.monthlyExpenses)} detail="Operacion registrada" accent="coral" />
-        <Metric label="Resultado operativo" value={money(metrics.netAfterExpenses)} detail="Utilidad menos gastos" accent="ink" />
-      </section>
-
-      <section className="analytics-grid">
+      <section className="dashboard-analysis">
         <article className="card pricing-card">
           <div className="card-head">
             <div>
