@@ -29,7 +29,7 @@ Configuracion recomendada:
 
 - Root Directory: dejar vacio.
 - Runtime: Node.
-- Build Command: `corepack enable && corepack pnpm install --frozen-lockfile && corepack pnpm --filter @emprendedos/api build`
+- Build Command: `corepack pnpm install --frozen-lockfile && corepack pnpm --filter @emprendedos/api build`
 - Start Command: `corepack pnpm --filter @emprendedos/api start`
 - Health Check Path: `/v1/health`
 
@@ -75,7 +75,7 @@ Configuracion recomendada:
 
 - Framework Preset: Vite.
 - Root Directory: `apps/web`
-- Install Command: `corepack enable && corepack pnpm install --frozen-lockfile`
+- Install Command: `corepack pnpm install --frozen-lockfile`
 - Build Command: `corepack pnpm --filter @emprendedos/web build`
 - Output Directory: `dist`
 
