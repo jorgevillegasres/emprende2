@@ -7,7 +7,15 @@ import {
   type DecisionRecord,
   type DecisionStatus
 } from "../api/client";
-import { filterDecisions, summarizeDecisions, type DecisionPriorityFilter, type DecisionStatusFilter } from "./actionPlanLogic";
+import {
+  filterDecisions,
+  getDecisionSources,
+  labelDecisionSource,
+  summarizeDecisions,
+  type DecisionPriorityFilter,
+  type DecisionSourceFilter,
+  type DecisionStatusFilter
+} from "./actionPlanLogic";
 
 const statusLabels: Record<DecisionStatusFilter, string> = {
   all: "Todas",
@@ -27,16 +35,22 @@ export function ActionPlan({ token }: { token: string }) {
   const [decisions, setDecisions] = useState<DecisionRecord[]>([]);
   const [statusFilter, setStatusFilter] = useState<DecisionStatusFilter>("open");
   const [priorityFilter, setPriorityFilter] = useState<DecisionPriorityFilter>("all");
+  const [sourceFilter, setSourceFilter] = useState<DecisionSourceFilter>("all");
   const [message, setMessage] = useState("");
   const [form, setForm] = useState({
     title: "",
     detail: "",
     owner: "owner",
     priority: "medium" as DecisionPriority,
+    source: "manual",
     dueDate: ""
   });
   const summary = useMemo(() => summarizeDecisions(decisions), [decisions]);
-  const visibleDecisions = useMemo(() => filterDecisions(decisions, { status: statusFilter, priority: priorityFilter }), [decisions, priorityFilter, statusFilter]);
+  const sources = useMemo(() => getDecisionSources(decisions), [decisions]);
+  const visibleDecisions = useMemo(
+    () => filterDecisions(decisions, { status: statusFilter, priority: priorityFilter, source: sourceFilter }),
+    [decisions, priorityFilter, sourceFilter, statusFilter]
+  );
 
   useEffect(() => {
     listDecisions(token)
@@ -52,7 +66,7 @@ export function ActionPlan({ token }: { token: string }) {
         {
           title: form.title,
           detail: form.detail,
-          source: "manual",
+          source: form.source,
           priority: form.priority,
           owner: form.owner.trim() || "owner",
           dueDate: form.dueDate || undefined
@@ -115,13 +129,34 @@ export function ActionPlan({ token }: { token: string }) {
                 </option>
               ))}
             </select>
+            <select value={sourceFilter} onChange={(event) => setSourceFilter(event.target.value as DecisionSourceFilter)}>
+              <option value="all">Todos los origenes</option>
+              {sources.map((source) => (
+                <option key={source} value={source}>
+                  {labelDecisionSource(source)}
+                </option>
+              ))}
+            </select>
           </div>
+          {sources.length ? (
+            <div className="action-plan-source-strip" aria-label="Resumen por origen">
+              {sources.map((source) => (
+                <span key={source}>
+                  {labelDecisionSource(source)}
+                  <b>{decisions.filter((decision) => decision.source === source).length}</b>
+                </span>
+              ))}
+            </div>
+          ) : null}
           <div className="action-plan-list">
             {visibleDecisions.length ? (
               visibleDecisions.map((decision) => (
                 <article className={`action-plan-row status-${decision.status}`} key={decision.id}>
                   <div>
-                    <span>{priorityLabels[decision.priority]}</span>
+                    <div className="action-plan-badges">
+                      <span>{priorityLabels[decision.priority]}</span>
+                      <span>{labelDecisionSource(decision.source)}</span>
+                    </div>
                     <strong>{decision.title}</strong>
                     <p>{decision.detail}</p>
                     <small>
@@ -161,6 +196,17 @@ export function ActionPlan({ token }: { token: string }) {
             <label>
               <span>Responsable</span>
               <input value={form.owner} onChange={(event) => setForm((current) => ({ ...current, owner: event.target.value }))} />
+            </label>
+            <label>
+              <span>Origen</span>
+              <select value={form.source} onChange={(event) => setForm((current) => ({ ...current, source: event.target.value }))}>
+                <option value="manual">Manual</option>
+                <option value="pricing">Precios</option>
+                <option value="inventory">Inventario</option>
+                <option value="production">Produccion</option>
+                <option value="sales">Ventas</option>
+                <option value="expenses">Gastos</option>
+              </select>
             </label>
             <label>
               <span>Prioridad</span>
