@@ -3,7 +3,7 @@ import { databaseSchemaVersion, decisions, expenses, inventoryMovements, product
 
 describe("drizzle schema", () => {
   it("exports operational tables and schema version", () => {
-    expect(databaseSchemaVersion).toBe("2026-06-11-decisions");
+    expect(databaseSchemaVersion).toBe("2026-06-11-decision-tracking");
     expect(users).toBeDefined();
     expect(products).toBeDefined();
     expect(supplies).toBeDefined();

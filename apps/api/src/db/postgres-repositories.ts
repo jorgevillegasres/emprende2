@@ -251,6 +251,7 @@ export function createPostgresRepositories(db: Db): Repositories {
             source: record.source,
             priority: record.priority,
             status: record.status,
+            owner: record.owner ?? "",
             dueDate: record.dueDate ?? null
           })
           .returning();
@@ -258,6 +259,14 @@ export function createPostgresRepositories(db: Db): Repositories {
       },
       async listByTenant(tenantId: string) {
         const rows = await db.select().from(decisions).where(eq(decisions.tenantId, tenantId)).orderBy(desc(decisions.createdAt));
+        return rows.map(toDecisionRecord);
+      },
+      async listByTenantAndStatus(tenantId: string, status: DecisionStatus) {
+        const rows = await db
+          .select()
+          .from(decisions)
+          .where(and(eq(decisions.tenantId, tenantId), eq(decisions.status, status)))
+          .orderBy(desc(decisions.createdAt));
         return rows.map(toDecisionRecord);
       },
       async updateStatus(tenantId: string, id: string, status: DecisionStatus) {
@@ -375,6 +384,7 @@ function toDecisionRecord(row: typeof decisions.$inferSelect): DecisionRecord {
     source: row.source,
     priority: toDecisionPriority(row.priority),
     status: toDecisionStatus(row.status),
+    owner: row.owner,
     dueDate: row.dueDate,
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString()

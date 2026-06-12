@@ -185,6 +185,7 @@ export type DecisionRecord = {
   source: string;
   priority: DecisionPriority;
   status: DecisionStatus;
+  owner?: string;
   dueDate?: string | null;
   createdAt?: string;
   updatedAt?: string;
@@ -195,6 +196,7 @@ export type DecisionPayload = {
   detail: string;
   source: string;
   priority: DecisionPriority;
+  owner?: string;
   dueDate?: string;
 };
 
@@ -235,8 +237,8 @@ export function getRecipesPath() {
   return "/v1/recipes";
 }
 
-export function getDecisionsPath() {
-  return "/v1/decisions";
+export function getDecisionsPath(status?: DecisionStatus) {
+  return status ? `/v1/decisions?status=${status}` : "/v1/decisions";
 }
 
 export async function login(email: string, password: string): Promise<AuthSession> {
@@ -324,8 +326,8 @@ export async function createRecipe(payload: RecipePayload, token?: string | null
   return postJson(getRecipesPath(), payload, token);
 }
 
-export async function listDecisions(token?: string | null): Promise<DecisionRecord[]> {
-  return getJson(getDecisionsPath(), token);
+export async function listDecisions(token?: string | null, status?: DecisionStatus): Promise<DecisionRecord[]> {
+  return getJson(getDecisionsPath(status), token);
 }
 
 export async function createDecision(payload: DecisionPayload, token?: string | null): Promise<DecisionRecord> {

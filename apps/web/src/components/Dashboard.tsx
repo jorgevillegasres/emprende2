@@ -9,6 +9,12 @@ const toneLabels: Record<string, string> = {
   focus: "Afinar"
 };
 
+const statusLabels: Record<DecisionRecord["status"], string> = {
+  open: "Abiertas",
+  done: "Hechas",
+  dismissed: "Descartadas"
+};
+
 function money(value: number) {
   return new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 }).format(value);
 }
@@ -17,6 +23,8 @@ export function Dashboard({ metrics, onSectionChange, token }: { metrics: Dashbo
   const [targetMargin, setTargetMargin] = useState(60);
   const [selectedProductName, setSelectedProductName] = useState(metrics.priceScenarios[0]?.name ?? "");
   const [decisions, setDecisions] = useState<DecisionRecord[]>([]);
+  const [decisionOwner, setDecisionOwner] = useState("owner");
+  const [decisionStatusFilter, setDecisionStatusFilter] = useState<DecisionRecord["status"]>("open");
   const [decisionMessage, setDecisionMessage] = useState("");
   const [isSavingDecision, setIsSavingDecision] = useState(false);
   const score = metrics.businessHealthScore ?? getScore(metrics);
@@ -30,7 +38,12 @@ export function Dashboard({ metrics, onSectionChange, token }: { metrics: Dashbo
     () => (selectedScenario ? calculateScenario(selectedScenario.name, selectedScenario.currentPrice, selectedScenario.unitCost, targetMargin) : null),
     [selectedScenario, targetMargin]
   );
-  const openDecisions = decisions.filter((decision) => decision.status === "open");
+  const decisionCounts = {
+    open: decisions.filter((decision) => decision.status === "open").length,
+    done: decisions.filter((decision) => decision.status === "done").length,
+    dismissed: decisions.filter((decision) => decision.status === "dismissed").length
+  };
+  const filteredDecisions = decisions.filter((decision) => decision.status === decisionStatusFilter);
 
   useEffect(() => {
     listDecisions(token)
@@ -48,7 +61,8 @@ export function Dashboard({ metrics, onSectionChange, token }: { metrics: Dashbo
           title: `${simulatedScenario.recommendation.title}: ${simulatedScenario.name}`,
           detail: simulatedScenario.recommendation.detail,
           source: "pricing",
-          priority: simulatedScenario.recommendation.action === "maintain" ? "low" : "high"
+          priority: simulatedScenario.recommendation.action === "maintain" ? "low" : "high",
+          owner: decisionOwner.trim() || "owner"
         },
         token
       );
@@ -179,6 +193,10 @@ export function Dashboard({ metrics, onSectionChange, token }: { metrics: Dashbo
                 <span>{simulatedScenario.recommendation.title}</span>
                 <p>{simulatedScenario.recommendation.detail}</p>
               </div>
+              <label>
+                Responsable
+                <input maxLength={80} onChange={(event) => setDecisionOwner(event.target.value)} type="text" value={decisionOwner} />
+              </label>
               <button className="secondary-action inline-decision-action" disabled={isSavingDecision} onClick={handleSaveDecision} type="button">
                 {isSavingDecision ? "Guardando..." : "Guardar decision"}
               </button>
@@ -270,20 +288,28 @@ export function Dashboard({ metrics, onSectionChange, token }: { metrics: Dashbo
               <h2>Acciones abiertas</h2>
             </div>
           </div>
+          <div className="decision-status-tabs" aria-label="Filtrar decisiones por estado">
+            {(["open", "done", "dismissed"] as const).map((status) => (
+              <button className={decisionStatusFilter === status ? "active" : ""} key={status} onClick={() => setDecisionStatusFilter(status)} type="button">
+                {statusLabels[status]} <b>{decisionCounts[status]}</b>
+              </button>
+            ))}
+          </div>
           <div className="decision-task-list">
-            {openDecisions.length > 0 ? (
-              openDecisions.slice(0, 4).map((decision) => (
+            {filteredDecisions.length > 0 ? (
+              filteredDecisions.slice(0, 4).map((decision) => (
                 <div className="decision-task-row" key={decision.id}>
                   <div>
                     <span>{decision.priority}</span>
                     <strong>{decision.title}</strong>
                     <small>{decision.detail}</small>
+                    <em>{decision.owner || "Sin responsable"}</em>
                   </div>
-                  <button onClick={() => void handleCompleteDecision(decision.id)} type="button">Hecha</button>
+                  {decision.status === "open" ? <button onClick={() => void handleCompleteDecision(decision.id)} type="button">Hecha</button> : null}
                 </div>
               ))
             ) : (
-              <p className="empty-note">Guarda una recomendacion para convertirla en accion.</p>
+              <p className="empty-note">No hay decisiones en este estado.</p>
             )}
           </div>
         </article>

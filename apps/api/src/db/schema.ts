@@ -192,6 +192,7 @@ export const decisions = pgTable(
     source: text("source").notNull(),
     priority: text("priority").notNull().default("medium"),
     status: text("status").notNull().default("open"),
+    owner: text("owner").notNull().default(""),
     dueDate: date("due_date", { mode: "string" }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow()
@@ -217,4 +218,4 @@ export const schema = {
   decisions
 };
 
-export const databaseSchemaVersion = "2026-06-11-decisions";
+export const databaseSchemaVersion = "2026-06-11-decision-tracking";

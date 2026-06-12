@@ -76,4 +76,8 @@ describe("getDecisionsPath", () => {
   it("targets the decisions endpoint", () => {
     expect(getDecisionsPath()).toBe("/v1/decisions");
   });
+
+  it("can target decisions by status", () => {
+    expect(getDecisionsPath("done")).toBe("/v1/decisions?status=done");
+  });
 });

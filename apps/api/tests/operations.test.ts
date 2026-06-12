@@ -15,6 +15,7 @@ describe("operational resource routes", () => {
         detail: "Necesita subir $ 2.500 para llegar al margen objetivo.",
         source: "pricing",
         priority: "high",
+        owner: "Jorge",
         dueDate: "2026-06-20"
       }
     });
@@ -33,12 +34,17 @@ describe("operational resource routes", () => {
       title: "Subir precio de shampoo",
       status: "open",
       priority: "high",
+      owner: "Jorge",
       dueDate: "2026-06-20"
     });
     expect(listResponse.statusCode).toBe(200);
     expect(listResponse.json()).toEqual([expect.objectContaining({ id: created.id, tenantId: "decision-tenant" })]);
     expect(completeResponse.statusCode).toBe(200);
     expect(completeResponse.json()).toMatchObject({ id: created.id, status: "done" });
+
+    const doneResponse = await app.inject({ method: "GET", url: "/v1/decisions?status=done", headers });
+    expect(doneResponse.statusCode).toBe(200);
+    expect(doneResponse.json()).toEqual([expect.objectContaining({ id: created.id, status: "done" })]);
   });
 
   it("lists and creates tenant-scoped products", async () => {

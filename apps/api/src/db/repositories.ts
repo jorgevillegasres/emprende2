@@ -53,6 +53,7 @@ export type DecisionRecord = TenantRecord & {
   source: string;
   priority: DecisionPriority;
   status: DecisionStatus;
+  owner?: string;
   dueDate?: string | null;
   createdAt?: string;
   updatedAt?: string;
@@ -99,6 +100,7 @@ export type RecipeRepository = TenantRepository<RecipeRecord> & {
 };
 export type ProductionOrderRepository = TenantRepository<ProductionOrderRecord>;
 export type DecisionRepository = TenantRepository<DecisionRecord> & {
+  listByTenantAndStatus(tenantId: string, status: DecisionStatus): Promise<DecisionRecord[]>;
   updateStatus(tenantId: string, id: string, status: DecisionStatus): Promise<DecisionRecord | null>;
 };
 
@@ -184,6 +186,11 @@ function createDecisionRepository(records: DecisionRecord[]): DecisionRepository
     },
     async listByTenant(tenantId: string) {
       return records.filter((record) => record.tenantId === tenantId).sort((a, b) => (b.createdAt ?? "").localeCompare(a.createdAt ?? ""));
+    },
+    async listByTenantAndStatus(tenantId: string, status: DecisionStatus) {
+      return records
+        .filter((record) => record.tenantId === tenantId && record.status === status)
+        .sort((a, b) => (b.createdAt ?? "").localeCompare(a.createdAt ?? ""));
     },
     async updateStatus(tenantId: string, id: string, status: DecisionStatus) {
       const record = records.find((decision) => decision.tenantId === tenantId && decision.id === id);

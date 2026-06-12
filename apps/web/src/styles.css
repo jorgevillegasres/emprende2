@@ -620,7 +620,9 @@ h2 {
   font-weight: 900;
 }
 
-.pricing-simulator select {
+.pricing-simulator select,
+.pricing-simulator input[type="text"],
+.pricing-simulator label input:not([type]) {
   width: 100%;
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -752,6 +754,39 @@ h2 {
   gap: 10px;
 }
 
+.decision-status-tabs {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+  margin-bottom: 12px;
+  padding: 4px;
+  border-radius: 8px;
+  background: #edf1f4;
+}
+
+.decision-status-tabs button {
+  min-width: 0;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 950;
+  padding: 8px 6px;
+  cursor: pointer;
+}
+
+.decision-status-tabs button.active {
+  background: #fff;
+  color: var(--ink);
+  box-shadow: 0 1px 5px rgba(15, 23, 42, 0.08);
+}
+
+.decision-status-tabs b {
+  color: var(--blue);
+}
+
 .decision-task-row {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
@@ -792,6 +827,13 @@ h2 {
   font-size: 0.8rem;
   font-weight: 800;
   line-height: 1.35;
+}
+
+.decision-task-row em {
+  color: var(--muted);
+  font-size: 0.76rem;
+  font-style: normal;
+  font-weight: 950;
 }
 
 .decision-task-row button {

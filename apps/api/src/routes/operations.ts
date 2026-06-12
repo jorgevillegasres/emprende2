@@ -91,11 +91,16 @@ const decisionSchema = z.object({
   detail: z.string().min(1).max(300),
   source: z.string().min(1).max(40),
   priority: z.enum(["low", "medium", "high"]).default("medium"),
+  owner: z.string().min(1).max(80).optional(),
   dueDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional()
 });
 
 const decisionStatusSchema = z.object({
   status: z.enum(["open", "done", "dismissed"])
+});
+
+const decisionListQuerySchema = z.object({
+  status: z.enum(["open", "done", "dismissed"]).optional()
 });
 
 type ExecutableProductionOrder = z.infer<typeof productionOrderSchema> & {
@@ -243,7 +248,13 @@ export async function registerOperationRoutes(app: FastifyInstance) {
 
   app.get("/v1/inventory-movements", async (request) => repositories.inventoryMovements.listByTenant(resolveRequestContext(request.headers).tenantId));
   app.get("/v1/production-orders", async (request) => repositories.productionOrders.listByTenant(resolveRequestContext(request.headers).tenantId));
-  app.get("/v1/decisions", async (request) => repositories.decisions.listByTenant(resolveRequestContext(request.headers).tenantId));
+  app.get("/v1/decisions", async (request, reply) => {
+    const context = resolveRequestContext(request.headers);
+    const parsed = decisionListQuerySchema.safeParse(request.query);
+    if (!parsed.success) return reply.code(400).send({ error: "Invalid decision query", issues: parsed.error.issues });
+    if (parsed.data.status) return repositories.decisions.listByTenantAndStatus(context.tenantId, parsed.data.status);
+    return repositories.decisions.listByTenant(context.tenantId);
+  });
   app.post("/v1/decisions", async (request, reply) => {
     const context = resolveRequestContext(request.headers);
     const parsed = decisionSchema.safeParse(request.body);
@@ -256,6 +267,7 @@ export async function registerOperationRoutes(app: FastifyInstance) {
       source: parsed.data.source,
       priority: parsed.data.priority,
       status: "open",
+      owner: parsed.data.owner ?? "",
       dueDate: parsed.data.dueDate ?? null
     });
     return reply.code(201).send(created);
