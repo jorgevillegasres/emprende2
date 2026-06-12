@@ -86,10 +86,14 @@ const recipeSchema = z
     path: ["ingredients"]
   });
 
+type ExecutableProductionOrder = z.infer<typeof productionOrderSchema> & {
+  recipeId?: string | null;
+};
+
 export async function registerOperationRoutes(app: FastifyInstance) {
   const repositories = await getRepositories();
 
-  async function executeProductionOrder(tenantId: string, order: z.infer<typeof productionOrderSchema>) {
+  async function executeProductionOrder(tenantId: string, order: ExecutableProductionOrder) {
     const product = await repositories.products.findByTenantAndId(tenantId, order.productId);
     if (!product) return { statusCode: 404, body: { error: "Product not found" } };
 
@@ -142,6 +146,16 @@ export async function registerOperationRoutes(app: FastifyInstance) {
     }
 
     await repositories.products.updateStockAndUnitCost(tenantId, order.productId, productStockAfter, productUnitCost);
+    const productionOrder = await repositories.productionOrders.insert({
+      id: orderId,
+      tenantId,
+      productId: order.productId,
+      quantity: order.quantity,
+      totalCost,
+      unitCost,
+      recipeId: order.recipeId ?? null,
+      note: order.note
+    });
     movements.push(
       await repositories.inventoryMovements.insert({
         id: randomUUID(),
@@ -161,11 +175,7 @@ export async function registerOperationRoutes(app: FastifyInstance) {
     return {
       statusCode: 201,
       body: {
-        id: orderId,
-        productId: order.productId,
-        quantity: order.quantity,
-        totalCost,
-        unitCost,
+        ...productionOrder,
         movements
       }
     };
@@ -220,6 +230,7 @@ export async function registerOperationRoutes(app: FastifyInstance) {
   });
 
   app.get("/v1/inventory-movements", async (request) => repositories.inventoryMovements.listByTenant(resolveRequestContext(request.headers).tenantId));
+  app.get("/v1/production-orders", async (request) => repositories.productionOrders.listByTenant(resolveRequestContext(request.headers).tenantId));
 
   app.get("/v1/recipes", async (request) => repositories.recipes.listByTenant(resolveRequestContext(request.headers).tenantId));
   app.post("/v1/recipes", async (request, reply) => {
@@ -346,6 +357,7 @@ export async function registerOperationRoutes(app: FastifyInstance) {
     const result = await executeProductionOrder(context.tenantId, {
       productId: recipe.productId,
       quantity: parsed.data.quantity,
+      recipeId: recipe.id,
       note: parsed.data.note,
       supplies: recipe.ingredients.map((ingredient) => ({
         supplyId: ingredient.supplyId,

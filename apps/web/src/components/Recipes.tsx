@@ -1,8 +1,20 @@
 import { FormEvent, useEffect, useState } from "react";
-import { createProductionFromRecipe, createRecipe, listProducts, listRecipes, listSupplies, type ProductRecord, type RecipeRecord, type SupplyRecord } from "../api/client";
+import {
+  createProductionFromRecipe,
+  createRecipe,
+  listProductionOrders,
+  listProducts,
+  listRecipes,
+  listSupplies,
+  type ProductRecord,
+  type ProductionOrderSummaryRecord,
+  type RecipeRecord,
+  type SupplyRecord
+} from "../api/client";
 
 export function Recipes({ token }: { token: string }) {
   const [recipes, setRecipes] = useState<RecipeRecord[]>([]);
+  const [productionOrders, setProductionOrders] = useState<ProductionOrderSummaryRecord[]>([]);
   const [products, setProducts] = useState<ProductRecord[]>([]);
   const [supplies, setSupplies] = useState<SupplyRecord[]>([]);
   const [recipeId, setRecipeId] = useState("");
@@ -41,12 +53,13 @@ export function Recipes({ token }: { token: string }) {
     let isMounted = true;
     setError("");
 
-    Promise.all([listRecipes(token), listProducts(token), listSupplies(token)])
-      .then(([loadedRecipes, loadedProducts, loadedSupplies]) => {
+    Promise.all([listRecipes(token), listProducts(token), listSupplies(token), listProductionOrders(token)])
+      .then(([loadedRecipes, loadedProducts, loadedSupplies, loadedProductionOrders]) => {
         if (!isMounted) return;
         setRecipes(loadedRecipes);
         setProducts(loadedProducts);
         setSupplies(loadedSupplies);
+        setProductionOrders(loadedProductionOrders);
         setProductionRecipeId((currentId) => loadedRecipes.some((recipe) => recipe.id === currentId) ? currentId : loadedRecipes[0]?.id ?? "");
         setProductId((currentId) => loadedProducts.some((product) => product.id === currentId) ? currentId : loadedProducts[0]?.id ?? "");
         setSupplyOneId((currentId) => loadedSupplies.some((supply) => supply.id === currentId) ? currentId : loadedSupplies[0]?.id ?? "");
@@ -104,10 +117,16 @@ export function Recipes({ token }: { token: string }) {
         quantity: productionQuantity,
         note: productionNote.trim()
       }, token);
-      const [loadedRecipes, loadedProducts, loadedSupplies] = await Promise.all([listRecipes(token), listProducts(token), listSupplies(token)]);
+      const [loadedRecipes, loadedProducts, loadedSupplies, loadedProductionOrders] = await Promise.all([
+        listRecipes(token),
+        listProducts(token),
+        listSupplies(token),
+        listProductionOrders(token)
+      ]);
       setRecipes(loadedRecipes);
       setProducts(loadedProducts);
       setSupplies(loadedSupplies);
+      setProductionOrders(loadedProductionOrders);
       setProductionRecipeId((currentId) => loadedRecipes.some((recipe) => recipe.id === currentId) ? currentId : loadedRecipes[0]?.id ?? "");
       setProductionQuantity(productionRecipe?.outputQuantity ?? 10);
     } catch {
@@ -281,8 +300,48 @@ export function Recipes({ token }: { token: string }) {
           )}
         </section>
       </section>
+
+      <section className="card production-history-card">
+        <div className="card-head">
+          <div>
+            <p className="eyebrow">Trazabilidad</p>
+            <h2>Historial de lotes producidos</h2>
+          </div>
+        </div>
+        {productionOrders.length ? (
+          <div className="production-history-list">
+            {productionOrders.map((order) => (
+              <article className="production-history-row" key={order.id}>
+                <div>
+                  <span>{order.recipeId ? `Receta ${order.recipeId}` : "Produccion manual"}</span>
+                  <strong>{order.productId}</strong>
+                  <small>{order.note || "Sin nota"}</small>
+                </div>
+                <div>
+                  <span>Cantidad</span>
+                  <strong>{order.quantity}</strong>
+                </div>
+                <div>
+                  <span>Costo total</span>
+                  <strong>{money(order.totalCost)}</strong>
+                </div>
+                <div>
+                  <span>Costo unit.</span>
+                  <strong>{money(order.unitCost)}</strong>
+                </div>
+              </article>
+            ))}
+          </div>
+        ) : (
+          <p className="empty-copy">Todavia no hay lotes producidos.</p>
+        )}
+      </section>
     </main>
   );
+}
+
+function money(value: number) {
+  return new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 }).format(value);
 }
 
 function roundQuantity(value: number) {

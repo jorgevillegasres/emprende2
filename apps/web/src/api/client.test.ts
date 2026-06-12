@@ -6,6 +6,7 @@ import {
   getInventoryPurchasePath,
   getProductionFromRecipePath,
   getProductionOrderPath,
+  getProductionOrdersPath,
   getRecipesPath,
   getRegisterPath
 } from "./client";
@@ -49,6 +50,12 @@ describe("getInventoryPurchasePath", () => {
 describe("getProductionOrderPath", () => {
   it("targets the production order endpoint", () => {
     expect(getProductionOrderPath()).toBe("/v1/production-orders");
+  });
+});
+
+describe("getProductionOrdersPath", () => {
+  it("targets the production order listing endpoint", () => {
+    expect(getProductionOrdersPath()).toBe("/v1/production-orders");
   });
 });
 

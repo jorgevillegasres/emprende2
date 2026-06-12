@@ -36,6 +36,13 @@
       "when": 1781200800000,
       "tag": "0005_recipes",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1781204400000,
+      "tag": "0006_production_orders",
+      "breakpoints": true
     }
   ]
 }

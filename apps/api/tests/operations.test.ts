@@ -389,6 +389,55 @@ describe("operational resource routes", () => {
     );
   });
 
+  it("lists production order history after manual production", async () => {
+    const app = buildApp();
+    const headers = { "x-emprendedos-tenant-id": "production-history-tenant", "x-emprendedos-user-id": "production-history-user" };
+
+    await app.inject({
+      method: "POST",
+      url: "/v1/products",
+      headers,
+      payload: { id: "history-soap", name: "Jabon historial", stock: 1, minStock: 1, unitCost: 1000, price: 12000, unit: "un" }
+    });
+    await app.inject({
+      method: "POST",
+      url: "/v1/supplies",
+      headers,
+      payload: { id: "history-oil", name: "Aceite historial", stock: 50, minStock: 10, averageCost: 200, unit: "ml" }
+    });
+
+    const productionResponse = await app.inject({
+      method: "POST",
+      url: "/v1/production-orders",
+      headers,
+      payload: {
+        productId: "history-soap",
+        quantity: 5,
+        supplies: [{ supplyId: "history-oil", quantity: 10 }],
+        note: "Lote manual"
+      }
+    });
+    const order = productionResponse.json();
+    const historyResponse = await app.inject({ method: "GET", url: "/v1/production-orders", headers });
+    const history = historyResponse.json();
+
+    expect(productionResponse.statusCode).toBe(201);
+    expect(historyResponse.statusCode).toBe(200);
+    expect(history).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: order.id,
+          productId: "history-soap",
+          quantity: 5,
+          totalCost: 2000,
+          unitCost: 400,
+          recipeId: null,
+          note: "Lote manual"
+        })
+      ])
+    );
+  });
+
   it("rejects production orders when a supply has insufficient stock", async () => {
     const app = buildApp();
     const headers = { "x-emprendedos-tenant-id": "production-limited-tenant", "x-emprendedos-user-id": "production-limited-user" };
@@ -589,6 +638,59 @@ describe("operational resource routes", () => {
           quantity: 25,
           referenceType: "production-order",
           referenceId: order.id
+        })
+      ])
+    );
+  });
+
+  it("lists recipe-driven production orders with the recipe reference", async () => {
+    const app = buildApp();
+    const headers = { "x-emprendedos-tenant-id": "recipe-history-tenant", "x-emprendedos-user-id": "recipe-history-user" };
+
+    await app.inject({
+      method: "POST",
+      url: "/v1/products",
+      headers,
+      payload: { id: "recipe-history-soap", name: "Jabon receta historial", stock: 0, minStock: 1, unitCost: 0, price: 12000, unit: "un" }
+    });
+    await app.inject({
+      method: "POST",
+      url: "/v1/supplies",
+      headers,
+      payload: { id: "recipe-history-oil", name: "Aceite receta historial", stock: 100, minStock: 10, averageCost: 100, unit: "ml" }
+    });
+    await app.inject({
+      method: "POST",
+      url: "/v1/recipes",
+      headers,
+      payload: {
+        id: "history-formula",
+        productId: "recipe-history-soap",
+        name: "Formula historial",
+        outputQuantity: 10,
+        ingredients: [{ supplyId: "recipe-history-oil", quantity: 20 }],
+        note: "Base"
+      }
+    });
+
+    const productionResponse = await app.inject({
+      method: "POST",
+      url: "/v1/production-orders/from-recipe",
+      headers,
+      payload: { recipeId: "history-formula", quantity: 10, note: "Desde receta historial" }
+    });
+    const order = productionResponse.json();
+    const history = (await app.inject({ method: "GET", url: "/v1/production-orders", headers })).json();
+
+    expect(productionResponse.statusCode).toBe(201);
+    expect(history).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: order.id,
+          productId: "recipe-history-soap",
+          quantity: 10,
+          recipeId: "history-formula",
+          note: "Desde receta historial"
         })
       ])
     );

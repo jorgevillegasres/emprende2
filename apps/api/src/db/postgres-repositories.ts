@@ -1,8 +1,8 @@
 import { randomUUID } from "node:crypto";
 import { and, desc, eq } from "drizzle-orm";
 import type { createPostgresClient } from "./client.js";
-import type { AuthIdentityRecord, ExpenseRecord, InventoryMovementRecord, ProductRecord, RecipeRecord, Repositories, SaleRecord, SupplyRecord } from "./repositories.js";
-import { expenses, inventoryMovements, memberships, products, recipeIngredients, recipes, sales, supplies, tenants, users } from "./schema.js";
+import type { AuthIdentityRecord, ExpenseRecord, InventoryMovementRecord, ProductRecord, ProductionOrderRecord, RecipeRecord, Repositories, SaleRecord, SupplyRecord } from "./repositories.js";
+import { expenses, inventoryMovements, memberships, productionOrders, products, recipeIngredients, recipes, sales, supplies, tenants, users } from "./schema.js";
 
 type Db = ReturnType<typeof createPostgresClient>["db"];
 
@@ -216,6 +216,28 @@ export function createPostgresRepositories(db: Db): Repositories {
           ingredients: ingredientRows.map((ingredient) => ({ supplyId: ingredient.supplyId, quantity: ingredient.quantity }))
         };
       }
+    },
+    productionOrders: {
+      async insert(record: ProductionOrderRecord) {
+        const [created] = await db
+          .insert(productionOrders)
+          .values({
+            id: record.id,
+            tenantId: record.tenantId,
+            productId: record.productId,
+            quantity: record.quantity,
+            totalCost: record.totalCost,
+            unitCost: record.unitCost,
+            recipeId: record.recipeId ?? null,
+            note: record.note ?? ""
+          })
+          .returning();
+        return toProductionOrderRecord(created);
+      },
+      async listByTenant(tenantId: string) {
+        const rows = await db.select().from(productionOrders).where(eq(productionOrders.tenantId, tenantId)).orderBy(desc(productionOrders.createdAt));
+        return rows.map(toProductionOrderRecord);
+      }
     }
   };
 }
@@ -295,6 +317,20 @@ function toRecipeRecord(row: typeof recipes.$inferSelect): Omit<RecipeRecord, "i
     productId: row.productId,
     name: row.name,
     outputQuantity: row.outputQuantity,
+    note: row.note,
+    createdAt: row.createdAt.toISOString()
+  };
+}
+
+function toProductionOrderRecord(row: typeof productionOrders.$inferSelect): ProductionOrderRecord {
+  return {
+    tenantId: row.tenantId,
+    id: row.id,
+    productId: row.productId,
+    quantity: row.quantity,
+    totalCost: row.totalCost,
+    unitCost: row.unitCost,
+    recipeId: row.recipeId,
     note: row.note,
     createdAt: row.createdAt.toISOString()
   };

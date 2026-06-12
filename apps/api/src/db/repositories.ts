@@ -34,6 +34,16 @@ export type RecipeRecord = TenantRecord & {
   note?: string;
   createdAt?: string;
 };
+export type ProductionOrderRecord = TenantRecord & {
+  id: string;
+  productId: string;
+  quantity: number;
+  totalCost: number;
+  unitCost: number;
+  recipeId?: string | null;
+  note?: string;
+  createdAt?: string;
+};
 
 export type AuthIdentityRecord = {
   userId: string;
@@ -74,6 +84,7 @@ export type AuthRepository = {
 export type RecipeRepository = TenantRepository<RecipeRecord> & {
   findByTenantAndId(tenantId: string, id: string): Promise<RecipeRecord | null>;
 };
+export type ProductionOrderRepository = TenantRepository<ProductionOrderRecord>;
 
 export type Repositories = {
   auth: AuthRepository;
@@ -83,6 +94,7 @@ export type Repositories = {
   expenses: TenantRepository<ExpenseRecord>;
   inventoryMovements: TenantRepository<InventoryMovementRecord>;
   recipes: RecipeRepository;
+  productionOrders: ProductionOrderRepository;
 };
 
 export function createInMemoryRepositories(): Repositories {
@@ -92,6 +104,7 @@ export function createInMemoryRepositories(): Repositories {
   const expenses: ExpenseRecord[] = [];
   const inventoryMovements: InventoryMovementRecord[] = [];
   const recipes: RecipeRecord[] = [];
+  const productionOrders: ProductionOrderRecord[] = [];
   const authIdentities: AuthIdentityRecord[] = [];
 
   return {
@@ -101,6 +114,7 @@ export function createInMemoryRepositories(): Repositories {
     expenses: createTenantRepository(expenses),
     inventoryMovements: createTenantRepository(inventoryMovements),
     recipes: createRecipeRepository(recipes),
+    productionOrders: createTenantRepository(productionOrders),
     products: createProductRepository(products)
   };
 }
