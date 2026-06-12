@@ -37,16 +37,23 @@ button {
 
 .shell {
   width: 100%;
-  max-width: 1200px;
   margin: 0 auto;
-  padding: 0 24px 64px;
+  padding: 0 clamp(16px, 3vw, 32px) 64px;
 }
 
 .topbar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
   min-height: 82px;
   display: flex;
   align-items: center;
-  gap: 18px;
+  gap: 16px;
+  width: min(100%, 1440px);
+  margin: 0 auto;
+  padding: 10px 0;
+  background: rgba(245, 247, 248, 0.94);
+  backdrop-filter: blur(18px);
 }
 
 .brand {
@@ -58,6 +65,7 @@ button {
 }
 
 .brand-button {
+  flex: 0 0 auto;
   border: 0;
   background: transparent;
   padding: 0;
@@ -97,14 +105,23 @@ button {
   color: var(--muted);
 }
 
+.nav-viewport {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+}
+
 .nav {
   display: flex;
   gap: 4px;
-  margin-left: 14px;
   overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  padding: 2px;
+  scrollbar-width: thin;
 }
 
 .nav-item {
+  flex: 0 0 auto;
   min-height: 38px;
   border: 0;
   border-radius: 999px;
@@ -121,10 +138,11 @@ button {
 }
 
 .top-actions {
-  margin-left: auto;
+  flex: 0 0 auto;
   display: flex;
   align-items: center;
   gap: 10px;
+  min-width: max-content;
 }
 
 .today-pill,
@@ -1764,26 +1782,32 @@ h2 {
   }
 
   .topbar {
-    align-items: flex-start;
+    align-items: center;
     flex-wrap: wrap;
     padding: 14px 0;
   }
 
-  .nav {
+  .brand {
+    flex: 1 1 auto;
+    min-width: 180px;
+  }
+
+  .nav-viewport {
     order: 3;
     width: 100%;
-    margin-left: 0;
+    flex-basis: 100%;
   }
 
   .top-actions {
-    width: 100%;
-    margin-left: 0;
-    flex-wrap: wrap;
+    margin-left: auto;
   }
 
-  .primary-action,
-  .secondary-action {
-    flex: 1;
+  .today-pill {
+    display: none;
+  }
+
+  .primary-action {
+    padding-inline: 14px;
   }
 
   .login-panel {
@@ -1872,5 +1896,31 @@ h2 {
 
   .adjustment-action {
     width: 100%;
+  }
+}
+
+@media (max-width: 560px) {
+  .topbar {
+    gap: 10px;
+  }
+
+  .brand small,
+  .user-pill {
+    display: none;
+  }
+
+  .brand-mark {
+    width: 36px;
+    height: 36px;
+  }
+
+  .primary-action {
+    min-height: 36px;
+    padding-inline: 12px;
+  }
+
+  .secondary-action {
+    min-height: 36px;
+    padding-inline: 12px;
   }
 }

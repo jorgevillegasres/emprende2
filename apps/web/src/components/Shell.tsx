@@ -40,18 +40,20 @@ export function Shell({
             <small>Crece con claridad</small>
           </span>
         </button>
-        <nav className="nav" aria-label="Principal">
-          {navItems.map((item) => (
-            <button
-              className={`nav-item ${activeSection === item.section ? "active" : ""}`}
-              key={item.section}
-              type="button"
-              onClick={() => onSectionChange(item.section)}
-            >
-              {item.label}
-            </button>
-          ))}
-        </nav>
+        <div className="nav-viewport">
+          <nav className="nav" aria-label="Secciones principales">
+            {navItems.map((item) => (
+              <button
+                className={`nav-item ${activeSection === item.section ? "active" : ""}`}
+                key={item.section}
+                type="button"
+                onClick={() => onSectionChange(item.section)}
+              >
+                {item.label}
+              </button>
+            ))}
+          </nav>
+        </div>
         <div className="top-actions">
           <span className="today-pill">Junio 2026</span>
           {userLabel ? <span className="user-pill">{userLabel}</span> : null}
