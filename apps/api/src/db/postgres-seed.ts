@@ -55,13 +55,16 @@ export async function seedPostgresDemoData(db: Db) {
     .insert(supplies)
     .values([
       { tenantId: demoTenantId, id: "envase-vidrio", name: "Envase vidrio 10 ml", stock: 30, minStock: 40, averageCost: 1200, unit: "un" },
-      { tenantId: demoTenantId, id: "etiqueta-kraft", name: "Etiqueta kraft", stock: 66, minStock: 80, averageCost: 300, unit: "un" }
+      { tenantId: demoTenantId, id: "etiqueta-kraft", name: "Etiqueta kraft", stock: 66, minStock: 80, averageCost: 300, unit: "un" },
+      { tenantId: demoTenantId, id: "aceite-coco", name: "Aceite coco", stock: 18, minStock: 12, averageCost: 22000, unit: "kg" },
+      { tenantId: demoTenantId, id: "manteca-karite", name: "Manteca karite", stock: 8, minStock: 10, averageCost: 36000, unit: "kg" }
     ])
     .onConflictDoNothing();
 
   await db
     .insert(products)
     .values([
+      { tenantId: demoTenantId, id: "jabon-lavanda", name: "Jabon lavanda", stock: 24, minStock: 18, unitCost: 3600, price: 12000, unit: "un" },
       { tenantId: demoTenantId, id: "shampoo-romero", name: "Shampoo solido romero", stock: 12, minStock: 10, unitCost: 5200, price: 16000, unit: "un" },
       { tenantId: demoTenantId, id: "balsamo-calendula", name: "Balsamo calendula", stock: 6, minStock: 8, unitCost: 4300, price: 14000, unit: "un" }
     ])
@@ -121,6 +124,16 @@ export async function seedPostgresDemoData(db: Db) {
         revenue: 28000,
         cost: 8600,
         grossProfit: 19400
+      },
+      {
+        id: "30000000-0000-0000-0000-000000000003",
+        tenantId: demoTenantId,
+        date: "2026-06-10",
+        productId: "jabon-lavanda",
+        quantity: 4,
+        revenue: 48000,
+        cost: 14400,
+        grossProfit: 33600
       }
     ])
     .onConflictDoNothing();

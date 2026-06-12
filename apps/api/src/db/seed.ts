@@ -34,6 +34,34 @@ export async function createSeededRepositories() {
     averageCost: 300,
     unit: "un"
   });
+  await repositories.supplies.insert({
+    tenantId,
+    id: "aceite-coco",
+    name: "Aceite coco",
+    stock: 18,
+    minStock: 12,
+    averageCost: 22000,
+    unit: "kg"
+  });
+  await repositories.supplies.insert({
+    tenantId,
+    id: "manteca-karite",
+    name: "Manteca karite",
+    stock: 8,
+    minStock: 10,
+    averageCost: 36000,
+    unit: "kg"
+  });
+  await repositories.products.insert({
+    tenantId,
+    id: "jabon-lavanda",
+    name: "Jabon lavanda",
+    stock: 24,
+    minStock: 18,
+    unitCost: 3600,
+    price: 12000,
+    unit: "un"
+  });
   await repositories.products.insert({
     tenantId,
     id: "shampoo-romero",
@@ -83,6 +111,15 @@ export async function createSeededRepositories() {
     revenue: 28000,
     cost: 8600,
     grossProfit: 19400
+  });
+  await repositories.sales.insert({
+    tenantId,
+    date: "2026-06-10",
+    productId: "jabon-lavanda",
+    quantity: 4,
+    revenue: 48000,
+    cost: 14400,
+    grossProfit: 33600
   });
   await repositories.expenses.insert({ tenantId, date: "2026-06-02", category: "Servicios", amount: 68000 });
   await repositories.expenses.insert({ tenantId, date: "2026-06-05", category: "Herramientas", amount: 78000 });

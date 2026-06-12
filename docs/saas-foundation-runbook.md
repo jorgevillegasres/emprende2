@@ -93,3 +93,28 @@ Successful login returns a bearer token signed with `AUTH_SECRET`. Business rout
 - Demo auth only.
 - PostgreSQL requires manual `docker compose up`, `db:migrate`, and `db:seed` locally.
 - Billing is not implemented.
+
+## Demo Flow
+
+Use `docs/demo-flow.md` as the canonical demo script. The demo tenant should always include enough products, supplies, sales, expenses, recipes and production history to make the dashboard meaningful on first login.
+
+## MVP Release Checklist
+
+Before calling a build SaaS MVP ready, run:
+
+```bash
+corepack pnpm test
+corepack pnpm typecheck
+corepack pnpm --filter @emprendedos/web build
+```
+
+Then manually verify:
+
+- Login with demo credentials.
+- Register a new owner account.
+- Open dashboard.
+- Create one sale.
+- Confirm dashboard reloads.
+- Open inventory on desktop and mobile.
+- Open recipes on desktop and mobile.
+- Check browser console for blocking errors.
