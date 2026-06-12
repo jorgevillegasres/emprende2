@@ -101,7 +101,7 @@ Quedan fuera de este cierre:
 
 | Fecha | Commit | Resultado |
 | --- | --- | --- |
-| 2026-06-12 | Registrar hash del commit de Task 1 | Checklist creado |
+| 2026-06-12 | Commit de Task 1 | Checklist creado |
 ```
 
 - [ ] **Step 2: Review for feature creep**
