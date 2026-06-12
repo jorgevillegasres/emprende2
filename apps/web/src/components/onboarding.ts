@@ -66,3 +66,17 @@ export function isNewBusiness(metrics: DashboardMetrics) {
     metrics.topProductsByRevenue.length === 0
   );
 }
+
+export function getActivationStatus(metrics: DashboardMetrics) {
+  const progress = getOnboardingProgress(metrics);
+  const isReady = progress.percent === 100;
+
+  return {
+    isReady,
+    label: isReady ? "Listo para operar" : "Configuracion en progreso",
+    detail: isReady
+      ? "Tu emprendimiento ya tiene la base minima para usar Emprendedos como tablero diario."
+      : "Completa la base operativa para que el dashboard deje de ser una pantalla vacia y empiece a recomendar acciones.",
+    nextActionSection: progress.nextStep?.section ?? null
+  };
+}

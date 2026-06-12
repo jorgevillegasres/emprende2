@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { DashboardMetrics } from "../api/client";
-import { getOnboardingProgress, isNewBusiness } from "./onboarding";
+import { getActivationStatus, getOnboardingProgress, isNewBusiness } from "./onboarding";
 
 const emptyMetrics: DashboardMetrics = {
   monthlyRevenue: 0,
@@ -45,5 +45,29 @@ describe("getOnboardingProgress", () => {
       { section: "sales", completed: false },
       { section: "expenses", completed: true }
     ]);
+  });
+});
+
+describe("getActivationStatus", () => {
+  it("marks the business as ready when all setup steps are complete", () => {
+    const status = getActivationStatus({
+      ...emptyMetrics,
+      operationalCounts: { products: 1, supplies: 1, sales: 1, expenses: 1 }
+    });
+
+    expect(status.isReady).toBe(true);
+    expect(status.label).toBe("Listo para operar");
+    expect(status.nextActionSection).toBeNull();
+  });
+
+  it("points to the next setup action when the business is not ready", () => {
+    const status = getActivationStatus({
+      ...emptyMetrics,
+      operationalCounts: { products: 1, supplies: 0, sales: 0, expenses: 0 }
+    });
+
+    expect(status.isReady).toBe(false);
+    expect(status.label).toBe("Configuracion en progreso");
+    expect(status.nextActionSection).toBe("supplies");
   });
 });

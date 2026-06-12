@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { createDecision, listDecisions, updateDecisionStatus, type DashboardMetrics, type DecisionRecord } from "../api/client";
 import { buildGrowthDecisionPayload, buildPricingDecisionPayload, findMatchingDecision, type GrowthAction } from "./dashboardDecisions";
 import type { AppSection } from "./Shell";
-import { getOnboardingProgress } from "./onboarding";
+import { getActivationStatus, getOnboardingProgress } from "./onboarding";
 
 const toneLabels: Record<string, string> = {
   growth: "Crecer",
@@ -36,6 +36,7 @@ export function Dashboard({ metrics, onSectionChange, token }: { metrics: Dashbo
   const profitMax = Math.max(...metrics.productProfitability.map((product) => product.grossProfit), 1);
   const selectedScenario = metrics.priceScenarios.find((scenario) => scenario.name === selectedProductName) ?? metrics.priceScenarios[0];
   const onboardingProgress = getOnboardingProgress(metrics);
+  const activationStatus = getActivationStatus(metrics);
   const simulatedScenario = useMemo(
     () => (selectedScenario ? calculateScenario(selectedScenario.name, selectedScenario.currentPrice, selectedScenario.unitCost, targetMargin) : null),
     [selectedScenario, targetMargin]
@@ -104,7 +105,7 @@ export function Dashboard({ metrics, onSectionChange, token }: { metrics: Dashbo
               <p className="eyebrow">Pulso operativo</p>
               <h1>Salud del negocio</h1>
             </div>
-            <span className="status-chip">En marcha</span>
+            <span className="status-chip">{activationStatus.label}</span>
           </div>
           <div className="gauge">
             <svg viewBox="0 0 160 160" aria-hidden="true">
