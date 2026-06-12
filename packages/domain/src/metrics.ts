@@ -1,3 +1,5 @@
+import { calculatePriceScenario } from "./pricing.js";
+
 export type Supply = {
   id?: string;
   name: string;
@@ -61,6 +63,7 @@ export function calculateDashboardMetrics(state: DashboardState, today: string) 
   const expensesByCategory = getExpensesByCategory(monthlyExpensesList);
   const topProductsByRevenue = getTopProductsByRevenue(monthlySales, state.products);
   const productProfitability = getProductProfitability(monthlySales, state.products);
+  const priceScenarios = getPriceScenarios(state.products, 60);
   const marginLeaders = state.products
     .map((product) => ({
       ...product,
@@ -83,6 +86,7 @@ export function calculateDashboardMetrics(state: DashboardState, today: string) 
     expensesByCategory,
     topProductsByRevenue,
     productProfitability,
+    priceScenarios,
     marginLeaders,
     growthActions: getGrowthActions(lowStockItems, marginLeaders, expensesByCategory, topProductsByRevenue, averageMarginPercent)
   };
@@ -159,6 +163,20 @@ function getProductProfitability(sales: Sale[], products: Product[]) {
       unitProfit: product.quantity === 0 ? 0 : round(product.grossProfit / product.quantity)
     }))
     .sort((a, b) => b.grossProfit - a.grossProfit)
+    .slice(0, 5);
+}
+
+function getPriceScenarios(products: Product[], targetMarginPercent: number) {
+  return products
+    .map((product) =>
+      calculatePriceScenario({
+        name: product.name,
+        currentPrice: product.price,
+        unitCost: product.unitCost,
+        targetMarginPercent
+      })
+    )
+    .sort((a, b) => a.currentMarginPercent - b.currentMarginPercent)
     .slice(0, 5);
 }
 

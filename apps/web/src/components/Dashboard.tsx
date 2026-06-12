@@ -1,3 +1,4 @@
+import { useMemo, useState } from "react";
 import type { DashboardMetrics } from "../api/client";
 import type { AppSection } from "./Shell";
 import { isNewBusiness, onboardingSteps } from "./onboarding";
@@ -13,12 +14,19 @@ function money(value: number) {
 }
 
 export function Dashboard({ metrics, onSectionChange }: { metrics: DashboardMetrics; onSectionChange?: (section: AppSection) => void }) {
+  const [targetMargin, setTargetMargin] = useState(60);
+  const [selectedProductName, setSelectedProductName] = useState(metrics.priceScenarios[0]?.name ?? "");
   const score = metrics.businessHealthScore ?? getScore(metrics);
   const circumference = 389.56;
   const offset = circumference - (score / 100) * circumference;
   const weeklyMax = Math.max(...metrics.weeklyRevenue.map((week) => week.revenue), 1);
   const expenseMax = Math.max(...metrics.expensesByCategory.map((expense) => expense.amount), 1);
   const profitMax = Math.max(...metrics.productProfitability.map((product) => product.grossProfit), 1);
+  const selectedScenario = metrics.priceScenarios.find((scenario) => scenario.name === selectedProductName) ?? metrics.priceScenarios[0];
+  const simulatedScenario = useMemo(
+    () => (selectedScenario ? calculateScenario(selectedScenario.name, selectedScenario.currentPrice, selectedScenario.unitCost, targetMargin) : null),
+    [selectedScenario, targetMargin]
+  );
 
   return (
     <main>
@@ -77,6 +85,60 @@ export function Dashboard({ metrics, onSectionChange }: { metrics: DashboardMetr
       </section>
 
       <section className="analytics-grid">
+        <article className="card pricing-card">
+          <div className="card-head">
+            <div>
+              <p className="eyebrow">Precios</p>
+              <h2>Simulador de margen</h2>
+            </div>
+          </div>
+          {simulatedScenario ? (
+            <div className="pricing-simulator">
+              <label>
+                Producto
+                <select value={selectedScenario?.name ?? ""} onChange={(event) => setSelectedProductName(event.target.value)}>
+                  {metrics.priceScenarios.map((scenario) => (
+                    <option key={scenario.name} value={scenario.name}>
+                      {scenario.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="range-label">
+                <span>
+                  Margen objetivo
+                  <b>{targetMargin}%</b>
+                </span>
+                <input min="35" max="80" onChange={(event) => setTargetMargin(Number(event.target.value))} type="range" value={targetMargin} />
+              </label>
+              <div className="pricing-result">
+                <span>Precio sugerido</span>
+                <strong>{money(simulatedScenario.suggestedPrice)}</strong>
+                <small className={simulatedScenario.priceDelta >= 0 ? "delta-up" : "delta-down"}>
+                  {simulatedScenario.priceDelta >= 0 ? "+" : ""}
+                  {money(simulatedScenario.priceDelta)} vs. precio actual
+                </small>
+              </div>
+              <div className="pricing-kpis">
+                <span>
+                  <b>{money(simulatedScenario.currentPrice)}</b>
+                  Actual
+                </span>
+                <span>
+                  <b>{money(simulatedScenario.unitCost)}</b>
+                  Costo
+                </span>
+                <span>
+                  <b>{money(simulatedScenario.suggestedUnitProfit)}</b>
+                  Utilidad/un
+                </span>
+              </div>
+            </div>
+          ) : (
+            <p className="empty-note">Crea productos con costo y precio para simular margen.</p>
+          )}
+        </article>
+
         <article className="card chart-card">
           <div className="card-head">
             <div>
@@ -211,4 +273,23 @@ function getScore(metrics: DashboardMetrics) {
   const inventoryPenalty = Math.min(metrics.lowStockItems.length * 5, 20);
   const cashScore = metrics.netAfterExpenses > 0 ? 20 : 8;
   return Math.max(35, Math.round(marginScore + cashScore - inventoryPenalty));
+}
+
+function calculateScenario(name: string, currentPrice: number, unitCost: number, targetMarginPercent: number) {
+  const targetRatio = targetMarginPercent / 100;
+  const suggestedPrice = targetRatio >= 1 || targetRatio < 0 ? 0 : round(unitCost / (1 - targetRatio));
+  const priceDelta = round(suggestedPrice - currentPrice);
+  return {
+    name,
+    currentPrice,
+    unitCost,
+    targetMarginPercent,
+    suggestedPrice,
+    suggestedUnitProfit: round(suggestedPrice - unitCost),
+    priceDelta
+  };
+}
+
+function round(value: number) {
+  return Math.round((value + Number.EPSILON) * 100) / 100;
 }

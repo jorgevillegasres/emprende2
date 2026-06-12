@@ -21,6 +21,18 @@ export type DashboardMetrics = {
     marginPercent: number;
     unitProfit: number;
   }>;
+  priceScenarios: Array<{
+    name: string;
+    currentPrice: number;
+    unitCost: number;
+    targetMarginPercent: number;
+    currentMarginPercent: number;
+    currentUnitProfit: number;
+    suggestedPrice: number;
+    suggestedUnitProfit: number;
+    priceDelta: number;
+    priceDeltaPercent: number;
+  }>;
 };
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://127.0.0.1:3001";

@@ -18,5 +18,12 @@ describe("dashboard endpoint", () => {
       marginPercent: expect.any(Number),
       unitProfit: expect.any(Number)
     });
+    expect(body.priceScenarios[0]).toMatchObject({
+      name: expect.any(String),
+      currentPrice: expect.any(Number),
+      unitCost: expect.any(Number),
+      currentMarginPercent: expect.any(Number),
+      suggestedPrice: expect.any(Number)
+    });
   });
 });

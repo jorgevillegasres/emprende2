@@ -44,6 +44,14 @@ describe("calculateDashboardMetrics", () => {
         unitProfit: 2000
       }
     ]);
+    expect(result.priceScenarios[0]).toMatchObject({
+      name: "Balsamo",
+      currentPrice: 9000,
+      unitCost: 7000,
+      targetMarginPercent: 60,
+      suggestedPrice: 17500,
+      priceDelta: 8500
+    });
     expect(result.growthActions).toHaveLength(3);
   });
 });

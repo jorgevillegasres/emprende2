@@ -553,7 +553,8 @@ h2 {
 .bar-chart,
 .expense-list,
 .stock-list,
-.profitability-list {
+.profitability-list,
+.pricing-simulator {
   display: grid;
   gap: 14px;
 }
@@ -605,6 +606,99 @@ h2 {
 
 .expense-fill {
   background: var(--coral);
+}
+
+.pricing-card {
+  min-width: 0;
+}
+
+.pricing-simulator label {
+  display: grid;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 900;
+}
+
+.pricing-simulator select {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--ink);
+  font: inherit;
+  font-weight: 850;
+  padding: 10px 12px;
+}
+
+.range-label span {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.range-label b {
+  color: var(--ink);
+  font-size: 1rem;
+}
+
+.pricing-simulator input[type="range"] {
+  width: 100%;
+  accent-color: var(--blue);
+}
+
+.pricing-result {
+  display: grid;
+  gap: 4px;
+  padding: 14px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #edf6f2, #f4f8ff);
+}
+
+.pricing-result span,
+.pricing-result small {
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 900;
+}
+
+.pricing-result strong {
+  color: var(--ink);
+  font-size: clamp(1.55rem, 2vw, 2.2rem);
+  line-height: 1;
+}
+
+.delta-up {
+  color: var(--green) !important;
+}
+
+.delta-down {
+  color: var(--coral) !important;
+}
+
+.pricing-kpis {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.pricing-kpis span {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 900;
+}
+
+.pricing-kpis b {
+  color: var(--ink);
+  font-size: 0.88rem;
+  overflow-wrap: anywhere;
 }
 
 .profitability-card {
