@@ -18,11 +18,16 @@ export function getDemoRequestContext(): RequestContext {
   };
 }
 
-export function resolveRequestContext(headers: RequestHeaders): RequestContext {
-  const demo = getDemoRequestContext();
+export function resolveRequestContext(headers: RequestHeaders, options?: { allowDevelopmentContext?: boolean }): RequestContext {
   const tokenContext = resolveBearerContext(headers);
   if (tokenContext) return tokenContext;
 
+  const allowDevelopmentContext = options?.allowDevelopmentContext ?? getConfig().allowDevelopmentRequestContext;
+  if (!allowDevelopmentContext) {
+    throw new Error("Authentication required");
+  }
+
+  const demo = getDemoRequestContext();
   return {
     userId: readHeader(headers, "x-emprendedos-user-id") ?? demo.userId,
     tenantId: readHeader(headers, "x-emprendedos-tenant-id") ?? demo.tenantId,

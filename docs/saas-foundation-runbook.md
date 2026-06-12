@@ -63,13 +63,15 @@ All business data must be read through tenant-aware repositories. Never query bu
 
 ## Demo Request Context
 
-Until real authentication is implemented, the API resolves request context from optional headers:
+The API resolves tenant context from `Authorization: Bearer <token>` first.
+
+For local development only, `ALLOW_DEV_REQUEST_CONTEXT=true` permits fallback to:
 
 - `x-emprendedos-tenant-id`
 - `x-emprendedos-user-id`
 - `x-emprendedos-role`
 
-When headers are missing, the API falls back to the demo tenant and demo owner user from `.env.example`. These headers are a development bridge only; production auth must verify users and memberships server-side before trusting tenant access.
+Set `ALLOW_DEV_REQUEST_CONTEXT=false` or `NODE_ENV=production` to require bearer tokens. Production must not trust tenant headers from the client.
 
 ## Auth Foundation
 
@@ -84,7 +86,7 @@ Demo credentials are controlled by:
 - `DEMO_AUTH_PASSWORD`
 - `AUTH_SECRET`
 
-Successful login returns a bearer token signed with `AUTH_SECRET`. Business routes resolve tenant context from `Authorization: Bearer <token>` before falling back to development headers and demo context.
+Successful login returns a bearer token signed with `AUTH_SECRET`. Business routes resolve tenant context from `Authorization: Bearer <token>` before any development fallback.
 
 ## Current Limitations
 

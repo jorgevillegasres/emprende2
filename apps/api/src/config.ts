@@ -10,6 +10,7 @@ export function getConfig(env: Env = process.env) {
     databaseUrl: env.DATABASE_URL ?? "postgres://postgres:postgres@127.0.0.1:5432/emprendedos",
     authSecret: env.AUTH_SECRET ?? "dev-only-emprendedos-secret",
     demoAuthEmail: env.DEMO_AUTH_EMAIL ?? "demo@emprendedos.local",
-    demoAuthPassword: env.DEMO_AUTH_PASSWORD ?? "emprendedos-demo"
+    demoAuthPassword: env.DEMO_AUTH_PASSWORD ?? "emprendedos-demo",
+    allowDevelopmentRequestContext: env.ALLOW_DEV_REQUEST_CONTEXT !== "false" && env.NODE_ENV !== "production"
   };
 }

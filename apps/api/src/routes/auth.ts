@@ -62,7 +62,13 @@ export async function registerAuthRoutes(app: FastifyInstance) {
     return signSession(identity);
   });
 
-  app.get("/v1/auth/me", async (request) => resolveRequestContext(request.headers));
+  app.get("/v1/auth/me", async (request, reply) => {
+    try {
+      return resolveRequestContext(request.headers);
+    } catch {
+      return reply.code(401).send({ error: "Authentication required" });
+    }
+  });
 }
 
 function signSession(identity: { userId: string; tenantId: string; role: "owner" | "admin" | "operator" | "viewer" }) {
