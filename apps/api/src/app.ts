@@ -9,7 +9,7 @@ import { registerOperationRoutes } from "./routes/operations.js";
 export function buildApp() {
   const app = Fastify({ logger: false });
   const config = getConfig();
-  void app.register(cors, { origin: config.webOrigin });
+  void app.register(cors, { origin: config.webOrigins });
   void app.register(registerAuthRoutes);
   void app.register(registerHealthRoutes);
   void app.register(registerDashboardRoutes);
