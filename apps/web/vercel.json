@@ -1,5 +1,5 @@
 {
-  "buildCommand": "vite build",
+  "buildCommand": "VITE_API_BASE_URL=https://emprendedos-api.onrender.com vite build",
   "outputDirectory": "dist",
   "framework": "vite",
   "installCommand": "npm install"
