@@ -6,7 +6,7 @@
   "scripts": {
     "build": "pnpm --filter @emprendedos/domain build && tsc -p tsconfig.build.json",
     "dev": "tsx watch src/server.ts",
-    "start": "drizzle-kit migrate --config ../../drizzle.config.ts && node dist/server.js",
+    "start": "drizzle-kit migrate --config ../../drizzle.config.ts && node dist/db/seed-postgres.js && node dist/server.js",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
   },
