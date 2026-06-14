@@ -3124,3 +3124,68 @@ body.modal-open {
     grid-column: auto;
   }
 }
+
+/* =======================================================================
+   PULIDO FINAL — ritmo de marca, interactividad y gráficas
+   ======================================================================= */
+
+/* Acento coral en los títulos de sección (ritmo de marca consistente) */
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.eyebrow::before {
+  content: "";
+  width: 14px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--coral);
+}
+
+.executive-score .eyebrow::before {
+  background: var(--green);
+}
+
+/* Hover interactivo en filas de listas */
+.decision-task-row,
+.stock-row,
+.profitability-row,
+.movement-row,
+.production-history-row,
+.recipe-row,
+.action-plan-row {
+  border-radius: var(--r-sm);
+  transition: background var(--dur) var(--ease);
+}
+
+.decision-task-row:hover,
+.stock-row:hover,
+.profitability-row:hover,
+.movement-row:hover,
+.production-history-row:hover,
+.recipe-row:hover {
+  background: var(--surface-2);
+}
+
+.action-plan-row:hover {
+  border-color: var(--line-strong);
+  box-shadow: var(--shadow-sm);
+}
+
+/* Barras de gráficas más contundentes */
+.bar-track {
+  height: 13px;
+}
+
+.bar-fill,
+.expense-fill,
+.profit-fill {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25);
+}
+
+.bar-row strong,
+.expense-row strong {
+  color: var(--ink);
+}
