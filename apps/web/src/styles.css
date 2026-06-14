@@ -3892,3 +3892,74 @@ body.modal-open {
   border: 1px solid var(--line);
   box-shadow: var(--shadow);
 }
+
+/* =======================================================================
+   KANAKKU TABLES + CHARTS
+   ======================================================================= */
+
+/* Tablas: encabezado tenue, filas con hover violeta-soft */
+.data-table th {
+  color: var(--muted);
+  font-weight: 600;
+  background: var(--surface-2);
+  letter-spacing: 0.02em;
+}
+
+.data-table td {
+  color: var(--ink-soft);
+}
+
+.data-table th,
+.data-table td {
+  border-bottom: 1px solid var(--line);
+}
+
+.data-table tbody tr {
+  transition: background var(--dur) var(--ease);
+}
+
+.data-table tbody tr:hover {
+  background: var(--primary-soft);
+}
+
+/* Charts: paleta Kanakku */
+.bar-track {
+  background: var(--bg-2);
+}
+
+.bar-fill {
+  background: var(--primary);
+}
+
+.expense-fill {
+  background: var(--chart-amber);
+}
+
+.profit-fill {
+  background: linear-gradient(90deg, var(--chart-green), var(--primary));
+}
+
+.break-even-track {
+  background: var(--bg-2);
+}
+
+.break-even-fill {
+  background: linear-gradient(90deg, var(--chart-amber), var(--primary));
+}
+
+.break-even-band {
+  border-left-color: var(--chart-amber);
+}
+
+.break-even-band.is-covered .break-even-fill {
+  background: linear-gradient(90deg, var(--chart-green), var(--primary));
+}
+
+.break-even-band.is-covered {
+  border-left-color: var(--green);
+}
+
+/* Pricing simulator slider en violeta */
+.pricing-simulator input[type="range"] {
+  accent-color: var(--primary);
+}
