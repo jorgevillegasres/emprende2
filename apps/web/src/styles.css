@@ -1,35 +1,51 @@
 :root {
-  /* --- Canvas: warm "paper", not sterile white --- */
-  --bg: #f1ede4;
-  --bg-2: #e9e4d8;
-  --surface: #fffdf9;
-  --surface-2: #faf7f0;
+  color-scheme: light;
 
-  /* --- Ink: warm near-black command surfaces --- */
-  --ink: #16191c;
-  --ink-soft: #353b41;
-  --muted: #5a646d;
-  --line: #e2dccf;
-  --line-strong: #d2cbba;
+  /* --- Canvas / surfaces --- */
+  --bg: #f5f6fa;
+  --bg-2: #edeff4;
+  --surface: #ffffff;
+  --surface-2: #f7f8fb;
 
-  /* --- Semantic signals (vivid signature: energetic coral) --- */
-  --green: #07a86c;
-  --green-ink: #05623f;
-  --green-soft: #d2f4e2;
-  --coral: #fa4a28;
-  --coral-ink: #b22e0f;
-  --coral-soft: #ffe0d4;
-  --blue: #2a5bdb;
-  --blue-ink: #16409c;
-  --blue-soft: #dde7ff;
-  --yellow: #e0901a;
-  --yellow-ink: #8a560b;
-  --yellow-soft: #fcebcd;
+  /* --- Primary (violet signature) --- */
+  --primary: #6c5ffc;
+  --primary-hover: #5a4ce0;
+  --primary-soft: #eceaff;
+  --primary-ink: #4a3fd0;
+  --banner-grad: linear-gradient(135deg, #7b5cff, #6c4be0);
 
-  /* --- Typography --- */
-  --font-display: "Space Grotesk", "Segoe UI", sans-serif;
-  --font-body: "Hanken Grotesk", "Segoe UI", sans-serif;
-  --font-mono: "Space Grotesk", ui-monospace, "Cascadia Mono", monospace;
+  /* --- Text + lines --- */
+  --ink: #1b2333;
+  --ink-soft: #4a5568;
+  --muted: #8a94a6;
+  --line: #e8eaf0;
+  --line-strong: #d8dce6;
+
+  /* --- Semantic states (Kanakku) --- */
+  --green: #22c55e;
+  --green-ink: #15803d;
+  --green-soft: #e7f8ef;
+  --coral: #ef4444;
+  --coral-ink: #b91c1c;
+  --coral-soft: #fdecec;
+  --blue: #3b82f6;
+  --blue-ink: #1d4ed8;
+  --blue-soft: #e8f1fe;
+  --yellow: #f5a623;
+  --yellow-ink: #b26a00;
+  --yellow-soft: #fef3e2;
+
+  /* --- Chart palette --- */
+  --chart-blue: #4c8df6;
+  --chart-green: #22c55e;
+  --chart-amber: #f5b73d;
+  --chart-magenta: #ec4899;
+  --chart-violet: #6c5ffc;
+
+  /* --- Typography: Inter --- */
+  --font-display: "Inter", system-ui, sans-serif;
+  --font-body: "Inter", system-ui, sans-serif;
+  --font-mono: "Inter", ui-monospace, "Cascadia Mono", monospace;
 
   /* --- Spacing scale (4pt) --- */
   --s1: 4px;
@@ -40,17 +56,17 @@
   --s6: 32px;
   --s7: 48px;
 
-  /* --- Radii: mixed for rhythm --- */
+  /* --- Radii: cards 16, controls 10, pills full --- */
   --r-sm: 10px;
-  --r: 14px;
+  --r: 16px;
   --r-lg: 20px;
   --r-pill: 999px;
 
-  /* --- Shadows: layered, warm --- */
-  --shadow-sm: 0 1px 2px rgba(34, 28, 18, 0.06);
-  --shadow: 0 1px 2px rgba(34, 28, 18, 0.05), 0 14px 38px rgba(34, 28, 18, 0.09);
-  --shadow-lg: 0 2px 4px rgba(34, 28, 18, 0.06), 0 28px 64px rgba(34, 28, 18, 0.14);
-  --shadow-ink: 0 16px 40px rgba(12, 14, 16, 0.28);
+  /* --- Shadows: soft soft-UI --- */
+  --shadow-sm: 0 1px 2px rgba(16, 24, 40, 0.06);
+  --shadow: 0 1px 3px rgba(16, 24, 40, 0.04), 0 1px 2px rgba(16, 24, 40, 0.06);
+  --shadow-lg: 0 6px 16px rgba(16, 24, 40, 0.08), 0 2px 6px rgba(16, 24, 40, 0.05);
+  --shadow-ink: 0 10px 28px rgba(108, 95, 252, 0.22);
 
   /* --- Motion --- */
   --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
@@ -69,14 +85,10 @@ body {
   margin: 0;
   min-height: 100vh;
   overflow-x: hidden;
-  background:
-    radial-gradient(1200px 600px at 12% -8%, rgba(12, 155, 102, 0.1), transparent 60%),
-    radial-gradient(900px 520px at 100% 0%, rgba(226, 77, 53, 0.07), transparent 55%),
-    var(--bg);
-  background-attachment: fixed;
-  color: var(--ink);
+  background: var(--bg);
+  color: var(--ink-soft);
   font-family: var(--font-body);
-  font-feature-settings: "ss01", "cv01";
+  font-size: 14px;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
@@ -87,8 +99,8 @@ button {
 }
 
 ::selection {
-  background: var(--ink);
-  color: #fff;
+  background: var(--primary-soft);
+  color: var(--primary-ink);
 }
 
 .shell {
