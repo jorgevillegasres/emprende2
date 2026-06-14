@@ -167,6 +167,8 @@ export function Dashboard({ metrics, onSectionChange, token }: { metrics: Dashbo
         </div>
       </section>
 
+      <MonthlyComparisonStrip comparison={metrics.monthlyComparison} />
+
       <BreakEvenPanel breakEven={metrics.breakEven} />
 
       <section className="dashboard-analysis">
@@ -368,6 +370,8 @@ export function Dashboard({ metrics, onSectionChange, token }: { metrics: Dashbo
           </div>
         </article>
       </section>
+
+      <StockForecastPanel forecast={metrics.stockForecast} />
     </main>
   );
 }
@@ -447,6 +451,112 @@ function BreakEvenPanel({ breakEven }: { breakEven: DashboardMetrics["breakEven"
           {!canEstimate ? "Sin datos suficientes" : isCovered ? `Cubierto al ${progressPercent}%` : `${progressPercent}% del objetivo`}
         </p>
       </div>
+    </section>
+  );
+}
+
+function MonthlyComparisonStrip({ comparison }: { comparison: DashboardMetrics["monthlyComparison"] }) {
+  const items: Array<{ label: string; delta: DashboardMetrics["monthlyComparison"]["revenue"]; higherIsBetter: boolean }> = [
+    { label: "Ventas", delta: comparison.revenue, higherIsBetter: true },
+    { label: "Utilidad bruta", delta: comparison.grossProfit, higherIsBetter: true },
+    { label: "Gastos", delta: comparison.expenses, higherIsBetter: false },
+    { label: "Resultado", delta: comparison.netResult, higherIsBetter: true }
+  ];
+
+  return (
+    <section className="comparison-strip" aria-label="Comparacion con el mes anterior">
+      <div className="comparison-head">
+        <p className="eyebrow">Tendencia</p>
+        <h2>
+          {comparison.currentMonthLabel} <span>vs. {comparison.previousMonthLabel}</span>
+        </h2>
+        <p className="comparison-sub">
+          {comparison.hasPreviousData
+            ? "Asi se mueve tu negocio frente al mes pasado."
+            : `Aun no hay datos de ${comparison.previousMonthLabel} para comparar.`}
+        </p>
+      </div>
+      <div className="comparison-grid">
+        {items.map((item) => {
+          const { delta } = item;
+          const isPositive = delta.trend === "flat" ? null : (delta.trend === "up") === item.higherIsBetter;
+          const tone = !comparison.hasPreviousData ? "neutral" : isPositive === null ? "neutral" : isPositive ? "positive" : "negative";
+          const arrow = delta.trend === "up" ? "↑" : delta.trend === "down" ? "↓" : "→";
+          const badge = !comparison.hasPreviousData
+            ? "Mes base"
+            : delta.deltaPercent === null
+              ? "Nuevo"
+              : `${arrow} ${delta.deltaPercent >= 0 ? "+" : ""}${delta.deltaPercent}%`;
+          return (
+            <article className={`comparison-card tone-${tone}`} key={item.label}>
+              <span className="comparison-label">{item.label}</span>
+              <strong>{money(delta.current)}</strong>
+              <span className={`comparison-badge badge-${tone}`}>{badge}</span>
+              {comparison.hasPreviousData ? (
+                <small>
+                  {delta.delta >= 0 ? "+" : ""}
+                  {money(delta.delta)} vs. mes anterior
+                </small>
+              ) : (
+                <small>Sin referencia previa</small>
+              )}
+            </article>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
+function StockForecastPanel({ forecast }: { forecast: DashboardMetrics["stockForecast"] }) {
+  const statusLabels: Record<DashboardMetrics["stockForecast"][number]["status"], string> = {
+    critical: "Reponer ya",
+    watch: "Planear compra",
+    healthy: "Con holgura",
+    idle: "Sin rotacion"
+  };
+
+  const withSales = forecast.filter((item) => item.daysRemaining !== null);
+  const priority = forecast.filter((item) => item.status === "critical" || item.status === "watch").length;
+
+  return (
+    <section className="card forecast-card" aria-label="Proyeccion de stock">
+      <div className="card-head">
+        <div>
+          <p className="eyebrow">Proyeccion de inventario</p>
+          <h2>¿Cuanto te dura el stock?</h2>
+        </div>
+        <span className="status-chip">{priority > 0 ? `${priority} por reponer` : "Todo con holgura"}</span>
+      </div>
+      <p className="forecast-sub">Estimado segun el ritmo de ventas de este mes. Te avisamos que productos se agotan pronto.</p>
+      {withSales.length > 0 ? (
+        <div className="forecast-grid">
+          {forecast.map((item) => (
+            <article className={`forecast-item forecast-${item.status}`} key={item.productId}>
+              <div className="forecast-item-head">
+                <strong>{item.name}</strong>
+                <span className={`forecast-pill pill-${item.status}`}>{statusLabels[item.status]}</span>
+              </div>
+              <div className="forecast-figure">
+                {item.daysRemaining === null ? (
+                  <span className="forecast-days-empty">Sin ventas este mes</span>
+                ) : (
+                  <>
+                    <strong>{item.daysRemaining}</strong>
+                    <span>dias de stock</span>
+                  </>
+                )}
+              </div>
+              <small>
+                {item.stock} {item.unit ?? "un"} en mano
+                {item.daysRemaining !== null ? ` - ${item.unitsSold} vendidas este mes` : ""}
+              </small>
+            </article>
+          ))}
+        </div>
+      ) : (
+        <p className="empty-note">Registra ventas de tus productos para proyectar cuanto durara el inventario.</p>
+      )}
     </section>
   );
 }

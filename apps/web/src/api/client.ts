@@ -1,3 +1,11 @@
+export type ComparisonDelta = {
+  current: number;
+  previous: number;
+  delta: number;
+  deltaPercent: number | null;
+  trend: "up" | "down" | "flat";
+};
+
 export type DashboardMetrics = {
   monthlyRevenue: number;
   monthlyGrossProfit: number;
@@ -23,6 +31,25 @@ export type DashboardMetrics = {
     expenses: number;
   };
   weeklyRevenue: Array<{ label: string; revenue: number }>;
+  monthlyComparison: {
+    currentMonthLabel: string;
+    previousMonthLabel: string;
+    hasPreviousData: boolean;
+    revenue: ComparisonDelta;
+    grossProfit: ComparisonDelta;
+    expenses: ComparisonDelta;
+    netResult: ComparisonDelta;
+  };
+  stockForecast: Array<{
+    productId: string;
+    name: string;
+    unit?: string;
+    stock: number;
+    unitsSold: number;
+    dailyRate: number;
+    daysRemaining: number | null;
+    status: "critical" | "watch" | "healthy" | "idle";
+  }>;
   expensesByCategory: Array<{ category: string; amount: number }>;
   growthActions: Array<{ title: string; detail: string; tone: string }>;
   lowStockItems: Array<{ name: string; type: string; stock: number; minStock: number; unit?: string }>;

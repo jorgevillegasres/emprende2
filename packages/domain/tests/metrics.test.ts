@@ -86,4 +86,75 @@ describe("calculateDashboardMetrics", () => {
     });
     expect(result.growthActions).toHaveLength(3);
   });
+
+  it("compares the current month against the previous one", () => {
+    const result = calculateDashboardMetrics(
+      {
+        supplies: [],
+        products: [{ id: "soap", name: "Jabon", stock: 8, minStock: 4, unitCost: 3000, price: 9000 }],
+        expenses: [
+          { date: "2026-05-04", category: "Servicios", amount: 10000 },
+          { date: "2026-06-02", category: "Servicios", amount: 20000 }
+        ],
+        sales: [
+          { date: "2026-05-05", productId: "soap", quantity: 1, revenue: 9000, cost: 3000, grossProfit: 6000 },
+          { date: "2026-06-01", productId: "soap", quantity: 2, revenue: 18000, cost: 6000, grossProfit: 12000 }
+        ]
+      },
+      "2026-06-10"
+    );
+
+    expect(result.monthlyComparison.currentMonthLabel).toBe("Junio 2026");
+    expect(result.monthlyComparison.previousMonthLabel).toBe("Mayo 2026");
+    expect(result.monthlyComparison.hasPreviousData).toBe(true);
+    expect(result.monthlyComparison.revenue).toMatchObject({ current: 18000, previous: 9000, delta: 9000, deltaPercent: 100, trend: "up" });
+    expect(result.monthlyComparison.expenses.trend).toBe("up");
+    expect(result.monthlyComparison.netResult.current).toBe(-8000);
+  });
+
+  it("returns no previous data when last month had no activity", () => {
+    const result = calculateDashboardMetrics(
+      {
+        supplies: [],
+        products: [{ id: "soap", name: "Jabon", stock: 8, minStock: 4, unitCost: 3000, price: 9000 }],
+        expenses: [],
+        sales: [{ date: "2026-06-01", productId: "soap", quantity: 2, revenue: 18000, cost: 6000, grossProfit: 12000 }]
+      },
+      "2026-06-10"
+    );
+
+    expect(result.monthlyComparison.hasPreviousData).toBe(false);
+    expect(result.monthlyComparison.revenue.deltaPercent).toBeNull();
+    expect(result.monthlyComparison.revenue.trend).toBe("up");
+  });
+
+  it("projects how long product stock lasts at the current sales pace", () => {
+    const result = calculateDashboardMetrics(
+      {
+        supplies: [],
+        products: [
+          { id: "soap", name: "Jabon", stock: 10, minStock: 4, unitCost: 3000, price: 9000 },
+          { id: "balm", name: "Balsamo", stock: 40, minStock: 5, unitCost: 7000, price: 9000 },
+          { id: "wax", name: "Vela", stock: 5, minStock: 2, unitCost: 6000, price: 18000 }
+        ],
+        expenses: [],
+        sales: [
+          { date: "2026-06-02", productId: "soap", quantity: 5, revenue: 45000, cost: 15000, grossProfit: 30000 },
+          { date: "2026-06-09", productId: "soap", quantity: 5, revenue: 45000, cost: 15000, grossProfit: 30000 },
+          { date: "2026-06-10", productId: "balm", quantity: 1, revenue: 9000, cost: 7000, grossProfit: 2000 }
+        ]
+      },
+      "2026-06-10"
+    );
+
+    const soap = result.stockForecast.find((item) => item.productId === "soap");
+    const balm = result.stockForecast.find((item) => item.productId === "balm");
+    const wax = result.stockForecast.find((item) => item.productId === "wax");
+
+    expect(soap).toMatchObject({ unitsSold: 10, daysRemaining: 10, status: "watch" });
+    expect(balm).toMatchObject({ unitsSold: 1, status: "healthy" });
+    expect(wax).toMatchObject({ unitsSold: 0, daysRemaining: null, status: "idle" });
+    // Most urgent product is listed first.
+    expect(result.stockForecast[0]?.productId).toBe("soap");
+  });
 });

@@ -79,8 +79,23 @@ export const demoRecipes: RecipeSeed[] = [
   }
 ];
 
+// Ventas del mes anterior (mayo, ~468.000) para alimentar la comparacion mensual.
+// Junio crece ~32% frente a mayo y pasa de perdida a utilidad.
+const demoSalesPreviousMonth: SaleSeed[] = [
+  { id: "31000000-0000-0000-0000-000000000001", date: "2026-05-03", productId: "jabon-lavanda", quantity: 4, revenue: 48000, cost: 14400, grossProfit: 33600 },
+  { id: "31000000-0000-0000-0000-000000000002", date: "2026-05-05", productId: "crema-karite", quantity: 2, revenue: 44000, cost: 16000, grossProfit: 28000 },
+  { id: "31000000-0000-0000-0000-000000000003", date: "2026-05-08", productId: "shampoo-romero", quantity: 3, revenue: 48000, cost: 15600, grossProfit: 32400 },
+  { id: "31000000-0000-0000-0000-000000000004", date: "2026-05-12", productId: "vela-lavanda", quantity: 2, revenue: 36000, cost: 12000, grossProfit: 24000 },
+  { id: "31000000-0000-0000-0000-000000000005", date: "2026-05-15", productId: "vela-lavanda", quantity: 3, revenue: 54000, cost: 18000, grossProfit: 36000 },
+  { id: "31000000-0000-0000-0000-000000000006", date: "2026-05-17", productId: "crema-karite", quantity: 2, revenue: 44000, cost: 16000, grossProfit: 28000 },
+  { id: "31000000-0000-0000-0000-000000000007", date: "2026-05-21", productId: "balsamo-calendula", quantity: 3, revenue: 42000, cost: 12900, grossProfit: 29100 },
+  { id: "31000000-0000-0000-0000-000000000008", date: "2026-05-25", productId: "jabon-lavanda", quantity: 5, revenue: 60000, cost: 18000, grossProfit: 42000 },
+  { id: "31000000-0000-0000-0000-000000000009", date: "2026-05-28", productId: "shampoo-romero", quantity: 4, revenue: 64000, cost: 20800, grossProfit: 43200 },
+  { id: "31000000-0000-0000-0000-000000000010", date: "2026-05-30", productId: "balsamo-calendula", quantity: 2, revenue: 28000, cost: 8600, grossProfit: 19400 }
+];
+
 // Ventas repartidas en las 4 semanas de junio (revenue total ~616.000).
-export const demoSales: SaleSeed[] = [
+const demoSalesCurrentMonth: SaleSeed[] = [
   { id: "30000000-0000-0000-0000-000000000001", date: "2026-06-02", productId: "jabon-lavanda", quantity: 3, revenue: 36000, cost: 10800, grossProfit: 25200 },
   { id: "30000000-0000-0000-0000-000000000002", date: "2026-06-04", productId: "vela-lavanda", quantity: 2, revenue: 36000, cost: 12000, grossProfit: 24000 },
   { id: "30000000-0000-0000-0000-000000000003", date: "2026-06-06", productId: "shampoo-romero", quantity: 2, revenue: 32000, cost: 10400, grossProfit: 21600 },
@@ -97,14 +112,29 @@ export const demoSales: SaleSeed[] = [
   { id: "30000000-0000-0000-0000-000000000014", date: "2026-06-27", productId: "vela-lavanda", quantity: 2, revenue: 36000, cost: 12000, grossProfit: 24000 }
 ];
 
+// Historico completo de ventas (mayo + junio) consumido por el seed.
+export const demoSales: SaleSeed[] = [...demoSalesPreviousMonth, ...demoSalesCurrentMonth];
+
+// Gastos de mayo (~348.000) para la comparacion mensual.
+const demoExpensesPreviousMonth: ExpenseSeed[] = [
+  { id: "41000000-0000-0000-0000-000000000001", date: "2026-05-02", category: "Servicios", amount: 65000 },
+  { id: "41000000-0000-0000-0000-000000000002", date: "2026-05-06", category: "Herramientas", amount: 40000 },
+  { id: "41000000-0000-0000-0000-000000000003", date: "2026-05-14", category: "Arriendo", amount: 120000 },
+  { id: "41000000-0000-0000-0000-000000000004", date: "2026-05-19", category: "Marketing", amount: 38000 },
+  { id: "41000000-0000-0000-0000-000000000005", date: "2026-05-24", category: "Insumos", amount: 85000 }
+];
+
 // Gastos del mes en varias categorias (total ~401.000).
-export const demoExpenses: ExpenseSeed[] = [
+const demoExpensesCurrentMonth: ExpenseSeed[] = [
   { id: "40000000-0000-0000-0000-000000000001", date: "2026-06-02", category: "Servicios", amount: 68000 },
   { id: "40000000-0000-0000-0000-000000000002", date: "2026-06-05", category: "Herramientas", amount: 78000 },
   { id: "40000000-0000-0000-0000-000000000003", date: "2026-06-10", category: "Marketing", amount: 45000 },
   { id: "40000000-0000-0000-0000-000000000004", date: "2026-06-15", category: "Arriendo", amount: 120000 },
   { id: "40000000-0000-0000-0000-000000000005", date: "2026-06-20", category: "Insumos", amount: 90000 }
 ];
+
+// Historico completo de gastos (mayo + junio) consumido por el seed.
+export const demoExpenses: ExpenseSeed[] = [...demoExpensesPreviousMonth, ...demoExpensesCurrentMonth];
 
 export const demoProductionOrders: ProductionSeed[] = [
   {

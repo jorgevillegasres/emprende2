@@ -2500,6 +2500,216 @@ h2 {
   }
 }
 
+/* --- Comparacion mensual (tendencia vs. mes anterior) --- */
+.comparison-strip {
+  margin: 14px 0 22px;
+  padding: 22px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  background: linear-gradient(135deg, var(--surface), var(--surface-2));
+  box-shadow: var(--shadow);
+}
+
+.comparison-head h2 {
+  font-size: clamp(1.2rem, 1.7vw, 1.6rem);
+  line-height: 1.1;
+}
+
+.comparison-head h2 span {
+  color: var(--muted);
+  font-weight: 800;
+}
+
+.comparison-sub {
+  margin: 6px 0 0;
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+.comparison-grid {
+  margin-top: 18px;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.comparison-card {
+  display: grid;
+  gap: 6px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  background: var(--surface);
+}
+
+.comparison-card .comparison-label {
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.comparison-card strong {
+  font-size: 1.4rem;
+  line-height: 1.05;
+}
+
+.comparison-card small {
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.comparison-badge {
+  justify-self: start;
+  padding: 3px 10px;
+  border-radius: var(--r-pill);
+  font-size: 0.82rem;
+  font-weight: 900;
+}
+
+.badge-positive {
+  color: var(--green-ink);
+  background: var(--green-soft);
+}
+
+.badge-negative {
+  color: var(--coral-ink);
+  background: var(--coral-soft);
+}
+
+.badge-neutral {
+  color: var(--ink-soft);
+  background: var(--bg-2);
+}
+
+.comparison-card.tone-positive {
+  border-left: 4px solid var(--green);
+}
+
+.comparison-card.tone-negative {
+  border-left: 4px solid var(--coral);
+}
+
+.comparison-card.tone-neutral {
+  border-left: 4px solid var(--line-strong);
+}
+
+/* --- Proyeccion de stock --- */
+.forecast-card {
+  margin-top: 16px;
+}
+
+.forecast-sub {
+  margin: 4px 0 0;
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+.forecast-grid {
+  margin-top: 16px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 14px;
+}
+
+.forecast-item {
+  display: grid;
+  gap: 10px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--line-strong);
+  border-radius: var(--r);
+  background: var(--surface-2);
+}
+
+.forecast-item.forecast-critical {
+  border-left-color: var(--coral);
+}
+
+.forecast-item.forecast-watch {
+  border-left-color: var(--yellow);
+}
+
+.forecast-item.forecast-healthy {
+  border-left-color: var(--green);
+}
+
+.forecast-item-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.forecast-item-head strong {
+  font-size: 0.98rem;
+}
+
+.forecast-pill {
+  padding: 2px 9px;
+  border-radius: var(--r-pill);
+  font-size: 0.72rem;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.pill-critical {
+  color: var(--coral-ink);
+  background: var(--coral-soft);
+}
+
+.pill-watch {
+  color: var(--yellow-ink);
+  background: var(--yellow-soft);
+}
+
+.pill-healthy {
+  color: var(--green-ink);
+  background: var(--green-soft);
+}
+
+.pill-idle {
+  color: var(--ink-soft);
+  background: var(--bg-2);
+}
+
+.forecast-figure {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.forecast-figure strong {
+  font-size: 1.8rem;
+  line-height: 1;
+}
+
+.forecast-figure span {
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.forecast-days-empty {
+  color: var(--muted);
+  font-size: 0.92rem;
+  font-weight: 800;
+}
+
+.forecast-item small {
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+@media (max-width: 900px) {
+  .comparison-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
 /* --- Gauge de salud: más presencia --- */
 .gauge-track {
   stroke: var(--bg-2);

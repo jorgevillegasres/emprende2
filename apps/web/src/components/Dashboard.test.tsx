@@ -22,6 +22,16 @@ const metrics: DashboardMetrics = {
   },
   businessHealthScore: 57,
   weeklyRevenue: [{ label: "Semana 1", revenue: 124000 }],
+  monthlyComparison: {
+    currentMonthLabel: "Junio 2026",
+    previousMonthLabel: "Mayo 2026",
+    hasPreviousData: true,
+    revenue: { current: 124000, previous: 90000, delta: 34000, deltaPercent: 37.78, trend: "up" },
+    grossProfit: { current: 85400, previous: 60000, delta: 25400, deltaPercent: 42.33, trend: "up" },
+    expenses: { current: 146000, previous: 120000, delta: 26000, deltaPercent: 21.67, trend: "up" },
+    netResult: { current: -60600, previous: -60000, delta: -600, deltaPercent: -1, trend: "down" }
+  },
+  stockForecast: [{ productId: "shampoo", name: "Shampoo", unit: "un", stock: 14, unitsSold: 7, dailyRate: 0.7, daysRemaining: 20, status: "watch" }],
   expensesByCategory: [{ category: "Servicios", amount: 68000 }],
   growthActions: [{ title: "Impulsa Shampoo solido", detail: "Es el producto con mas ventas.", tone: "growth" }],
   lowStockItems: [{ name: "Envase vidrio", type: "Insumo", stock: 30, minStock: 40, unit: "un" }],

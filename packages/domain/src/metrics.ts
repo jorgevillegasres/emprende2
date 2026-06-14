@@ -60,6 +60,8 @@ export function calculateDashboardMetrics(state: DashboardState, today: string) 
       .map((product) => ({ ...product, type: "Producto" as const }))
   ];
   const weeklyRevenue = getWeeklyRevenue(monthlySales, today);
+  const monthlyComparison = getMonthlyComparison(state.sales, state.expenses, today);
+  const stockForecast = getStockForecast(state.products, monthlySales, today);
   const expensesByCategory = getExpensesByCategory(monthlyExpensesList);
   const topProductsByRevenue = getTopProductsByRevenue(monthlySales, state.products);
   const productProfitability = getProductProfitability(monthlySales, state.products);
@@ -90,6 +92,8 @@ export function calculateDashboardMetrics(state: DashboardState, today: string) 
     breakEven: calculateBreakEven(monthlyExpenses, averageMarginPercent, monthlyRevenue),
     lowStockItems,
     weeklyRevenue,
+    monthlyComparison,
+    stockForecast,
     expensesByCategory,
     topProductsByRevenue,
     productProfitability,
@@ -109,6 +113,112 @@ function getWeeklyRevenue(sales: Sale[], today: string) {
     weeks[weekIndex].revenue += sale.revenue;
   }
   return weeks.map((week) => ({ ...week, revenue: round(week.revenue) }));
+}
+
+const MONTHS_ES = [
+  "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+  "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
+];
+
+function monthLabel(monthKey: string) {
+  const [year, month] = monthKey.split("-").map(Number);
+  return `${MONTHS_ES[month - 1] ?? monthKey} ${year}`;
+}
+
+function previousMonthKey(monthKey: string) {
+  const [year, month] = monthKey.split("-").map(Number);
+  const prevMonth = month === 1 ? 12 : month - 1;
+  const prevYear = month === 1 ? year - 1 : year;
+  return `${prevYear}-${String(prevMonth).padStart(2, "0")}`;
+}
+
+type ComparisonDelta = {
+  current: number;
+  previous: number;
+  delta: number;
+  deltaPercent: number | null;
+  trend: "up" | "down" | "flat";
+};
+
+function buildDelta(current: number, previous: number): ComparisonDelta {
+  const delta = current - previous;
+  return {
+    current: round(current),
+    previous: round(previous),
+    delta: round(delta),
+    deltaPercent: previous === 0 ? null : round((delta / Math.abs(previous)) * 100),
+    trend: delta > 0 ? "up" : delta < 0 ? "down" : "flat"
+  };
+}
+
+function getMonthlyComparison(sales: Sale[], expenses: Expense[], today: string) {
+  const currentKey = today.slice(0, 7);
+  const prevKey = previousMonthKey(currentKey);
+
+  const aggregate = (monthKey: string) => {
+    const monthSales = sales.filter((sale) => sale.date.startsWith(monthKey));
+    const monthExpenses = expenses.filter((expense) => expense.date.startsWith(monthKey));
+    const revenue = sumBy(monthSales, (sale) => sale.revenue);
+    const grossProfit = sumBy(monthSales, (sale) => sale.grossProfit);
+    const expenseTotal = sumBy(monthExpenses, (expense) => expense.amount);
+    return {
+      revenue,
+      grossProfit,
+      expenses: expenseTotal,
+      net: grossProfit - expenseTotal,
+      hasActivity: monthSales.length > 0 || monthExpenses.length > 0
+    };
+  };
+
+  const current = aggregate(currentKey);
+  const previous = aggregate(prevKey);
+
+  return {
+    currentMonthLabel: monthLabel(currentKey),
+    previousMonthLabel: monthLabel(prevKey),
+    hasPreviousData: previous.hasActivity,
+    revenue: buildDelta(current.revenue, previous.revenue),
+    grossProfit: buildDelta(current.grossProfit, previous.grossProfit),
+    expenses: buildDelta(current.expenses, previous.expenses),
+    netResult: buildDelta(current.net, previous.net)
+  };
+}
+
+function getStockForecast(products: Product[], monthlySales: Sale[], today: string) {
+  const todayDay = Number(today.slice(8, 10)) || 1;
+  const windowDays = monthlySales.reduce((maxDay, sale) => Math.max(maxDay, Number(sale.date.slice(8, 10)) || 0), todayDay);
+  const observedDays = Math.max(1, windowDays);
+
+  const unitsByProduct = new Map<string, number>();
+  for (const sale of monthlySales) {
+    unitsByProduct.set(sale.productId, (unitsByProduct.get(sale.productId) ?? 0) + sale.quantity);
+  }
+
+  const statusRank = { critical: 0, watch: 1, healthy: 2, idle: 3 };
+
+  return products
+    .map((product) => {
+      const unitsSold = unitsByProduct.get(product.id) ?? 0;
+      const dailyRate = unitsSold === 0 ? 0 : round(unitsSold / observedDays);
+      const daysRemaining = unitsSold === 0 ? null : Math.round((product.stock / unitsSold) * observedDays);
+      const status: "critical" | "watch" | "healthy" | "idle" =
+        daysRemaining === null ? "idle" : daysRemaining <= 7 ? "critical" : daysRemaining <= 21 ? "watch" : "healthy";
+      return {
+        productId: product.id,
+        name: product.name,
+        unit: product.unit,
+        stock: product.stock,
+        unitsSold,
+        dailyRate,
+        daysRemaining,
+        status
+      };
+    })
+    .sort((a, b) => {
+      const rankDiff = statusRank[a.status] - statusRank[b.status];
+      if (rankDiff !== 0) return rankDiff;
+      return (a.daysRemaining ?? Infinity) - (b.daysRemaining ?? Infinity);
+    });
 }
 
 function getExpensesByCategory(expenses: Expense[]) {

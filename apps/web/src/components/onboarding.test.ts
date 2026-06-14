@@ -21,6 +21,16 @@ const emptyMetrics: DashboardMetrics = {
   },
   businessHealthScore: 35,
   weeklyRevenue: [],
+  monthlyComparison: {
+    currentMonthLabel: "Junio 2026",
+    previousMonthLabel: "Mayo 2026",
+    hasPreviousData: false,
+    revenue: { current: 0, previous: 0, delta: 0, deltaPercent: null, trend: "flat" },
+    grossProfit: { current: 0, previous: 0, delta: 0, deltaPercent: null, trend: "flat" },
+    expenses: { current: 0, previous: 0, delta: 0, deltaPercent: null, trend: "flat" },
+    netResult: { current: 0, previous: 0, delta: 0, deltaPercent: null, trend: "flat" }
+  },
+  stockForecast: [],
   expensesByCategory: [],
   growthActions: [],
   lowStockItems: [],
