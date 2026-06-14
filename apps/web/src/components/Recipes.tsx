@@ -53,6 +53,9 @@ export function Recipes({ token }: { token: string }) {
     uniqueIngredientIds.size === ingredientLines.length;
   const productionRecipe = recipes.find((recipe) => recipe.id === productionRecipeId);
   const canProduce = Boolean(productionRecipe) && Number.isFinite(productionQuantity) && productionQuantity > 0 && productionNote.trim().length > 0;
+  const productName = (id: string) => products.find((product) => product.id === id)?.name ?? id;
+  const supplyName = (id: string) => supplies.find((supply) => supply.id === id)?.name ?? id;
+  const recipeName = (id: string) => recipes.find((recipe) => recipe.id === id)?.name ?? id;
 
   useEffect(() => {
     let isMounted = true;
@@ -197,14 +200,14 @@ export function Recipes({ token }: { token: string }) {
             {recipes.map((recipe) => (
               <article className="recipe-row" key={recipe.id}>
                 <div>
-                  <span>{recipe.productId}</span>
+                  <span>{productName(recipe.productId)}</span>
                   <strong>{recipe.name}</strong>
                   <small>Rinde {recipe.outputQuantity} unidades base</small>
                 </div>
                 <ul>
                   {recipe.ingredients.map((ingredient) => (
                     <li key={ingredient.supplyId}>
-                      {ingredient.supplyId}: {ingredient.quantity}
+                      {supplyName(ingredient.supplyId)}: {ingredient.quantity}
                     </li>
                   ))}
                 </ul>
@@ -252,7 +255,7 @@ export function Recipes({ token }: { token: string }) {
                 <ul>
                   {productionRecipe.ingredients.map((ingredient) => (
                     <li key={ingredient.supplyId}>
-                      {ingredient.supplyId}: {roundQuantity((ingredient.quantity * productionQuantity) / productionRecipe.outputQuantity)}
+                      {supplyName(ingredient.supplyId)}: {roundQuantity((ingredient.quantity * productionQuantity) / productionRecipe.outputQuantity)}
                     </li>
                   ))}
                 </ul>
@@ -342,8 +345,8 @@ export function Recipes({ token }: { token: string }) {
             {productionOrders.map((order) => (
               <article className="production-history-row" key={order.id}>
                 <div>
-                  <span>{order.recipeId ? `Receta ${order.recipeId}` : "Produccion manual"}</span>
-                  <strong>{order.productId}</strong>
+                  <span>{order.recipeId ? `Receta ${recipeName(order.recipeId)}` : "Produccion manual"}</span>
+                  <strong>{productName(order.productId)}</strong>
                   <small>{order.note || "Sin nota"}</small>
                 </div>
                 <div>

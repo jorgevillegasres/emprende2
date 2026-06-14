@@ -35,6 +35,9 @@ type Field = {
 type Row = ProductRecord | SupplyRecord | SaleRecord | ExpenseRecord;
 type OperationSection = Exclude<AppSection, "dashboard" | "recipes" | "plan" | "admin">;
 
+// Resuelve ids de referencia (productId/itemId) al nombre legible de la entidad.
+type CellContext = { resolveName: (id: string) => string };
+
 // Fecha de hoy (al cargar la app) para prellenar formularios de venta y gasto.
 const TODAY_ISO = new Date().toISOString().slice(0, 10);
 
@@ -89,7 +92,7 @@ const resourceConfig = {
     headers: ["Fecha", "Producto", "Cant.", "Ingreso", "Costo", "Utilidad"],
     load: listSales,
     create: createSale,
-    toCells: (row: SaleRecord) => [row.date, row.productId, row.quantity, money(row.revenue), money(row.cost), money(row.grossProfit)]
+    toCells: (row: SaleRecord, ctx: CellContext) => [row.date, ctx.resolveName(row.productId), row.quantity, money(row.revenue), money(row.cost), money(row.grossProfit)]
   },
   expenses: {
     title: "Gastos",
@@ -113,7 +116,7 @@ const resourceConfig = {
   headers: string[];
   load: (token?: string | null) => Promise<Row[]>;
   create: (payload: never, token?: string | null) => Promise<Row>;
-  toCells: (row: never) => Array<string | number>;
+  toCells: (row: never, ctx: CellContext) => Array<string | number>;
 }>;
 
 export function Operations({ focusSignal = 0, section, token, searchQuery = "" }: { focusSignal?: number; section: OperationSection; token: string; searchQuery?: string }) {
@@ -152,11 +155,19 @@ export function Operations({ focusSignal = 0, section, token, searchQuery = "" }
   const formRef = useRef<HTMLFormElement | null>(null);
   const addLabel =
     section === "products" ? "Nuevo producto" : section === "supplies" ? "Nuevo insumo" : section === "sales" ? "Registrar venta" : "Registrar gasto";
+  const itemNameById = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const product of productOptions) map.set(product.id, product.name);
+    for (const product of purchaseProducts) map.set(product.id, product.name);
+    for (const supply of purchaseSupplies) if (supply.id) map.set(supply.id, supply.name);
+    return map;
+  }, [productOptions, purchaseProducts, purchaseSupplies]);
+  const cellContext = useMemo<CellContext>(() => ({ resolveName: (id) => itemNameById.get(id) ?? id }), [itemNameById]);
   const filteredRows = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
     if (!query) return rows;
-    return rows.filter((row) => config.toCells(row as never).join(" ").toLowerCase().includes(query));
-  }, [rows, searchQuery, config]);
+    return rows.filter((row) => config.toCells(row as never, cellContext).join(" ").toLowerCase().includes(query));
+  }, [rows, searchQuery, config, cellContext]);
   const totalValue = useMemo(() => rows.length, [rows]);
   const selectedProduct = productOptions.find((product) => product.id === selectedProductId);
   const saleTotals = calculateSaleTotals(selectedProduct, saleQuantity);
@@ -405,7 +416,7 @@ export function Operations({ focusSignal = 0, section, token, searchQuery = "" }
   }
 
   function handleExportRows() {
-    const csv = buildCsvFromTable(config.headers, filteredRows.map((row) => config.toCells(row as never)));
+    const csv = buildCsvFromTable(config.headers, filteredRows.map((row) => config.toCells(row as never, cellContext)));
     downloadCsv(createExportFilename(config.title), csv);
   }
 
@@ -415,12 +426,12 @@ export function Operations({ focusSignal = 0, section, token, searchQuery = "" }
       inventoryMovements.map((movement) => [
         movement.createdAt ?? "",
         movement.itemType === "product" ? "Producto" : "Insumo",
-        movement.itemId,
+        cellContext.resolveName(movement.itemId),
         formatMovementType(movement.movementType),
         movement.quantity,
         movement.stockBefore,
         movement.stockAfter,
-        movement.referenceType,
+        formatReferenceType(movement.referenceType),
         movement.note ?? ""
       ])
     );
@@ -472,7 +483,7 @@ export function Operations({ focusSignal = 0, section, token, searchQuery = "" }
                 {filteredRows.length ? (
                   filteredRows.map((row, index) => (
                     <tr key={rowKey(row, index)}>
-                      {config.toCells(row as never).map((cell, cellIndex) => (
+                      {config.toCells(row as never, cellContext).map((cell, cellIndex) => (
                         <td key={`${rowKey(row, index)}-${cellIndex}`} data-label={config.headers[cellIndex]}>
                           {cell}
                         </td>
@@ -608,8 +619,8 @@ export function Operations({ focusSignal = 0, section, token, searchQuery = "" }
                 <div className="movement-row" key={movement.id}>
                   <span className={`movement-badge ${movement.quantity < 0 ? "out" : "in"}`}>{movement.quantity < 0 ? "Salida" : "Entrada"}</span>
                   <div>
-                    <strong>{movement.itemId}</strong>
-                    <small>{formatMovementType(movement.movementType)} - {movement.referenceType}</small>
+                    <strong>{cellContext.resolveName(movement.itemId)}</strong>
+                    <small>{formatMovementType(movement.movementType)} - {formatReferenceType(movement.referenceType)}</small>
                   </div>
                   <span>{movement.quantity}</span>
                   <span>{movement.stockBefore} {"->"} {movement.stockAfter}</span>
@@ -797,4 +808,15 @@ function formatMovementType(type: InventoryMovementRecord["movementType"]) {
   if (type === "production") return "Produccion";
   if (type === "purchase") return "Compra";
   return "Ajuste";
+}
+
+function formatReferenceType(reference: string) {
+  const labels: Record<string, string> = {
+    production_order: "Orden de produccion",
+    sale: "Venta",
+    purchase: "Compra",
+    adjustment: "Ajuste manual",
+    manual: "Ajuste manual"
+  };
+  return labels[reference] ?? reference;
 }
