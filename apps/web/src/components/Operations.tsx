@@ -142,7 +142,10 @@ export function Operations({ focusSignal = 0, section, token }: { focusSignal?: 
   const [saleQuantity, setSaleQuantity] = useState(1);
   const [error, setError] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const formRef = useRef<HTMLFormElement | null>(null);
+  const addLabel =
+    section === "products" ? "Nuevo producto" : section === "supplies" ? "Nuevo insumo" : section === "sales" ? "Registrar venta" : "Registrar gasto";
   const totalValue = useMemo(() => rows.length, [rows]);
   const selectedProduct = productOptions.find((product) => product.id === selectedProductId);
   const saleTotals = calculateSaleTotals(selectedProduct, saleQuantity);
@@ -240,19 +243,40 @@ export function Operations({ focusSignal = 0, section, token }: { focusSignal?: 
 
   useEffect(() => {
     if (section !== "sales" || focusSignal === 0) return;
+    setIsDrawerOpen(true);
+  }, [focusSignal, section]);
 
-    formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-    const firstInput = formRef.current?.querySelector("input, select");
-    if (firstInput instanceof HTMLInputElement || firstInput instanceof HTMLSelectElement) {
-      firstInput.focus();
+  useEffect(() => {
+    setIsDrawerOpen(false);
+    setError("");
+  }, [section]);
+
+  useEffect(() => {
+    if (!isDrawerOpen) return;
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setIsDrawerOpen(false);
+    };
+    document.addEventListener("keydown", onKeyDown);
+    document.body.style.overflow = "hidden";
+
+    const firstField = formRef.current?.querySelector("input, select");
+    if (firstField instanceof HTMLInputElement || firstField instanceof HTMLSelectElement) {
+      window.setTimeout(() => firstField.focus(), 60);
     }
-  }, [focusSignal, productOptions.length, section]);
+
+    return () => {
+      document.removeEventListener("keydown", onKeyDown);
+      document.body.style.overflow = "";
+    };
+  }, [isDrawerOpen]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setIsSaving(true);
     setError("");
-    const form = new FormData(event.currentTarget);
+    const formElement = event.currentTarget;
+    const form = new FormData(formElement);
     const payload = isSalesSection
       ? {
           date: String(form.get("date") ?? ""),
@@ -271,8 +295,9 @@ export function Operations({ focusSignal = 0, section, token }: { focusSignal?: 
       await config.create(payload as never, token);
       setRows(await config.load(token));
       if (isSalesSection) setProductOptions(await listProducts(token));
-      event.currentTarget.reset();
+      formElement.reset();
       if (isSalesSection) setSaleQuantity(1);
+      setIsDrawerOpen(false);
     } catch {
       setError("Revisa los campos e intenta guardar de nuevo");
     } finally {
@@ -421,12 +446,66 @@ export function Operations({ focusSignal = 0, section, token }: { focusSignal?: 
         </div>
       </section>
 
-      <section className="operations-grid">
-        <form className="card operations-form" onSubmit={handleSubmit} ref={formRef}>
-          <div>
-            <p className="eyebrow">Nuevo registro</p>
-            <h2>Captura rapida</h2>
+      <section className="operations-board">
+        <article className="card operations-table-card">
+          <div className="card-head">
+            <div>
+              <p className="eyebrow">Listado</p>
+              <h2>Registros actuales</h2>
+            </div>
+            <div className="operations-head-actions">
+              <button className="ghost-action export-action" disabled={!rows.length} onClick={handleExportRows} type="button">
+                Exportar CSV
+              </button>
+              <button className="primary-action" onClick={() => setIsDrawerOpen(true)} type="button">
+                + {addLabel}
+              </button>
+            </div>
           </div>
+          <div className="table-wrap">
+            <table className="data-table">
+              <thead>
+                <tr>
+                  {config.headers.map((header) => (
+                    <th key={header}>{header}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {rows.length ? (
+                  rows.map((row, index) => (
+                    <tr key={rowKey(row, index)}>
+                      {config.toCells(row as never).map((cell, cellIndex) => (
+                        <td key={`${rowKey(row, index)}-${cellIndex}`}>{cell}</td>
+                      ))}
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td className="table-empty" colSpan={config.headers.length}>
+                      Aun no tienes registros aqui. Toca <b>{addLabel}</b> para crear el primero.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </article>
+      </section>
+
+      {isDrawerOpen ? (
+        <div className="drawer-overlay" onClick={() => setIsDrawerOpen(false)}>
+          <aside className="drawer-panel" role="dialog" aria-modal="true" aria-label={addLabel} onClick={(event) => event.stopPropagation()}>
+            <div className="drawer-head">
+              <div>
+                <p className="eyebrow">Nuevo registro</p>
+                <h2>{addLabel}</h2>
+              </div>
+              <button className="drawer-close" onClick={() => setIsDrawerOpen(false)} type="button" aria-label="Cerrar">
+                &times;
+              </button>
+            </div>
+            <form className="operations-form" onSubmit={handleSubmit} ref={formRef}>
           {templates.length ? (
             <div className="template-strip">
               {templates.map((template) => (
@@ -502,40 +581,10 @@ export function Operations({ focusSignal = 0, section, token }: { focusSignal?: 
           <button className="primary-action form-action" disabled={isSaving || (isSalesSection && !canSubmitSale)} type="submit">
             {isSaving ? "Guardando..." : "Guardar"}
           </button>
-        </form>
-
-        <article className="card operations-table-card">
-          <div className="card-head">
-            <div>
-              <p className="eyebrow">Listado</p>
-              <h2>Registros actuales</h2>
-            </div>
-            <button className="secondary-action export-action" disabled={!rows.length} onClick={handleExportRows} type="button">
-              Exportar CSV
-            </button>
-          </div>
-          <div className="table-wrap">
-            <table className="data-table">
-              <thead>
-                <tr>
-                  {config.headers.map((header) => (
-                    <th key={header}>{header}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((row, index) => (
-                  <tr key={rowKey(row, index)}>
-                    {config.toCells(row as never).map((cell, cellIndex) => (
-                      <td key={`${rowKey(row, index)}-${cellIndex}`}>{cell}</td>
-                    ))}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </article>
-      </section>
+            </form>
+          </aside>
+        </div>
+      ) : null}
 
       {section === "supplies" ? (
         <section className="card movements-card">

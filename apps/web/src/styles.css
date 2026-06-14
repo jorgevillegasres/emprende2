@@ -2565,3 +2565,155 @@ h2 {
     transition-duration: 0.001ms !important;
   }
 }
+
+/* =======================================================================
+   PANEL DESLIZANTE — la lista es protagonista, el formulario aparece enfocado
+   ======================================================================= */
+
+/* La lista ocupa todo el ancho */
+.operations-board {
+  display: grid;
+  grid-template-columns: 1fr;
+}
+
+.operations-head-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Botón secundario discreto para acciones de soporte (export) */
+.ghost-action {
+  min-height: 38px;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--ink-soft);
+  padding: 8px 14px;
+  font-weight: 700;
+  white-space: nowrap;
+  transition: border-color var(--dur) var(--ease), background var(--dur) var(--ease), color var(--dur) var(--ease);
+}
+
+.ghost-action:not(:disabled):hover {
+  border-color: var(--line-strong);
+  background: var(--surface-2);
+  color: var(--ink);
+}
+
+.ghost-action:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Estado vacío dentro de la tabla */
+.table-empty {
+  padding: 40px 16px !important;
+  text-align: center !important;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.table-empty b {
+  color: var(--ink);
+}
+
+/* --- Drawer: overlay + panel deslizante desde la derecha --- */
+.drawer-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  justify-content: flex-end;
+  background: rgba(18, 16, 12, 0.42);
+  backdrop-filter: blur(3px);
+  animation: emp-fade 200ms var(--ease) both;
+}
+
+@keyframes emp-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.drawer-panel {
+  width: min(440px, 100%);
+  height: 100%;
+  overflow-y: auto;
+  display: grid;
+  align-content: start;
+  gap: 18px;
+  padding: 24px clamp(18px, 3vw, 28px) 32px;
+  background: var(--surface);
+  border-left: 1px solid var(--line);
+  box-shadow: -24px 0 60px rgba(18, 16, 12, 0.22);
+  animation: emp-slide-in 280ms var(--ease) both;
+}
+
+@keyframes emp-slide-in {
+  from {
+    transform: translateX(28px);
+    opacity: 0.4;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+.drawer-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--line);
+}
+
+.drawer-head h2 {
+  margin: 0;
+}
+
+.drawer-close {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--line);
+  background: var(--surface-2);
+  color: var(--ink);
+  font-size: 1.5rem;
+  line-height: 1;
+  transition: transform var(--dur) var(--ease), background var(--dur) var(--ease), border-color var(--dur) var(--ease);
+}
+
+.drawer-close:hover {
+  background: var(--ink);
+  color: #fff;
+  border-color: var(--ink);
+  transform: rotate(90deg);
+}
+
+/* El formulario dentro del drawer ya no necesita superficie de tarjeta */
+.drawer-panel .operations-form {
+  margin: 0;
+}
+
+.drawer-panel .form-action {
+  justify-self: stretch;
+  width: 100%;
+  text-align: center;
+}
+
+@media (max-width: 560px) {
+  .drawer-panel {
+    width: 100%;
+    border-left: 0;
+  }
+}
