@@ -61,6 +61,10 @@
   box-sizing: border-box;
 }
 
+html {
+  scrollbar-gutter: stable;
+}
+
 body {
   margin: 0;
   min-height: 100vh;
@@ -97,16 +101,16 @@ button {
 .topbar {
   position: sticky;
   top: 0;
-  z-index: 20;
-  min-height: 82px;
+  z-index: 40;
+  min-height: 76px;
   display: flex;
   align-items: center;
   gap: 16px;
-  width: min(100%, 1440px);
-  margin: 0 auto;
-  padding: 10px 0;
-  background: rgba(245, 247, 248, 0.94);
-  backdrop-filter: blur(18px);
+  width: 100%;
+  margin: 0;
+  padding: 12px 0;
+  background: rgba(241, 237, 228, 0.92);
+  backdrop-filter: blur(18px) saturate(140%);
 }
 
 .brand {
@@ -2150,11 +2154,27 @@ h2 {
 }
 
 .brand-mark {
-  border-radius: 12px;
-  background: linear-gradient(140deg, var(--ink), #2c3a33 60%, var(--green));
-  box-shadow: 0 6px 16px rgba(12, 155, 102, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.16);
+  position: relative;
+  border-radius: 11px;
+  background: var(--ink);
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(22, 25, 28, 0.24), inset 0 0 0 1px rgba(255, 255, 255, 0.08);
   font-family: var(--font-display);
+  font-weight: 600;
+  overflow: hidden;
   transition: transform var(--dur) var(--ease);
+}
+
+/* Acento verde de marca en el monograma */
+.brand-mark::after {
+  content: "";
+  position: absolute;
+  left: 7px;
+  right: 7px;
+  bottom: 6px;
+  height: 3px;
+  border-radius: 999px;
+  background: var(--green);
 }
 
 .brand-button:hover .brand-mark {
@@ -2619,16 +2639,19 @@ h2 {
   color: var(--ink);
 }
 
-/* --- Drawer: overlay + panel deslizante desde la derecha --- */
-.drawer-overlay {
+/* --- Modal: popup centrado en desktop, hoja inferior en móvil --- */
+.modal-overlay {
   position: fixed;
   inset: 0;
-  z-index: 60;
+  z-index: 80;
   display: flex;
-  justify-content: flex-end;
-  background: rgba(18, 16, 12, 0.42);
-  backdrop-filter: blur(3px);
-  animation: emp-fade 200ms var(--ease) both;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(16px, 4vw, 40px);
+  background: rgba(18, 16, 12, 0.5);
+  backdrop-filter: blur(4px);
+  animation: emp-fade 180ms var(--ease) both;
+  overflow-y: auto;
 }
 
 @keyframes emp-fade {
@@ -2640,24 +2663,28 @@ h2 {
   }
 }
 
-.drawer-panel {
-  width: min(440px, 100%);
-  height: 100%;
-  overflow-y: auto;
+.modal-card {
+  width: min(520px, 100%);
+  max-height: calc(100vh - 2 * clamp(16px, 4vw, 40px));
+  margin: auto;
   display: grid;
-  align-content: start;
-  gap: 18px;
-  padding: 24px clamp(18px, 3vw, 28px) 32px;
+  grid-template-rows: auto minmax(0, 1fr);
+  overflow: hidden;
   background: var(--surface);
-  border-left: 1px solid var(--line);
-  box-shadow: -24px 0 60px rgba(18, 16, 12, 0.22);
-  animation: emp-slide-in 280ms var(--ease) both;
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-lg);
+  animation: emp-pop 220ms var(--ease) both;
 }
 
-@keyframes emp-slide-in {
+.modal-card.modal-lg {
+  width: min(780px, 100%);
+}
+
+@keyframes emp-pop {
   from {
-    transform: translateX(28px);
-    opacity: 0.4;
+    transform: translateY(12px) scale(0.98);
+    opacity: 0;
   }
   to {
     transform: none;
@@ -2665,20 +2692,25 @@ h2 {
   }
 }
 
-.drawer-head {
+.modal-head {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: 14px;
-  padding-bottom: 16px;
+  padding: 22px clamp(18px, 3vw, 26px) 16px;
   border-bottom: 1px solid var(--line);
 }
 
-.drawer-head h2 {
+.modal-head h2 {
   margin: 0;
 }
 
-.drawer-close {
+.modal-body {
+  overflow-y: auto;
+  padding: 20px clamp(18px, 3vw, 26px) clamp(20px, 3vw, 26px);
+}
+
+.modal-close {
   flex: 0 0 auto;
   display: grid;
   place-items: center;
@@ -2693,27 +2725,90 @@ h2 {
   transition: transform var(--dur) var(--ease), background var(--dur) var(--ease), border-color var(--dur) var(--ease);
 }
 
-.drawer-close:hover {
+.modal-close:hover {
   background: var(--ink);
   color: #fff;
   border-color: var(--ink);
   transform: rotate(90deg);
 }
 
-/* El formulario dentro del drawer ya no necesita superficie de tarjeta */
-.drawer-panel .operations-form {
+/* Los formularios dentro del modal no necesitan superficie de tarjeta */
+.modal-body .operations-form,
+.modal-body .action-plan-form,
+.modal-body .recipe-form,
+.modal-body .recipe-production-form,
+.modal-body .adjustment-panel {
   margin: 0;
+  padding: 0;
+  border: 0;
+  box-shadow: none;
+  background: transparent;
 }
 
-.drawer-panel .form-action {
+.modal-body .form-action,
+.modal-body .primary-action[type="submit"] {
   justify-self: stretch;
   width: 100%;
   text-align: center;
 }
 
-@media (max-width: 560px) {
-  .drawer-panel {
+/* Rejillas multi-columna se apilan dentro del modal angosto */
+.modal-body .production-grid,
+.modal-body .purchase-grid,
+.modal-body .adjustment-grid {
+  grid-template-columns: 1fr;
+}
+
+.modal-lg .recipe-form-grid,
+.modal-lg .recipe-form-grid.compact {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.modal-lg .recipe-note {
+  grid-column: span 2;
+}
+
+.modal-body .adjustment-action,
+.modal-body .adjustment-delta {
+  width: 100%;
+}
+
+/* Bloqueo de scroll del fondo sin salto de layout (ver scrollbar-gutter en html) */
+body.modal-open {
+  overflow: hidden;
+}
+
+/* Hoja inferior en móvil */
+@media (max-width: 600px) {
+  .modal-overlay {
+    align-items: flex-end;
+    padding: 0;
+  }
+
+  .modal-card,
+  .modal-card.modal-lg {
     width: 100%;
-    border-left: 0;
+    max-height: 92vh;
+    border-radius: var(--r-lg) var(--r-lg) 0 0;
+    border-bottom: 0;
+    animation: emp-sheet 260ms var(--ease) both;
+  }
+
+  @keyframes emp-sheet {
+    from {
+      transform: translateY(100%);
+    }
+    to {
+      transform: none;
+    }
+  }
+
+  .modal-lg .recipe-form-grid,
+  .modal-lg .recipe-form-grid.compact {
+    grid-template-columns: 1fr;
+  }
+
+  .modal-lg .recipe-note {
+    grid-column: auto;
   }
 }

@@ -16,6 +16,7 @@ import {
   type DecisionSourceFilter,
   type DecisionStatusFilter
 } from "./actionPlanLogic";
+import { Modal } from "./Modal";
 
 const statusLabels: Record<DecisionStatusFilter, string> = {
   all: "Todas",
@@ -37,6 +38,7 @@ export function ActionPlan({ token }: { token: string }) {
   const [priorityFilter, setPriorityFilter] = useState<DecisionPriorityFilter>("all");
   const [sourceFilter, setSourceFilter] = useState<DecisionSourceFilter>("all");
   const [message, setMessage] = useState("");
+  const [isFormOpen, setIsFormOpen] = useState(false);
   const [form, setForm] = useState({
     title: "",
     detail: "",
@@ -76,6 +78,7 @@ export function ActionPlan({ token }: { token: string }) {
       setDecisions((current) => [created, ...current]);
       setForm((current) => ({ ...current, title: "", detail: "", dueDate: "" }));
       setStatusFilter("open");
+      setIsFormOpen(false);
       setMessage("Accion creada.");
     } catch {
       setMessage("No pudimos crear la accion.");
@@ -106,13 +109,16 @@ export function ActionPlan({ token }: { token: string }) {
         </div>
       </section>
 
-      <section className="action-plan-grid">
+      <section className="operations-board">
         <article className="card action-plan-list-card">
           <div className="card-head">
             <div>
               <p className="eyebrow">Seguimiento</p>
               <h2>Acciones</h2>
             </div>
+            <button className="primary-action" onClick={() => setIsFormOpen(true)} type="button">
+              + Nueva accion
+            </button>
           </div>
           <div className="action-plan-filters">
             <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as DecisionStatusFilter)}>
@@ -176,15 +182,10 @@ export function ActionPlan({ token }: { token: string }) {
             )}
           </div>
         </article>
+      </section>
 
-        <article className="card action-plan-form-card">
-          <div className="card-head">
-            <div>
-              <p className="eyebrow">Nueva accion</p>
-              <h2>Crear seguimiento</h2>
-            </div>
-          </div>
-          <form className="action-plan-form" onSubmit={handleCreate}>
+      <Modal open={isFormOpen} onClose={() => setIsFormOpen(false)} eyebrow="Nueva accion" title="Crear seguimiento">
+        <form className="action-plan-form" onSubmit={handleCreate}>
             <label>
               <span>Titulo</span>
               <input required value={form.title} onChange={(event) => setForm((current) => ({ ...current, title: event.target.value }))} />
@@ -222,9 +223,8 @@ export function ActionPlan({ token }: { token: string }) {
             </label>
             <button className="primary-action" type="submit">Crear accion</button>
             {message ? <p className="decision-message">{message}</p> : null}
-          </form>
-        </article>
-      </section>
+        </form>
+      </Modal>
     </main>
   );
 }

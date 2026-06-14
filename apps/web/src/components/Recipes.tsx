@@ -12,6 +12,7 @@ import {
   type SupplyRecord
 } from "../api/client";
 import { buildCsvFromTable, createExportFilename, downloadCsv } from "./csvExport";
+import { Modal } from "./Modal";
 
 export function Recipes({ token }: { token: string }) {
   const [recipes, setRecipes] = useState<RecipeRecord[]>([]);
@@ -33,6 +34,8 @@ export function Recipes({ token }: { token: string }) {
   const [error, setError] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [isProducing, setIsProducing] = useState(false);
+  const [isProduceOpen, setIsProduceOpen] = useState(false);
+  const [isRecipeFormOpen, setIsRecipeFormOpen] = useState(false);
 
   const ingredientLines = [
     { supplyId: supplyOneId, quantity: supplyOneQuantity },
@@ -99,6 +102,7 @@ export function Recipes({ token }: { token: string }) {
       setSupplyOneQuantity(1);
       setSupplyTwoQuantity(0);
       setNote("");
+      setIsRecipeFormOpen(false);
     } catch {
       setError("No se pudo guardar la receta. Revisa producto, insumos y codigo.");
     } finally {
@@ -130,6 +134,7 @@ export function Recipes({ token }: { token: string }) {
       setProductionOrders(loadedProductionOrders);
       setProductionRecipeId((currentId) => loadedRecipes.some((recipe) => recipe.id === currentId) ? currentId : loadedRecipes[0]?.id ?? "");
       setProductionQuantity(productionRecipe?.outputQuantity ?? 10);
+      setIsProduceOpen(false);
     } catch {
       setError("No se pudo producir desde la receta. Revisa stock de insumos.");
     } finally {
@@ -169,13 +174,47 @@ export function Recipes({ token }: { token: string }) {
 
       {error ? <div className="system-panel">{error}</div> : null}
 
-      <section className="recipes-grid">
-        <div className="recipe-workspace">
-          <form className="card recipe-production-form" onSubmit={handleProductionSubmit}>
-            <div>
-              <p className="eyebrow">Produccion guiada</p>
-              <h2>Producir desde receta</h2>
-            </div>
+      <section className="card recipes-library-card">
+        <div className="card-head">
+          <div>
+            <p className="eyebrow">Biblioteca</p>
+            <h2>Formulas guardadas</h2>
+          </div>
+          <div className="operations-head-actions">
+            <button className="ghost-action" disabled={!recipes.length} onClick={() => setIsProduceOpen(true)} type="button">
+              Producir lote
+            </button>
+            <button className="primary-action" onClick={() => setIsRecipeFormOpen(true)} type="button">
+              + Nueva receta
+            </button>
+          </div>
+        </div>
+        {recipes.length ? (
+          <div className="recipe-list">
+            {recipes.map((recipe) => (
+              <article className="recipe-row" key={recipe.id}>
+                <div>
+                  <span>{recipe.productId}</span>
+                  <strong>{recipe.name}</strong>
+                  <small>Rinde {recipe.outputQuantity} unidades base</small>
+                </div>
+                <ul>
+                  {recipe.ingredients.map((ingredient) => (
+                    <li key={ingredient.supplyId}>
+                      {ingredient.supplyId}: {ingredient.quantity}
+                    </li>
+                  ))}
+                </ul>
+              </article>
+            ))}
+          </div>
+        ) : (
+          <p className="empty-copy">Aun no tienes recetas. Toca <b>+ Nueva receta</b> para crear tu primera formula base.</p>
+        )}
+      </section>
+
+      <Modal open={isProduceOpen} onClose={() => setIsProduceOpen(false)} eyebrow="Produccion guiada" title="Producir desde receta" size="lg">
+        <form className="recipe-production-form" onSubmit={handleProductionSubmit}>
             {recipes.length ? (
               <div className="recipe-form-grid compact">
                 <label>
@@ -216,13 +255,11 @@ export function Recipes({ token }: { token: string }) {
                 </ul>
               </div>
             ) : null}
-          </form>
+        </form>
+      </Modal>
 
-          <form className="card recipe-form" onSubmit={handleSubmit}>
-          <div>
-            <p className="eyebrow">Nueva formula</p>
-            <h2>Receta base</h2>
-          </div>
+      <Modal open={isRecipeFormOpen} onClose={() => setIsRecipeFormOpen(false)} eyebrow="Nueva formula" title="Receta base" size="lg">
+        <form className="recipe-form" onSubmit={handleSubmit}>
           <div className="recipe-form-grid">
             <label>
               <span>Codigo</span>
@@ -283,40 +320,8 @@ export function Recipes({ token }: { token: string }) {
           <button className="primary-action" disabled={isSaving || !canSubmit} type="submit">
             {isSaving ? "Guardando..." : "Guardar receta"}
           </button>
-          </form>
-        </div>
-
-        <section className="card recipes-list-card">
-          <div className="card-head">
-            <div>
-              <p className="eyebrow">Biblioteca</p>
-              <h2>Formulas guardadas</h2>
-            </div>
-          </div>
-          {recipes.length ? (
-            <div className="recipe-list">
-              {recipes.map((recipe) => (
-                <article className="recipe-row" key={recipe.id}>
-                  <div>
-                    <span>{recipe.productId}</span>
-                    <strong>{recipe.name}</strong>
-                    <small>Rinde {recipe.outputQuantity} unidades base</small>
-                  </div>
-                  <ul>
-                    {recipe.ingredients.map((ingredient) => (
-                      <li key={ingredient.supplyId}>
-                        {ingredient.supplyId}: {ingredient.quantity}
-                      </li>
-                    ))}
-                  </ul>
-                </article>
-              ))}
-            </div>
-          ) : (
-            <p className="empty-copy">Todavia no hay recetas guardadas.</p>
-          )}
-        </section>
-      </section>
+        </form>
+      </Modal>
 
       <section className="card production-history-card">
         <div className="card-head">

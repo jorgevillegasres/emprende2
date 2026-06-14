@@ -19,6 +19,7 @@ import {
   type SupplyRecord
 } from "../api/client";
 import { buildCsvFromTable, createExportFilename, downloadCsv } from "./csvExport";
+import { Modal } from "./Modal";
 import { getTemplatesForSection } from "./operationTemplates";
 import { calculateSaleTotals } from "./salesCalculator";
 import type { AppSection } from "./Shell";
@@ -143,6 +144,7 @@ export function Operations({ focusSignal = 0, section, token }: { focusSignal?: 
   const [error, setError] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [openInventoryAction, setOpenInventoryAction] = useState<"produce" | "purchase" | "adjust" | null>(null);
   const formRef = useRef<HTMLFormElement | null>(null);
   const addLabel =
     section === "products" ? "Nuevo producto" : section === "supplies" ? "Nuevo insumo" : section === "sales" ? "Registrar venta" : "Registrar gasto";
@@ -248,28 +250,9 @@ export function Operations({ focusSignal = 0, section, token }: { focusSignal?: 
 
   useEffect(() => {
     setIsDrawerOpen(false);
+    setOpenInventoryAction(null);
     setError("");
   }, [section]);
-
-  useEffect(() => {
-    if (!isDrawerOpen) return;
-
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setIsDrawerOpen(false);
-    };
-    document.addEventListener("keydown", onKeyDown);
-    document.body.style.overflow = "hidden";
-
-    const firstField = formRef.current?.querySelector("input, select");
-    if (firstField instanceof HTMLInputElement || firstField instanceof HTMLSelectElement) {
-      window.setTimeout(() => firstField.focus(), 60);
-    }
-
-    return () => {
-      document.removeEventListener("keydown", onKeyDown);
-      document.body.style.overflow = "";
-    };
-  }, [isDrawerOpen]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -326,6 +309,7 @@ export function Operations({ focusSignal = 0, section, token }: { focusSignal?: 
         setAdjustmentStockAfter(products.find((product) => product.id === nextId)?.stock ?? 0);
         return nextId;
       });
+      setOpenInventoryAction(null);
     } catch {
       setError("No se pudo registrar el ajuste de inventario");
     } finally {
@@ -358,6 +342,7 @@ export function Operations({ focusSignal = 0, section, token }: { focusSignal?: 
         return options.some((item) => item.id === currentId) ? currentId : options[0]?.id ?? "";
       });
       setPurchaseQuantity(1);
+      setOpenInventoryAction(null);
     } catch {
       setError("No se pudo registrar la entrada de inventario");
     } finally {
@@ -390,6 +375,7 @@ export function Operations({ focusSignal = 0, section, token }: { focusSignal?: 
       setProductionQuantity(1);
       setProductionSupplyOneQuantity(1);
       setProductionSupplyTwoQuantity(0);
+      setOpenInventoryAction(null);
     } catch {
       setError("No se pudo registrar la orden de produccion");
     } finally {
@@ -493,19 +479,8 @@ export function Operations({ focusSignal = 0, section, token }: { focusSignal?: 
         </article>
       </section>
 
-      {isDrawerOpen ? (
-        <div className="drawer-overlay" onClick={() => setIsDrawerOpen(false)}>
-          <aside className="drawer-panel" role="dialog" aria-modal="true" aria-label={addLabel} onClick={(event) => event.stopPropagation()}>
-            <div className="drawer-head">
-              <div>
-                <p className="eyebrow">Nuevo registro</p>
-                <h2>{addLabel}</h2>
-              </div>
-              <button className="drawer-close" onClick={() => setIsDrawerOpen(false)} type="button" aria-label="Cerrar">
-                &times;
-              </button>
-            </div>
-            <form className="operations-form" onSubmit={handleSubmit} ref={formRef}>
+      <Modal open={isDrawerOpen} onClose={() => setIsDrawerOpen(false)} eyebrow="Nuevo registro" title={addLabel}>
+        <form className="operations-form" onSubmit={handleSubmit} ref={formRef}>
           {templates.length ? (
             <div className="template-strip">
               {templates.map((template) => (
@@ -581,27 +556,53 @@ export function Operations({ focusSignal = 0, section, token }: { focusSignal?: 
           <button className="primary-action form-action" disabled={isSaving || (isSalesSection && !canSubmitSale)} type="submit">
             {isSaving ? "Guardando..." : "Guardar"}
           </button>
-            </form>
-          </aside>
-        </div>
-      ) : null}
+        </form>
+      </Modal>
 
       {section === "supplies" ? (
         <section className="card movements-card">
           <div className="card-head">
             <div>
               <p className="eyebrow">Kardex</p>
-              <h2>Movimientos recientes</h2>
+              <h2>Movimientos de inventario</h2>
             </div>
-            <button className="secondary-action export-action" disabled={!inventoryMovements.length} onClick={handleExportInventoryMovements} type="button">
-              Exportar CSV
-            </button>
+            <div className="operations-head-actions">
+              <button className="ghost-action" disabled={!inventoryMovements.length} onClick={handleExportInventoryMovements} type="button">
+                Exportar CSV
+              </button>
+              <button className="ghost-action" onClick={() => setOpenInventoryAction("adjust")} type="button">
+                Ajustar stock
+              </button>
+              <button className="ghost-action" onClick={() => setOpenInventoryAction("purchase")} type="button">
+                Registrar entrada
+              </button>
+              <button className="primary-action" onClick={() => setOpenInventoryAction("produce")} type="button">
+                + Producir lote
+              </button>
+            </div>
           </div>
-          <form className="adjustment-panel" onSubmit={handleProductionSubmit}>
-            <div>
-              <p className="eyebrow">Produccion</p>
-              <h3>Convertir insumos en producto terminado</h3>
+          {inventoryMovements.length ? (
+            <div className="movement-list">
+              {inventoryMovements.map((movement) => (
+                <div className="movement-row" key={movement.id}>
+                  <span className={`movement-badge ${movement.quantity < 0 ? "out" : "in"}`}>{movement.quantity < 0 ? "Salida" : "Entrada"}</span>
+                  <div>
+                    <strong>{movement.itemId}</strong>
+                    <small>{formatMovementType(movement.movementType)} - {movement.referenceType}</small>
+                  </div>
+                  <span>{movement.quantity}</span>
+                  <span>{movement.stockBefore} {"->"} {movement.stockAfter}</span>
+                </div>
+              ))}
             </div>
+          ) : (
+            <p className="empty-copy">Todavia no hay movimientos de inventario. Registra una entrada, produccion o ajuste para verlos aqui.</p>
+          )}
+        </section>
+      ) : null}
+
+      <Modal open={openInventoryAction === "produce"} onClose={() => setOpenInventoryAction(null)} eyebrow="Produccion" title="Convertir insumos en producto" size="lg">
+        <form className="adjustment-panel" onSubmit={handleProductionSubmit}>
             {purchaseProducts.length && purchaseSupplies.length ? (
               <div className="production-grid">
                 <label>
@@ -658,12 +659,11 @@ export function Operations({ focusSignal = 0, section, token }: { focusSignal?: 
             ) : (
               <p className="empty-copy">Crea al menos un producto y un insumo para registrar produccion.</p>
             )}
-          </form>
-          <form className="adjustment-panel" onSubmit={handlePurchaseSubmit}>
-            <div>
-              <p className="eyebrow">Entrada</p>
-              <h3>Registrar compra o reposicion</h3>
-            </div>
+        </form>
+      </Modal>
+
+      <Modal open={openInventoryAction === "purchase"} onClose={() => setOpenInventoryAction(null)} eyebrow="Entrada" title="Registrar compra o reposicion" size="lg">
+        <form className="adjustment-panel" onSubmit={handlePurchaseSubmit}>
             {purchaseOptions.length ? (
               <div className="purchase-grid">
                 <label>
@@ -710,12 +710,11 @@ export function Operations({ focusSignal = 0, section, token }: { focusSignal?: 
             ) : (
               <p className="empty-copy">Crea productos o insumos para registrar entradas de inventario.</p>
             )}
-          </form>
-          <form className="adjustment-panel" onSubmit={handleAdjustmentSubmit}>
-            <div>
-              <p className="eyebrow">Ajuste manual</p>
-              <h3>Corregir stock contado</h3>
-            </div>
+        </form>
+      </Modal>
+
+      <Modal open={openInventoryAction === "adjust"} onClose={() => setOpenInventoryAction(null)} eyebrow="Ajuste manual" title="Corregir stock contado">
+        <form className="adjustment-panel" onSubmit={handleAdjustmentSubmit}>
             {adjustmentProducts.length ? (
               <div className="adjustment-grid">
                 <label>
@@ -755,26 +754,8 @@ export function Operations({ focusSignal = 0, section, token }: { focusSignal?: 
             ) : (
               <p className="empty-copy">Crea un producto para registrar ajustes manuales de inventario.</p>
             )}
-          </form>
-          {inventoryMovements.length ? (
-            <div className="movement-list">
-              {inventoryMovements.map((movement) => (
-                <div className="movement-row" key={movement.id}>
-                  <span className={`movement-badge ${movement.quantity < 0 ? "out" : "in"}`}>{movement.quantity < 0 ? "Salida" : "Entrada"}</span>
-                  <div>
-                    <strong>{movement.itemId}</strong>
-                    <small>{formatMovementType(movement.movementType)} - {movement.referenceType}</small>
-                  </div>
-                  <span>{movement.quantity}</span>
-                  <span>{movement.stockBefore} {"->"} {movement.stockAfter}</span>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="empty-copy">Todavia no hay movimientos de inventario registrados.</p>
-          )}
-        </section>
-      ) : null}
+        </form>
+      </Modal>
     </main>
   );
 }
