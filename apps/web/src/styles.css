@@ -2174,16 +2174,8 @@ h2 {
   transition: transform var(--dur) var(--ease);
 }
 
-/* Acento verde de marca en el monograma */
-.brand-mark::after {
-  content: "";
-  position: absolute;
-  left: 7px;
-  right: 7px;
-  bottom: 6px;
-  height: 3px;
-  border-radius: 999px;
-  background: var(--green);
+.brand-mark svg {
+  display: block;
 }
 
 .brand-button:hover .brand-mark {
@@ -2633,12 +2625,8 @@ h2 {
 }
 
 .login-copy .brand-mark {
-  background: var(--coral);
-  box-shadow: 0 6px 18px rgba(250, 74, 40, 0.4);
-}
-
-.login-copy .brand-mark::after {
-  background: rgba(255, 255, 255, 0.9);
+  background: #20262b;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12);
 }
 
 .login-copy .brand strong {

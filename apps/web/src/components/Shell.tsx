@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { BrandMark } from "./BrandMark";
 import { Icon } from "./Icon";
 import { getPrimaryActionSection } from "./shellActions";
 
@@ -33,7 +34,9 @@ export function Shell({
     <div className="shell">
       <header className="topbar">
         <button className="brand brand-button" type="button" onClick={() => onSectionChange("dashboard")} aria-label="Emprendedos">
-          <span className="brand-mark">e</span>
+          <span className="brand-mark">
+            <BrandMark />
+          </span>
           <span>
             <strong>
               emprende<span>dos</span>

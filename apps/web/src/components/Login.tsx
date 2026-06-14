@@ -1,5 +1,6 @@
 import { FormEvent, useState } from "react";
 import type { RegisterPayload } from "../api/client";
+import { BrandMark } from "./BrandMark";
 import { Icon } from "./Icon";
 
 export function Login({
@@ -49,7 +50,9 @@ export function Login({
       <section className="login-panel">
         <div className="login-copy">
           <div className="brand">
-            <span className="brand-mark">e</span>
+            <span className="brand-mark">
+              <BrandMark />
+            </span>
             <span>
               <strong>
                 emprende<span>dos</span>
