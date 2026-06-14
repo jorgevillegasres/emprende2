@@ -247,15 +247,19 @@ button {
 }
 
 .login-panel {
-  width: min(1040px, 100%);
+  width: min(1000px, 100%);
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 380px;
-  gap: 18px;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+  gap: 0;
   align-items: stretch;
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow-lg);
 }
 
 .login-copy {
-  min-height: 520px;
+  min-height: 470px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -1978,7 +1982,12 @@ h2 {
   }
 
   .login-copy {
-    min-height: 360px;
+    min-height: auto;
+    gap: 20px;
+  }
+
+  .login-highlights {
+    display: none;
   }
 
   .hero-grid,
@@ -2603,13 +2612,24 @@ h2 {
 /* --- Login: panel editorial con textura --- */
 /* Login: panel izquierdo oscuro de mando (primera impresión) */
 .login-copy {
-  justify-content: flex-start;
-  gap: 30px;
-  border-radius: var(--r-lg);
-  border-color: transparent;
+  justify-content: center;
+  gap: 26px;
+  border: 0;
+  border-radius: 0;
+  padding: clamp(28px, 3.5vw, 44px);
   background: radial-gradient(130% 130% at 0% 0%, #242b31, var(--ink) 72%);
   color: #fff;
-  box-shadow: var(--shadow-ink);
+  box-shadow: none;
+}
+
+/* Login: formulario como mitad derecha de la tarjeta unificada */
+.login-panel .login-form {
+  align-content: center;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  background: var(--surface);
+  padding: clamp(28px, 3.5vw, 44px);
 }
 
 .login-copy .brand-mark {
@@ -2679,6 +2699,19 @@ h2 {
 .login-highlights strong {
   color: #fff;
   font-weight: 700;
+}
+
+/* Al apilarse, el hero se compacta y oculta las propuestas para acercar el formulario */
+@media (max-width: 900px) {
+  .login-highlights {
+    display: none;
+  }
+
+  .login-copy {
+    min-height: auto;
+    gap: 18px;
+    text-align: left;
+  }
 }
 
 .login-form {
