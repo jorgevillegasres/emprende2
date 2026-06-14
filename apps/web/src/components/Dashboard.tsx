@@ -355,11 +355,11 @@ export function Dashboard({ metrics, onSectionChange, token }: { metrics: Dashbo
           </div>
           <div className="stock-list">
             {metrics.lowStockItems.slice(0, 5).map((item) => (
-              <div className="stock-row" key={`${item.type}-${item.name}`}>
+              <div className={`stock-row ${item.stock <= item.minStock * 0.5 ? "stock-critical" : "stock-low"}`} key={`${item.type}-${item.name}`}>
                 <span>{item.type}</span>
                 <strong>{item.name}</strong>
                 <small>
-                  {item.stock} / min. {item.minStock} {item.unit ?? ""}
+                  <b>{item.stock}</b> / min. {item.minStock} {item.unit ?? ""}
                 </small>
               </div>
             ))}

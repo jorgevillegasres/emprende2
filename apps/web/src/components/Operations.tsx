@@ -577,9 +577,11 @@ export function Operations({ focusSignal = 0, section, token }: { focusSignal?: 
                 Exportar CSV
               </button>
               <button className="ghost-action" onClick={() => setOpenInventoryAction("adjust")} type="button">
+                <Icon name="adjust" size={16} />
                 Ajustar stock
               </button>
               <button className="ghost-action" onClick={() => setOpenInventoryAction("purchase")} type="button">
+                <Icon name="entrada" size={16} />
                 Registrar entrada
               </button>
               <button className="primary-action" onClick={() => setOpenInventoryAction("produce")} type="button">

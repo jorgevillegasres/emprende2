@@ -183,6 +183,7 @@ export function Recipes({ token }: { token: string }) {
           </div>
           <div className="operations-head-actions">
             <button className="ghost-action" disabled={!recipes.length} onClick={() => setIsProduceOpen(true)} type="button">
+              <Icon name="products" size={16} />
               Producir lote
             </button>
             <button className="primary-action" onClick={() => setIsRecipeFormOpen(true)} type="button">

@@ -3238,3 +3238,59 @@ body.modal-open {
     display: none;
   }
 }
+
+/* =======================================================================
+   QA: urgencia en alertas de stock + modales más compactos
+   ======================================================================= */
+
+/* Señal de urgencia: barra lateral + conteo coloreado */
+.stock-row.stock-low,
+.stock-row.stock-critical {
+  padding-left: 12px;
+  box-shadow: inset 3px 0 0 var(--yellow);
+}
+
+.stock-row.stock-critical {
+  box-shadow: inset 3px 0 0 var(--coral);
+}
+
+.stock-row small b {
+  font-weight: 950;
+  font-variant-numeric: tabular-nums;
+}
+
+.stock-row.stock-low small b {
+  color: var(--yellow-ink);
+}
+
+.stock-row.stock-critical small b {
+  color: var(--coral-ink);
+}
+
+/* Modales más compactos (menos scroll) */
+.modal-body .operations-form,
+.modal-body .sales-builder {
+  gap: 13px;
+}
+
+.modal-body .form-grid {
+  gap: 11px;
+}
+
+.modal-body label {
+  gap: 5px;
+}
+
+.modal-body .form-grid input,
+.modal-body .sales-builder input,
+.modal-body .sales-builder select {
+  min-height: 38px;
+}
+
+.modal-body .template-strip {
+  gap: 6px;
+}
+
+.modal-body .template-chip {
+  padding: 9px 11px;
+}
