@@ -3808,6 +3808,51 @@ body.modal-open {
   white-space: nowrap;
 }
 
+.period-selector {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  height: 40px;
+  padding: 0 4px;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--line);
+  background: var(--surface);
+}
+
+.period-label {
+  min-width: 92px;
+  padding: 0 6px;
+  text-align: center;
+  color: var(--ink-soft);
+  font-size: 0.85rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.period-arrow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border: none;
+  border-radius: var(--r-pill);
+  background: transparent;
+  color: var(--ink-soft);
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.period-arrow:hover:not(:disabled) {
+  background: var(--primary-soft);
+  color: var(--primary-ink);
+}
+
+.period-arrow:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
 .nav-toggle {
   display: none;
 }

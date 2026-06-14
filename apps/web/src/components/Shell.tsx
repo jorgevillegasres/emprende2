@@ -41,6 +41,10 @@ export function Shell({
   onSectionChange,
   userLabel,
   isSuperAdmin,
+  periodLabel,
+  canGoNextPeriod,
+  onPrevPeriod,
+  onNextPeriod,
   children
 }: {
   activeSection: AppSection;
@@ -49,6 +53,10 @@ export function Shell({
   onSectionChange: (section: AppSection) => void;
   userLabel?: string;
   isSuperAdmin?: boolean;
+  periodLabel?: string;
+  canGoNextPeriod?: boolean;
+  onPrevPeriod?: () => void;
+  onNextPeriod?: () => void;
   children: ReactNode;
 }) {
   const [theme, setTheme] = useState<"light" | "dark">("light");
@@ -143,7 +151,23 @@ export function Shell({
             <input type="search" placeholder="Buscar..." aria-label="Buscar" />
           </label>
           <div className="topbar-actions">
-            <span className="date-pill">Junio 2026</span>
+            {activeSection === "dashboard" && periodLabel ? (
+              <div className="period-selector" role="group" aria-label="Periodo del tablero">
+                <button className="period-arrow" type="button" aria-label="Mes anterior" onClick={onPrevPeriod}>
+                  <Icon name="chevron-left" size={16} />
+                </button>
+                <span className="period-label">{periodLabel}</span>
+                <button
+                  className="period-arrow"
+                  type="button"
+                  aria-label="Mes siguiente"
+                  onClick={onNextPeriod}
+                  disabled={!canGoNextPeriod}
+                >
+                  <Icon name="chevron-right" size={16} />
+                </button>
+              </div>
+            ) : null}
             <button
               className="icon-button"
               type="button"

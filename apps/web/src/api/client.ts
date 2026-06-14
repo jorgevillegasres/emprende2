@@ -331,8 +331,9 @@ export async function getCurrentUser(token: string): Promise<AuthSession> {
   return { ...session, token };
 }
 
-export async function getDashboardMetrics(token?: string | null): Promise<DashboardMetrics> {
-  const response = await fetch(`${API_BASE_URL}/v1/dashboard`, {
+export async function getDashboardMetrics(token?: string | null, month?: string): Promise<DashboardMetrics> {
+  const query = month ? `?month=${encodeURIComponent(month)}` : "";
+  const response = await fetch(`${API_BASE_URL}/v1/dashboard${query}`, {
     headers: createAuthHeaders(token)
   });
   if (!response.ok) throw new Error("No se pudo cargar el dashboard");

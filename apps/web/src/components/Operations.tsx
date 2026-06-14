@@ -35,6 +35,9 @@ type Field = {
 type Row = ProductRecord | SupplyRecord | SaleRecord | ExpenseRecord;
 type OperationSection = Exclude<AppSection, "dashboard" | "recipes" | "plan" | "admin">;
 
+// Fecha de hoy (al cargar la app) para prellenar formularios de venta y gasto.
+const TODAY_ISO = new Date().toISOString().slice(0, 10);
+
 const resourceConfig = {
   products: {
     title: "Productos terminados",
@@ -76,7 +79,7 @@ const resourceConfig = {
     eyebrow: "Ingresos",
     description: "Registra ventas para alimentar margen, ritmo comercial y utilidad.",
     fields: [
-      { name: "date", label: "Fecha", type: "date", defaultValue: "2026-06-10" },
+      { name: "date", label: "Fecha", type: "date", defaultValue: TODAY_ISO },
       { name: "productId", label: "Producto", type: "text" },
       { name: "quantity", label: "Cantidad", type: "number" },
       { name: "revenue", label: "Ingreso", type: "number" },
@@ -93,7 +96,7 @@ const resourceConfig = {
     eyebrow: "Egresos",
     description: "Observa salidas de dinero por categoria para proteger caja.",
     fields: [
-      { name: "date", label: "Fecha", type: "date", defaultValue: "2026-06-10" },
+      { name: "date", label: "Fecha", type: "date", defaultValue: TODAY_ISO },
       { name: "category", label: "Categoria", type: "text" },
       { name: "amount", label: "Valor", type: "number" }
     ],

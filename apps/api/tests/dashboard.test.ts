@@ -4,7 +4,8 @@ import { buildApp } from "../src/app.js";
 describe("dashboard endpoint", () => {
   it("returns tenant-scoped dashboard metrics", async () => {
     const app = buildApp();
-    const response = await app.inject({ method: "GET", url: "/v1/dashboard" });
+    // Mes fijo con datos demo para que la prueba sea determinista en el tiempo.
+    const response = await app.inject({ method: "GET", url: "/v1/dashboard?month=2026-06" });
     const body = response.json();
 
     expect(response.statusCode).toBe(200);

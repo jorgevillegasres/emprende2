@@ -23,6 +23,7 @@ export function App() {
   const [authView, setAuthView] = useState<"landing" | "login">("landing");
   const [loginInitialMode, setLoginInitialMode] = useState<"login" | "register">("login");
   const [isDemoLoading, setIsDemoLoading] = useState(false);
+  const [selectedMonth, setSelectedMonth] = useState(currentMonthKey());
 
   useEffect(() => {
     const storedSession = readStoredSession();
@@ -35,7 +36,6 @@ export function App() {
       .then((session) => {
         persistSession(session);
         setAuthSession(session);
-        return loadDashboard(session.token);
       })
       .catch(() => {
         clearStoredSession();
@@ -44,9 +44,16 @@ export function App() {
       .finally(() => setIsAuthLoading(false));
   }, []);
 
-  async function loadDashboard(token: string) {
+  // Carga el dashboard cuando hay sesion y cuando cambia el periodo seleccionado.
+  useEffect(() => {
+    if (!authSession) return;
+    void loadDashboard(authSession.token, selectedMonth);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authSession, selectedMonth]);
+
+  async function loadDashboard(token: string, month: string) {
     setError("");
-    return getDashboardMetrics(token)
+    return getDashboardMetrics(token, month)
       .then(setMetrics)
       .catch((err: unknown) => {
         setError(err instanceof Error ? err.message : "Error cargando dashboard");
@@ -61,7 +68,6 @@ export function App() {
       persistSession(session);
       setAuthSession(session);
       setActiveSection("dashboard");
-      await loadDashboard(session.token);
     } catch {
       setAuthError("No pudimos validar esas credenciales.");
     } finally {
@@ -77,7 +83,6 @@ export function App() {
       persistSession(session);
       setAuthSession(session);
       setActiveSection("dashboard");
-      await loadDashboard(session.token);
     } catch {
       setAuthError("No pudimos crear la cuenta. Revisa el correo o intenta con otro.");
     } finally {
@@ -93,7 +98,6 @@ export function App() {
       persistSession(session);
       setAuthSession(session);
       setActiveSection("dashboard");
-      await loadDashboard(session.token);
     } catch {
       setAuthError("No pudimos abrir el demo. Intenta de nuevo.");
     } finally {
@@ -150,7 +154,18 @@ export function App() {
   }
 
   return (
-    <Shell activeSection={activeSection} onLogout={handleLogout} onPrimaryAction={handlePrimaryAction} onSectionChange={setActiveSection} userLabel={authSession.role} isSuperAdmin={authSession.superAdmin}>
+    <Shell
+      activeSection={activeSection}
+      onLogout={handleLogout}
+      onPrimaryAction={handlePrimaryAction}
+      onSectionChange={setActiveSection}
+      userLabel={authSession.role}
+      isSuperAdmin={authSession.superAdmin}
+      periodLabel={formatMonthLabel(selectedMonth)}
+      canGoNextPeriod={selectedMonth < currentMonthKey()}
+      onPrevPeriod={() => setSelectedMonth((month) => shiftMonth(month, -1))}
+      onNextPeriod={() => setSelectedMonth((month) => shiftMonth(month, 1))}
+    >
       {activeSection === "dashboard" ? (
         <>
           {error ? <div className="system-panel">{error}</div> : null}
@@ -189,4 +204,24 @@ function persistSession(session: AuthSession) {
 
 function clearStoredSession() {
   window.localStorage.removeItem(AUTH_STORAGE_KEY);
+}
+
+const MONTHS_ES = [
+  "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+  "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
+];
+
+function currentMonthKey(): string {
+  return new Date().toISOString().slice(0, 7);
+}
+
+function shiftMonth(monthKey: string, delta: number): string {
+  const [year, month] = monthKey.split("-").map(Number);
+  const date = new Date(Date.UTC(year, month - 1 + delta, 1));
+  return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, "0")}`;
+}
+
+function formatMonthLabel(monthKey: string): string {
+  const [year, month] = monthKey.split("-").map(Number);
+  return `${MONTHS_ES[month - 1] ?? monthKey} ${year}`;
 }
