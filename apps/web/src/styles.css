@@ -3963,3 +3963,88 @@ body.modal-open {
 .pricing-simulator input[type="range"] {
   accent-color: var(--primary);
 }
+
+/* =======================================================================
+   KANAKKU PAGES — banners violeta, heroes claros
+   ======================================================================= */
+
+/* Stat de operaciones/recetas: banner violeta */
+.operations-stat {
+  background: var(--banner-grad);
+  box-shadow: 0 8px 20px rgba(108, 95, 252, 0.26);
+  color: #fff;
+}
+
+.operations-stat span {
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.operations-stat strong {
+  color: #fff;
+}
+
+/* Heroes de página: superficie clara limpia */
+.operations-hero,
+.action-plan-hero {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow);
+}
+
+.operations-hero > div p:not(.eyebrow),
+.action-plan-hero > div p:not(.eyebrow) {
+  color: var(--muted);
+}
+
+/* Banda de onboarding: violeta-soft */
+.onboarding-band {
+  background: var(--primary-soft);
+  border-color: color-mix(in srgb, var(--primary) 25%, transparent);
+}
+
+.onboarding-progress span {
+  background: var(--primary);
+}
+
+/* Login: hero oscuro → banner violeta de bienvenida */
+.login-copy {
+  background: var(--banner-grad);
+  color: #fff;
+  box-shadow: none;
+}
+
+.login-copy .brand-mark {
+  background: rgba(255, 255, 255, 0.16);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.28);
+}
+
+.login-copy .brand strong,
+.login-copy .brand strong span,
+.login-copy h1 {
+  color: #fff;
+}
+
+.login-copy .brand small,
+.login-copy .eyebrow {
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.login-copy p:not(.eyebrow) {
+  color: rgba(255, 255, 255, 0.88);
+}
+
+.login-highlights {
+  border-top-color: rgba(255, 255, 255, 0.2);
+}
+
+.login-highlights li svg {
+  color: #fff;
+}
+
+.login-highlights strong {
+  color: #fff;
+}
+
+.login-highlights span {
+  color: rgba(255, 255, 255, 0.82);
+}
