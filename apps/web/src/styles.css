@@ -4101,3 +4101,41 @@ body.modal-open {
   background: var(--bg-2);
   stroke: var(--bg-2);
 }
+
+/* Dark mode: adaptar paneles con fondo claro fijo + contraste de texto */
+[data-theme="dark"] .decision p {
+  color: var(--ink-soft);
+}
+
+[data-theme="dark"] .decision span {
+  background: rgba(255, 255, 255, 0.12);
+  color: var(--ink);
+}
+
+[data-theme="dark"] .pricing-result,
+[data-theme="dark"] .sales-summary,
+[data-theme="dark"] .template-chip,
+[data-theme="dark"] .adjustment-panel,
+[data-theme="dark"] .recipe-scale-preview {
+  background: var(--surface-2);
+}
+
+[data-theme="dark"] .pricing-result strong,
+[data-theme="dark"] .sales-summary strong {
+  color: var(--ink);
+}
+
+[data-theme="dark"] .data-table th {
+  background: var(--surface-2);
+}
+
+[data-theme="dark"] .decision-status-tabs,
+[data-theme="dark"] .mode-tabs {
+  background: var(--bg-2);
+}
+
+[data-theme="dark"] .decision-status-tabs button.active,
+[data-theme="dark"] .mode-tabs button.active {
+  background: var(--surface);
+  color: var(--ink);
+}
