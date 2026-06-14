@@ -2489,6 +2489,68 @@ h2 {
   background: transparent;
 }
 
+/* --- Tablas responsive: en móvil cada fila se apila como tarjeta --- */
+@media (max-width: 600px) {
+  .operations-table-card .table-wrap {
+    overflow: visible;
+  }
+
+  .operations-table-card .data-table,
+  .operations-table-card .data-table tbody {
+    display: block;
+    min-width: 0;
+    width: 100%;
+  }
+
+  .operations-table-card .data-table thead {
+    display: none;
+  }
+
+  .operations-table-card .data-table tr {
+    display: grid;
+    gap: 6px;
+    margin-bottom: 12px;
+    padding: 14px;
+    border: 1px solid var(--line);
+    border-radius: var(--r-sm);
+    background: var(--surface-2);
+  }
+
+  .operations-table-card .data-table tr:hover {
+    background: var(--surface-2);
+  }
+
+  .operations-table-card .data-table td {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 14px;
+    border: 0;
+    padding: 4px 0;
+    text-align: right;
+  }
+
+  .operations-table-card .data-table td::before {
+    content: attr(data-label);
+    flex: 0 0 auto;
+    color: var(--muted);
+    font-family: var(--font-body);
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 0.02em;
+    text-align: left;
+    text-transform: uppercase;
+  }
+
+  .operations-table-card .data-table td:first-child {
+    margin-bottom: 4px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--line);
+    font-family: var(--font-display);
+    font-size: 1.02rem;
+  }
+}
+
 /* --- Tablas de datos: encabezado tipo ledger --- */
 .data-table th {
   font-family: var(--font-body);

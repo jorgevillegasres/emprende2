@@ -462,7 +462,9 @@ export function Operations({ focusSignal = 0, section, token }: { focusSignal?: 
                   rows.map((row, index) => (
                     <tr key={rowKey(row, index)}>
                       {config.toCells(row as never).map((cell, cellIndex) => (
-                        <td key={`${rowKey(row, index)}-${cellIndex}`}>{cell}</td>
+                        <td key={`${rowKey(row, index)}-${cellIndex}`} data-label={config.headers[cellIndex]}>
+                          {cell}
+                        </td>
                       ))}
                     </tr>
                   ))
