@@ -4048,3 +4048,56 @@ body.modal-open {
 .login-highlights span {
   color: rgba(255, 255, 255, 0.82);
 }
+
+/* =======================================================================
+   KANAKKU DARK MODE — remapeo de tokens neutros
+   ======================================================================= */
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  --bg: #0f1117;
+  --bg-2: #181b23;
+  --surface: #1a1d27;
+  --surface-2: #222633;
+
+  --primary-soft: #2a2553;
+  --primary-ink: #b7afff;
+
+  --ink: #eef1f7;
+  --ink-soft: #c3c9d6;
+  --muted: #8b95a7;
+  --line: #2a2f3b;
+  --line-strong: #3b4250;
+
+  --green-soft: #14271d;
+  --green-ink: #5fe0a0;
+  --coral-soft: #2c1719;
+  --coral-ink: #ff9b9b;
+  --yellow-soft: #2c2113;
+  --yellow-ink: #f5c97a;
+  --blue-soft: #16213d;
+  --blue-ink: #93b8ff;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow: 0 1px 3px rgba(0, 0, 0, 0.35), 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 10px 28px rgba(0, 0, 0, 0.5);
+}
+
+/* Ajustes finos en oscuro */
+[data-theme="dark"] .topbar {
+  background: color-mix(in srgb, var(--surface) 82%, transparent);
+}
+
+[data-theme="dark"] .icon-button,
+[data-theme="dark"] .secondary-action,
+[data-theme="dark"] .ghost-action,
+[data-theme="dark"] .date-pill {
+  background: var(--surface-2);
+}
+
+[data-theme="dark"] .executive-score .gauge-track,
+[data-theme="dark"] .bar-track,
+[data-theme="dark"] .break-even-track {
+  background: var(--bg-2);
+  stroke: var(--bg-2);
+}
