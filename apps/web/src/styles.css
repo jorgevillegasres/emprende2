@@ -2202,10 +2202,38 @@ h2 {
 
 .nav-item {
   position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
   color: var(--muted);
   font-weight: 700;
   letter-spacing: -0.005em;
   transition: color var(--dur) var(--ease), background var(--dur) var(--ease);
+}
+
+.nav-item svg {
+  flex: 0 0 auto;
+  opacity: 0.7;
+  transition: opacity var(--dur) var(--ease);
+}
+
+.nav-item:hover svg,
+.nav-item.active svg {
+  opacity: 1;
+}
+
+/* Botones con ícono + texto alineados */
+.primary-action,
+.secondary-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.primary-action svg,
+.secondary-action svg {
+  flex: 0 0 auto;
 }
 
 .nav-item:hover {

@@ -1,16 +1,17 @@
 import type { ReactNode } from "react";
+import { Icon } from "./Icon";
 import { getPrimaryActionSection } from "./shellActions";
 
 export type AppSection = "dashboard" | "products" | "supplies" | "sales" | "expenses" | "recipes" | "plan";
 
-const navItems: Array<{ section: AppSection; label: string }> = [
-  { section: "dashboard", label: "Mi negocio" },
-  { section: "products", label: "Productos" },
-  { section: "supplies", label: "Inventario" },
-  { section: "sales", label: "Ventas" },
-  { section: "expenses", label: "Gastos" },
-  { section: "recipes", label: "Recetas" },
-  { section: "plan", label: "Plan" }
+const navItems: Array<{ section: AppSection; label: string; icon: string }> = [
+  { section: "dashboard", label: "Mi negocio", icon: "dashboard" },
+  { section: "products", label: "Productos", icon: "products" },
+  { section: "supplies", label: "Inventario", icon: "inventory" },
+  { section: "sales", label: "Ventas", icon: "sales" },
+  { section: "expenses", label: "Gastos", icon: "expenses" },
+  { section: "recipes", label: "Recetas", icon: "recipes" },
+  { section: "plan", label: "Plan", icon: "plan" }
 ];
 
 export function Shell({
@@ -49,6 +50,7 @@ export function Shell({
                 type="button"
                 onClick={() => onSectionChange(item.section)}
               >
+                <Icon name={item.icon} size={16} />
                 {item.label}
               </button>
             ))}
@@ -58,11 +60,13 @@ export function Shell({
           <span className="today-pill">Junio 2026</span>
           {userLabel ? <span className="user-pill">{userLabel}</span> : null}
           <button className="primary-action" onClick={onPrimaryAction ?? (() => onSectionChange(getPrimaryActionSection()))} type="button">
+            <Icon name="sales" size={16} />
             Registrar venta
           </button>
           {onLogout ? (
-            <button className="secondary-action" onClick={onLogout} type="button">
-              Salir
+            <button className="secondary-action" onClick={onLogout} type="button" aria-label="Cerrar sesion">
+              <Icon name="logout" size={16} />
+              <span className="action-label">Salir</span>
             </button>
           ) : null}
         </div>
