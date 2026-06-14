@@ -3189,3 +3189,45 @@ body.modal-open {
 .expense-row strong {
   color: var(--ink);
 }
+
+/* =======================================================================
+   NAV MÓVIL — solo íconos para que las 7 secciones quepan sin scroll
+   ======================================================================= */
+@media (max-width: 640px) {
+  .nav-viewport {
+    overflow-x: visible;
+  }
+
+  .nav {
+    width: 100%;
+    min-width: 0;
+    gap: 2px;
+    justify-content: space-between;
+  }
+
+  .nav-item {
+    flex: 1 1 0;
+    min-width: 0;
+    justify-content: center;
+    gap: 0;
+    padding: 9px 6px;
+  }
+
+  .nav-item .nav-label {
+    display: none;
+  }
+
+  .nav-item svg {
+    opacity: 1;
+  }
+
+  .nav-item.active {
+    flex: 0 0 auto;
+    gap: 7px;
+    padding: 9px 13px;
+  }
+
+  .nav-item.active .nav-label {
+    display: inline;
+  }
+}

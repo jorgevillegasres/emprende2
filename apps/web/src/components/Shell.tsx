@@ -54,7 +54,7 @@ export function Shell({
                 onClick={() => onSectionChange(item.section)}
               >
                 <Icon name={item.icon} size={16} />
-                {item.label}
+                <span className="nav-label">{item.label}</span>
               </button>
             ))}
           </nav>
