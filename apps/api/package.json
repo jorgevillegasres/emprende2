@@ -4,23 +4,23 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "tsc -p tsconfig.build.json",
+    "build": "pnpm --filter @emprendedos/domain build && tsc -p tsconfig.build.json",
     "dev": "tsx watch src/server.ts",
-    "start": "node dist/server.js",
+    "start": "drizzle-kit migrate --config ../../drizzle.config.ts && node dist/db/seed-postgres.js && node dist/server.js",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@emprendedos/domain": "workspace:*",
     "@fastify/cors": "^10.0.2",
+    "@types/node": "^22.10.2",
+    "drizzle-kit": "^0.30.1",
     "drizzle-orm": "^0.38.3",
     "fastify": "^5.2.1",
     "postgres": "^3.4.5",
     "zod": "^3.24.1"
   },
   "devDependencies": {
-    "@types/node": "^22.10.2",
-    "drizzle-kit": "^0.30.1",
     "tsx": "^4.19.2",
     "vitest": "^2.1.8"
   }
