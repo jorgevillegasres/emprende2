@@ -116,7 +116,7 @@ const resourceConfig = {
   toCells: (row: never) => Array<string | number>;
 }>;
 
-export function Operations({ focusSignal = 0, section, token }: { focusSignal?: number; section: OperationSection; token: string }) {
+export function Operations({ focusSignal = 0, section, token, searchQuery = "" }: { focusSignal?: number; section: OperationSection; token: string; searchQuery?: string }) {
   const config = resourceConfig[section];
   const templates = getTemplatesForSection(section);
   const [rows, setRows] = useState<Row[]>([]);
@@ -152,6 +152,11 @@ export function Operations({ focusSignal = 0, section, token }: { focusSignal?: 
   const formRef = useRef<HTMLFormElement | null>(null);
   const addLabel =
     section === "products" ? "Nuevo producto" : section === "supplies" ? "Nuevo insumo" : section === "sales" ? "Registrar venta" : "Registrar gasto";
+  const filteredRows = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+    if (!query) return rows;
+    return rows.filter((row) => config.toCells(row as never).join(" ").toLowerCase().includes(query));
+  }, [rows, searchQuery, config]);
   const totalValue = useMemo(() => rows.length, [rows]);
   const selectedProduct = productOptions.find((product) => product.id === selectedProductId);
   const saleTotals = calculateSaleTotals(selectedProduct, saleQuantity);
@@ -400,7 +405,7 @@ export function Operations({ focusSignal = 0, section, token }: { focusSignal?: 
   }
 
   function handleExportRows() {
-    const csv = buildCsvFromTable(config.headers, rows.map((row) => config.toCells(row as never)));
+    const csv = buildCsvFromTable(config.headers, filteredRows.map((row) => config.toCells(row as never)));
     downloadCsv(createExportFilename(config.title), csv);
   }
 
@@ -464,8 +469,8 @@ export function Operations({ focusSignal = 0, section, token }: { focusSignal?: 
                 </tr>
               </thead>
               <tbody>
-                {rows.length ? (
-                  rows.map((row, index) => (
+                {filteredRows.length ? (
+                  filteredRows.map((row, index) => (
                     <tr key={rowKey(row, index)}>
                       {config.toCells(row as never).map((cell, cellIndex) => (
                         <td key={`${rowKey(row, index)}-${cellIndex}`} data-label={config.headers[cellIndex]}>
@@ -477,7 +482,11 @@ export function Operations({ focusSignal = 0, section, token }: { focusSignal?: 
                 ) : (
                   <tr>
                     <td className="table-empty" colSpan={config.headers.length}>
-                      Aun no tienes registros aqui. Toca <b>{addLabel}</b> para crear el primero.
+                      {searchQuery.trim() ? (
+                        <>No hay resultados para <b>{searchQuery}</b>.</>
+                      ) : (
+                        <>Aun no tienes registros aqui. Toca <b>{addLabel}</b> para crear el primero.</>
+                      )}
                     </td>
                   </tr>
                 )}

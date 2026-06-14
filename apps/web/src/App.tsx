@@ -7,7 +7,7 @@ import { Landing } from "./components/Landing";
 import { Login } from "./components/Login";
 import { Operations } from "./components/Operations";
 import { Recipes } from "./components/Recipes";
-import { Shell, type AppSection } from "./components/Shell";
+import { Shell, type AppSection, type ShellNotification } from "./components/Shell";
 
 const AUTH_STORAGE_KEY = "emprendedos.auth";
 
@@ -24,6 +24,7 @@ export function App() {
   const [loginInitialMode, setLoginInitialMode] = useState<"login" | "register">("login");
   const [isDemoLoading, setIsDemoLoading] = useState(false);
   const [selectedMonth, setSelectedMonth] = useState(currentMonthKey());
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     const storedSession = readStoredSession();
@@ -115,10 +116,18 @@ export function App() {
     setAuthView("landing");
   }
 
+  function changeSection(section: AppSection) {
+    setActiveSection(section);
+    setSearchQuery("");
+  }
+
   function handlePrimaryAction() {
-    setActiveSection("sales");
+    changeSection("sales");
     setSalesFocusSignal((current) => current + 1);
   }
+
+  const searchEnabled = activeSection === "products" || activeSection === "supplies" || activeSection === "sales" || activeSection === "expenses";
+  const notifications = metrics ? buildNotifications(metrics) : [];
 
   if (isAuthLoading) {
     return <div className="system-panel boot-panel">Preparando tu espacio Emprendedos...</div>;
@@ -158,19 +167,23 @@ export function App() {
       activeSection={activeSection}
       onLogout={handleLogout}
       onPrimaryAction={handlePrimaryAction}
-      onSectionChange={setActiveSection}
+      onSectionChange={changeSection}
       userLabel={authSession.role}
       isSuperAdmin={authSession.superAdmin}
       periodLabel={formatMonthLabel(selectedMonth)}
       canGoNextPeriod={selectedMonth < currentMonthKey()}
       onPrevPeriod={() => setSelectedMonth((month) => shiftMonth(month, -1))}
       onNextPeriod={() => setSelectedMonth((month) => shiftMonth(month, 1))}
+      searchValue={searchQuery}
+      onSearchChange={setSearchQuery}
+      searchEnabled={searchEnabled}
+      notifications={notifications}
     >
       {activeSection === "dashboard" ? (
         <>
           {error ? <div className="system-panel">{error}</div> : null}
           {!metrics && !error ? <div className="system-panel">Cargando Emprendedos...</div> : null}
-          {metrics ? <Dashboard metrics={metrics} onSectionChange={setActiveSection} token={authSession.token} /> : null}
+          {metrics ? <Dashboard metrics={metrics} onSectionChange={changeSection} token={authSession.token} /> : null}
         </>
       ) : activeSection === "recipes" ? (
         <Recipes token={authSession.token} />
@@ -179,7 +192,7 @@ export function App() {
       ) : activeSection === "admin" ? (
         <AdminPanel token={authSession.token} currentUserId={authSession.userId} />
       ) : (
-        <Operations focusSignal={activeSection === "sales" ? salesFocusSignal : 0} section={activeSection} token={authSession.token} />
+        <Operations focusSignal={activeSection === "sales" ? salesFocusSignal : 0} section={activeSection} token={authSession.token} searchQuery={searchQuery} />
       )}
     </Shell>
   );
@@ -224,4 +237,48 @@ function shiftMonth(monthKey: string, delta: number): string {
 function formatMonthLabel(monthKey: string): string {
   const [year, month] = monthKey.split("-").map(Number);
   return `${MONTHS_ES[month - 1] ?? monthKey} ${year}`;
+}
+
+function buildNotifications(metrics: DashboardMetrics): ShellNotification[] {
+  const fmt = (value: number) =>
+    new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 }).format(value);
+  const notifications: ShellNotification[] = [];
+
+  for (const item of metrics.stockForecast.filter((forecast) => forecast.status === "critical").slice(0, 3)) {
+    notifications.push({
+      id: `forecast-${item.productId}`,
+      tone: "danger",
+      title: `Por agotarse: ${item.name}`,
+      detail: item.daysRemaining !== null ? `Te quedan ~${item.daysRemaining} dias de stock al ritmo actual.` : "Stock muy bajo."
+    });
+  }
+
+  for (const item of metrics.lowStockItems.slice(0, 4)) {
+    notifications.push({
+      id: `lowstock-${item.type}-${item.name}`,
+      tone: item.stock <= item.minStock * 0.5 ? "danger" : "warning",
+      title: `Stock bajo: ${item.name}`,
+      detail: `${item.stock} disponibles (minimo ${item.minStock}${item.unit ? ` ${item.unit}` : ""}).`
+    });
+  }
+
+  if (metrics.breakEven.canEstimate && !metrics.breakEven.isCovered) {
+    notifications.push({
+      id: "breakeven",
+      tone: "warning",
+      title: "Aun no cubres tus gastos",
+      detail: `Te faltan ${fmt(metrics.breakEven.revenueGap)} en ventas este mes.`
+    });
+  }
+
+  if (metrics.netAfterExpenses < 0) {
+    notifications.push({
+      id: "net-negative",
+      tone: "danger",
+      title: "Resultado del mes en rojo",
+      detail: `Estas gastando ${fmt(Math.abs(metrics.netAfterExpenses))} mas de lo que ganas.`
+    });
+  }
+
+  return notifications;
 }

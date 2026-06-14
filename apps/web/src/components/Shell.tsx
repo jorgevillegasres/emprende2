@@ -5,6 +5,8 @@ import { getPrimaryActionSection } from "./shellActions";
 
 export type AppSection = "dashboard" | "products" | "supplies" | "sales" | "expenses" | "recipes" | "plan" | "admin";
 
+export type ShellNotification = { id: string; tone: "danger" | "warning" | "info" | "success"; title: string; detail: string };
+
 type NavItem = { section: AppSection; label: string; icon: string };
 
 const navGroups: Array<{ label: string; items: NavItem[] }> = [
@@ -45,6 +47,10 @@ export function Shell({
   canGoNextPeriod,
   onPrevPeriod,
   onNextPeriod,
+  searchValue,
+  onSearchChange,
+  searchEnabled,
+  notifications,
   children
 }: {
   activeSection: AppSection;
@@ -57,10 +63,16 @@ export function Shell({
   canGoNextPeriod?: boolean;
   onPrevPeriod?: () => void;
   onNextPeriod?: () => void;
+  searchValue?: string;
+  onSearchChange?: (value: string) => void;
+  searchEnabled?: boolean;
+  notifications?: ShellNotification[];
   children: ReactNode;
 }) {
   const [theme, setTheme] = useState<"light" | "dark">("light");
   const [navOpen, setNavOpen] = useState(false);
+  const [notifOpen, setNotifOpen] = useState(false);
+  const alerts = notifications ?? [];
   const groups = isSuperAdmin
     ? [...navGroups, { label: "Plataforma", items: [{ section: "admin" as AppSection, label: "Cuentas", icon: "admin" }] }]
     : navGroups;
@@ -146,10 +158,20 @@ export function Shell({
             <span className="breadcrumb-sep">/</span>
             <b>{activeLabel}</b>
           </div>
-          <label className="topbar-search">
-            <Icon name="search" size={16} />
-            <input type="search" placeholder="Buscar..." aria-label="Buscar" />
-          </label>
+          {searchEnabled ? (
+            <label className="topbar-search">
+              <Icon name="search" size={16} />
+              <input
+                type="search"
+                placeholder="Buscar en esta seccion..."
+                aria-label="Buscar"
+                value={searchValue ?? ""}
+                onChange={(event) => onSearchChange?.(event.target.value)}
+              />
+            </label>
+          ) : (
+            <span className="topbar-search-spacer" />
+          )}
           <div className="topbar-actions">
             {activeSection === "dashboard" && periodLabel ? (
               <div className="period-selector" role="group" aria-label="Periodo del tablero">
@@ -176,9 +198,41 @@ export function Shell({
             >
               <Icon name="theme" size={18} />
             </button>
-            <button className="icon-button" type="button" aria-label="Notificaciones">
-              <Icon name="bell" size={18} />
-            </button>
+            <div className="notif-wrap">
+              <button
+                className="icon-button"
+                type="button"
+                aria-label="Notificaciones"
+                aria-expanded={notifOpen}
+                onClick={() => setNotifOpen((open) => !open)}
+              >
+                <Icon name="bell" size={18} />
+                {alerts.length > 0 ? <span className="notif-badge">{alerts.length}</span> : null}
+              </button>
+              {notifOpen ? (
+                <>
+                  <button className="notif-scrim" type="button" aria-label="Cerrar notificaciones" onClick={() => setNotifOpen(false)} />
+                  <div className="notif-panel" role="dialog" aria-label="Notificaciones">
+                    <div className="notif-panel-head">
+                      <strong>Notificaciones</strong>
+                      <span>{alerts.length > 0 ? `${alerts.length} alertas` : "Sin alertas"}</span>
+                    </div>
+                    {alerts.length > 0 ? (
+                      <ul className="notif-list">
+                        {alerts.map((alert) => (
+                          <li className={`notif-item notif-${alert.tone}`} key={alert.id}>
+                            <strong>{alert.title}</strong>
+                            <span>{alert.detail}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="notif-empty">Todo en orden. Sin alertas por ahora.</p>
+                    )}
+                  </div>
+                </>
+              ) : null}
+            </div>
             <button
               className="primary-action"
               onClick={onPrimaryAction ?? (() => onSectionChange(getPrimaryActionSection()))}
