@@ -2601,17 +2601,84 @@ h2 {
 }
 
 /* --- Login: panel editorial con textura --- */
+/* Login: panel izquierdo oscuro de mando (primera impresión) */
 .login-copy {
+  justify-content: flex-start;
+  gap: 30px;
   border-radius: var(--r-lg);
-  background:
-    radial-gradient(120% 120% at 0% 0%, rgba(12, 155, 102, 0.14), transparent 55%),
-    linear-gradient(160deg, #ffffff, var(--surface-2));
-  border-color: var(--line);
+  border-color: transparent;
+  background: radial-gradient(130% 130% at 0% 0%, #242b31, var(--ink) 72%);
+  color: #fff;
+  box-shadow: var(--shadow-ink);
+}
+
+.login-copy .brand-mark {
+  background: var(--coral);
+  box-shadow: 0 6px 18px rgba(250, 74, 40, 0.4);
+}
+
+.login-copy .brand-mark::after {
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.login-copy .brand strong {
+  color: #fff;
+}
+
+.login-copy .brand strong span {
+  color: #6ee7b0;
+}
+
+.login-copy .brand small {
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.login-copy .eyebrow {
+  color: rgba(255, 255, 255, 0.5);
 }
 
 .login-copy h1 {
   font-family: var(--font-display);
+  color: #fff;
   letter-spacing: -0.03em;
+}
+
+.login-copy p:not(.eyebrow) {
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.login-highlights {
+  display: grid;
+  gap: 16px;
+  margin: 0;
+  padding: 18px 0 0;
+  list-style: none;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.login-highlights li {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.login-highlights li svg {
+  flex: 0 0 auto;
+  margin-top: 2px;
+  color: #ff7a57;
+}
+
+.login-highlights span {
+  display: grid;
+  gap: 2px;
+  color: rgba(255, 255, 255, 0.62);
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.login-highlights strong {
+  color: #fff;
+  font-weight: 700;
 }
 
 .login-form {

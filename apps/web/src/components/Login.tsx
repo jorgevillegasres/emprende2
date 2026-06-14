@@ -1,5 +1,6 @@
 import { FormEvent, useState } from "react";
 import type { RegisterPayload } from "../api/client";
+import { Icon } from "./Icon";
 
 export function Login({
   error,
@@ -56,13 +57,36 @@ export function Login({
               <small>Tu negocio, mejor acompasado</small>
             </span>
           </div>
-          <div>
+          <div className="login-headline">
             <p className="eyebrow">Centro de mando</p>
             <h1>{mode === "login" ? "Entra a tu espacio de crecimiento" : "Crea el centro de mando de tu emprendimiento"}</h1>
             <p>
               Ventas, inventario, gastos y decisiones en un mismo lugar para que cada emprendedor vea su negocio con claridad.
             </p>
           </div>
+          <ul className="login-highlights">
+            <li>
+              <Icon name="sales" size={18} />
+              <span>
+                <strong>Claridad de ventas</strong>
+                Cuanto vendiste y cuanto te queda, sin hojas de calculo.
+              </span>
+            </li>
+            <li>
+              <Icon name="inventory" size={18} />
+              <span>
+                <strong>Inventario bajo control</strong>
+                Que producir, comprar o revisar esta semana.
+              </span>
+            </li>
+            <li>
+              <Icon name="plan" size={18} />
+              <span>
+                <strong>Decisiones, no solo datos</strong>
+                Acciones concretas para crecer con orden.
+              </span>
+            </li>
+          </ul>
         </div>
 
         <form className="card login-form" onSubmit={mode === "login" ? handleLoginSubmit : handleRegisterSubmit}>
