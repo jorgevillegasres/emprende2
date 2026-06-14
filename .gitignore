@@ -5,3 +5,8 @@ dist/
 .env.local
 .env.*.local
 .vercel
+
+# Secretos — nunca subir
+API KEYS.txt
+*.key
+secrets/
