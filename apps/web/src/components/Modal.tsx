@@ -18,13 +18,11 @@ export function Modal({
 }) {
   const cardRef = useRef<HTMLDivElement | null>(null);
 
+  // Bloqueo de scroll + auto-foco SOLO al abrir (no en cada render),
+  // para no robarle el foco a un campo mientras se escribe.
   useEffect(() => {
     if (!open) return;
 
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onClose();
-    };
-    document.addEventListener("keydown", onKeyDown);
     document.body.classList.add("modal-open");
 
     const firstField = cardRef.current?.querySelector("input, select, textarea, button:not(.modal-close)");
@@ -33,9 +31,19 @@ export function Modal({
     }
 
     return () => {
-      document.removeEventListener("keydown", onKeyDown);
       document.body.classList.remove("modal-open");
     };
+  }, [open]);
+
+  // Cerrar con Escape: se re-vincula si cambia onClose, sin re-enfocar.
+  useEffect(() => {
+    if (!open) return;
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
   }, [open, onClose]);
 
   if (!open) return null;
