@@ -33,7 +33,7 @@ type Field = {
 };
 
 type Row = ProductRecord | SupplyRecord | SaleRecord | ExpenseRecord;
-type OperationSection = Exclude<AppSection, "dashboard" | "recipes" | "plan">;
+type OperationSection = Exclude<AppSection, "dashboard" | "recipes" | "plan" | "admin">;
 
 const resourceConfig = {
   products: {

@@ -36,10 +36,12 @@ export function createPostgresRepositories(db: Db): Repositories {
         const [identity] = await db
           .select({
             userId: users.id,
+            userName: users.name,
             email: users.email,
             passwordHash: users.passwordHash,
             tenantId: memberships.tenantId,
-            role: memberships.role
+            role: memberships.role,
+            suspended: users.suspended
           })
           .from(users)
           .innerJoin(memberships, eq(users.id, memberships.userId))
@@ -77,6 +79,36 @@ export function createPostgresRepositories(db: Db): Repositories {
         });
 
         return record;
+      },
+      async listAccounts() {
+        const rows = await db
+          .select({
+            userId: users.id,
+            userName: users.name,
+            email: users.email,
+            suspended: users.suspended,
+            tenantId: memberships.tenantId,
+            tenantName: tenants.name,
+            role: memberships.role
+          })
+          .from(memberships)
+          .innerJoin(users, eq(users.id, memberships.userId))
+          .innerJoin(tenants, eq(tenants.id, memberships.tenantId))
+          .orderBy(desc(tenants.createdAt));
+
+        return rows.map((row) => ({
+          userId: row.userId,
+          userName: row.userName,
+          email: row.email,
+          tenantId: row.tenantId,
+          tenantName: row.tenantName,
+          role: row.role,
+          suspended: row.suspended === true
+        }));
+      },
+      async setSuspended(userId: string, suspended: boolean) {
+        const updated = await db.update(users).set({ suspended }).where(eq(users.id, userId)).returning({ id: users.id });
+        return updated.length > 0;
       }
     },
     products: {

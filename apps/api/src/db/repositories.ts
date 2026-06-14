@@ -71,6 +71,17 @@ export type AuthIdentityRecord = {
   country?: string;
   currency?: string;
   role: "owner" | "admin" | "operator" | "viewer";
+  suspended?: boolean;
+};
+
+export type AccountSummary = {
+  userId: string;
+  userName: string;
+  email: string;
+  tenantId: string;
+  tenantName: string;
+  role: string;
+  suspended: boolean;
 };
 
 export type TenantRepository<TRecord extends TenantRecord> = {
@@ -93,6 +104,8 @@ export type AuthRepository = {
   insert(record: AuthIdentityRecord): Promise<AuthIdentityRecord>;
   findByEmail(email: string): Promise<AuthIdentityRecord | null>;
   registerOwner(record: AuthIdentityRecord): Promise<AuthIdentityRecord>;
+  listAccounts(): Promise<AccountSummary[]>;
+  setSuspended(userId: string, suspended: boolean): Promise<boolean>;
 };
 
 export type RecipeRepository = TenantRepository<RecipeRecord> & {
@@ -254,6 +267,23 @@ function createAuthRepository(records: AuthIdentityRecord[]): AuthRepository {
       if (exists) throw new Error("Email already registered");
       records.push(record);
       return record;
+    },
+    async listAccounts() {
+      return records.map((record) => ({
+        userId: record.userId,
+        userName: record.userName ?? "",
+        email: record.email,
+        tenantId: record.tenantId,
+        tenantName: record.tenantName ?? "",
+        role: record.role,
+        suspended: record.suspended === true
+      }));
+    },
+    async setSuspended(userId: string, suspended: boolean) {
+      const record = records.find((existing) => existing.userId === userId);
+      if (!record) return false;
+      record.suspended = suspended;
+      return true;
     }
   };
 }

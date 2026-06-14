@@ -3,7 +3,7 @@ import { BrandMark } from "./BrandMark";
 import { Icon } from "./Icon";
 import { getPrimaryActionSection } from "./shellActions";
 
-export type AppSection = "dashboard" | "products" | "supplies" | "sales" | "expenses" | "recipes" | "plan";
+export type AppSection = "dashboard" | "products" | "supplies" | "sales" | "expenses" | "recipes" | "plan" | "admin";
 
 type NavItem = { section: AppSection; label: string; icon: string };
 
@@ -40,6 +40,7 @@ export function Shell({
   onLogout,
   onSectionChange,
   userLabel,
+  isSuperAdmin,
   children
 }: {
   activeSection: AppSection;
@@ -47,11 +48,16 @@ export function Shell({
   onLogout?: () => void;
   onSectionChange: (section: AppSection) => void;
   userLabel?: string;
+  isSuperAdmin?: boolean;
   children: ReactNode;
 }) {
   const [theme, setTheme] = useState<"light" | "dark">("light");
   const [navOpen, setNavOpen] = useState(false);
-  const activeLabel = allItems.find((item) => item.section === activeSection)?.label ?? "Inicio";
+  const groups = isSuperAdmin
+    ? [...navGroups, { label: "Plataforma", items: [{ section: "admin" as AppSection, label: "Cuentas", icon: "admin" }] }]
+    : navGroups;
+  const activeLabel =
+    [...allItems, { section: "admin" as AppSection, label: "Cuentas", icon: "admin" }].find((item) => item.section === activeSection)?.label ?? "Inicio";
 
   useEffect(() => {
     const stored = window.localStorage.getItem(THEME_KEY);
@@ -84,7 +90,7 @@ export function Shell({
         </button>
 
         <nav className="sidebar-nav" aria-label="Secciones principales">
-          {navGroups.map((group) => (
+          {groups.map((group) => (
             <div className="nav-group" key={group.label}>
               <p className="nav-group-label">{group.label}</p>
               {group.items.map((item) => (

@@ -31,7 +31,7 @@ export function verifyAuthToken(token: string, options: TokenOptions): RequestCo
     const now = options.now ?? Math.floor(Date.now() / 1000);
     if (payload.exp < now) return null;
     if (!isRole(payload.role) || !payload.userId || !payload.tenantId) return null;
-    return { userId: payload.userId, tenantId: payload.tenantId, role: payload.role };
+    return { userId: payload.userId, tenantId: payload.tenantId, role: payload.role, superAdmin: payload.superAdmin === true };
   } catch {
     return null;
   }

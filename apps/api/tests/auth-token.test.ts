@@ -11,7 +11,8 @@ describe("auth tokens", () => {
     expect(verifyAuthToken(token, { secret: "test-secret", now: 1_030 })).toEqual({
       userId: "user-a",
       tenantId: "tenant-a",
-      role: "admin"
+      role: "admin",
+      superAdmin: false
     });
   });
 

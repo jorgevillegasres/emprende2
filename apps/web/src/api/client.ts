@@ -64,6 +64,17 @@ export type AuthSession = {
   userId: string;
   tenantId: string;
   role: string;
+  superAdmin?: boolean;
+};
+
+export type AdminAccount = {
+  userId: string;
+  userName: string;
+  email: string;
+  tenantId: string;
+  tenantName: string;
+  role: string;
+  suspended: boolean;
 };
 
 export type RegisterPayload = {
@@ -267,6 +278,25 @@ export async function registerOwner(payload: RegisterPayload): Promise<AuthSessi
 
 export async function demoLogin(): Promise<AuthSession> {
   return postJson("/v1/auth/demo", {});
+}
+
+export async function listAdminAccounts(token: string): Promise<AdminAccount[]> {
+  return getJson<AdminAccount[]>("/v1/admin/accounts", token);
+}
+
+export async function createAdminUser(
+  payload: { ownerName: string; email: string; password: string; businessName: string; businessType: string },
+  token: string
+): Promise<void> {
+  await postJson("/v1/admin/users", payload, token);
+}
+
+export async function suspendAdminUser(userId: string, token: string): Promise<void> {
+  await postJson(`/v1/admin/users/${userId}/suspend`, {}, token);
+}
+
+export async function reactivateAdminUser(userId: string, token: string): Promise<void> {
+  await postJson(`/v1/admin/users/${userId}/reactivate`, {}, token);
 }
 
 export async function getCurrentUser(token: string): Promise<AuthSession> {

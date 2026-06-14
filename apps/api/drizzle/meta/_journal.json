@@ -57,6 +57,13 @@
       "when": 1781211600000,
       "tag": "0008_decision_tracking",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1781298000000,
+      "tag": "0009_user_suspended",
+      "breakpoints": true
     }
   ]
 }

@@ -5,7 +5,18 @@ export type RequestContext = {
   userId: string;
   tenantId: string;
   role: "owner" | "admin" | "operator" | "viewer";
+  superAdmin?: boolean;
 };
+
+export function isSuperAdminEmail(email: string): boolean {
+  return getConfig().superAdminEmails.includes(email.trim().toLowerCase());
+}
+
+export function requireSuperAdmin(headers: RequestHeaders): RequestContext {
+  const context = resolveRequestContext(headers);
+  if (!context.superAdmin) throw new Error("Forbidden");
+  return context;
+}
 
 type HeaderValue = string | string[] | undefined;
 type RequestHeaders = Record<string, HeaderValue>;

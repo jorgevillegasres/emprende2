@@ -18,6 +18,10 @@ export function getConfig(env: Env = process.env) {
     authSecret: env.AUTH_SECRET ?? "dev-only-emprendedos-secret",
     demoAuthEmail: env.DEMO_AUTH_EMAIL ?? "demo@emprendedos.local",
     demoAuthPassword: env.DEMO_AUTH_PASSWORD ?? "emprendedos-demo",
-    allowDevelopmentRequestContext: env.ALLOW_DEV_REQUEST_CONTEXT !== "false" && env.NODE_ENV !== "production"
+    allowDevelopmentRequestContext: env.ALLOW_DEV_REQUEST_CONTEXT !== "false" && env.NODE_ENV !== "production",
+    superAdminEmails: (env.SUPERADMIN_EMAILS ?? "")
+      .split(",")
+      .map((email) => email.trim().toLowerCase())
+      .filter(Boolean)
   };
 }

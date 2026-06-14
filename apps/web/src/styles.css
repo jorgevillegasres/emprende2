@@ -4586,3 +4586,39 @@ body.modal-open {
     width: 100%;
   }
 }
+
+/* Panel de administracion — estados de cuenta */
+.account-status {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: var(--r-pill);
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.account-status.is-active {
+  background: var(--green-soft);
+  color: var(--green-ink);
+}
+
+.account-status.is-suspended {
+  background: var(--coral-soft);
+  color: var(--coral-ink);
+}
+
+.account-self {
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.admin-row-action {
+  text-align: right;
+}
+
+.admin-suspended-note {
+  color: var(--muted);
+  font-weight: 500;
+  font-size: 0.85rem;
+}

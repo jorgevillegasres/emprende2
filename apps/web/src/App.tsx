@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { demoLogin, getCurrentUser, getDashboardMetrics, login, registerOwner, type AuthSession, type DashboardMetrics, type RegisterPayload } from "./api/client";
 import { ActionPlan } from "./components/ActionPlanView";
+import { AdminPanel } from "./components/AdminPanel";
 import { Dashboard } from "./components/Dashboard";
 import { Landing } from "./components/Landing";
 import { Login } from "./components/Login";
@@ -149,7 +150,7 @@ export function App() {
   }
 
   return (
-    <Shell activeSection={activeSection} onLogout={handleLogout} onPrimaryAction={handlePrimaryAction} onSectionChange={setActiveSection} userLabel={authSession.role}>
+    <Shell activeSection={activeSection} onLogout={handleLogout} onPrimaryAction={handlePrimaryAction} onSectionChange={setActiveSection} userLabel={authSession.role} isSuperAdmin={authSession.superAdmin}>
       {activeSection === "dashboard" ? (
         <>
           {error ? <div className="system-panel">{error}</div> : null}
@@ -160,6 +161,8 @@ export function App() {
         <Recipes token={authSession.token} />
       ) : activeSection === "plan" ? (
         <ActionPlan token={authSession.token} />
+      ) : activeSection === "admin" ? (
+        <AdminPanel token={authSession.token} currentUserId={authSession.userId} />
       ) : (
         <Operations focusSignal={activeSection === "sales" ? salesFocusSignal : 0} section={activeSection} token={authSession.token} />
       )}

@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { getConfig } from "../config.js";
-import { resolveRequestContext } from "../auth/context.js";
+import { isSuperAdminEmail, resolveRequestContext } from "../auth/context.js";
 import { hashPassword, verifyPassword } from "../auth/passwords.js";
 import { signAuthToken } from "../auth/tokens.js";
 import { getRepositories } from "../db/store.js";
@@ -59,6 +59,10 @@ export async function registerAuthRoutes(app: FastifyInstance) {
       return reply.code(401).send({ error: "Invalid credentials" });
     }
 
+    if (identity.suspended) {
+      return reply.code(403).send({ error: "Cuenta suspendida. Contacta al administrador." });
+    }
+
     return signSession(identity);
   });
 
@@ -83,11 +87,12 @@ export async function registerAuthRoutes(app: FastifyInstance) {
   });
 }
 
-function signSession(identity: { userId: string; tenantId: string; role: "owner" | "admin" | "operator" | "viewer" }) {
+function signSession(identity: { userId: string; tenantId: string; role: "owner" | "admin" | "operator" | "viewer"; email: string }) {
   const context = {
     userId: identity.userId,
     tenantId: identity.tenantId,
-    role: identity.role
+    role: identity.role,
+    superAdmin: isSuperAdminEmail(identity.email)
   };
   const token = signAuthToken(context, { secret: getConfig().authSecret });
   return { token, ...context };

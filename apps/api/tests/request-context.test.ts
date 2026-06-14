@@ -46,7 +46,7 @@ describe("resolveRequestContext", () => {
       { allowDevelopmentContext: true }
     );
 
-    expect(context).toEqual({ userId: "token-user", tenantId: "token-tenant", role: "owner" });
+    expect(context).toEqual({ userId: "token-user", tenantId: "token-tenant", role: "owner", superAdmin: false });
   });
 
   it("falls back to owner role when development role header is unsupported", () => {
