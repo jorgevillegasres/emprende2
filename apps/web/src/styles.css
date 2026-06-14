@@ -12,19 +12,19 @@
   --line: #e2dccf;
   --line-strong: #d2cbba;
 
-  /* --- Semantic signals (richer, AA-safe) --- */
-  --green: #0c9b66;
-  --green-ink: #056045;
-  --green-soft: #d8f1e4;
-  --coral: #e24d35;
-  --coral-ink: #a83118;
-  --coral-soft: #fbe3dc;
-  --blue: #2456c8;
-  --blue-ink: #173f98;
-  --blue-soft: #e0e9ff;
-  --yellow: #d4881a;
+  /* --- Semantic signals (vivid signature: energetic coral) --- */
+  --green: #07a86c;
+  --green-ink: #05623f;
+  --green-soft: #d2f4e2;
+  --coral: #fa4a28;
+  --coral-ink: #b22e0f;
+  --coral-soft: #ffe0d4;
+  --blue: #2a5bdb;
+  --blue-ink: #16409c;
+  --blue-soft: #dde7ff;
+  --yellow: #e0901a;
   --yellow-ink: #8a560b;
-  --yellow-soft: #fbeccf;
+  --yellow-soft: #fcebcd;
 
   /* --- Typography --- */
   --font-display: "Space Grotesk", "Segoe UI", sans-serif;
@@ -2230,14 +2230,14 @@ h2 {
 }
 
 .primary-action {
-  background: linear-gradient(180deg, #ef6a52, var(--coral));
-  box-shadow: 0 10px 22px rgba(226, 77, 53, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+  background: linear-gradient(180deg, #ff6a45, var(--coral));
+  box-shadow: 0 10px 24px rgba(250, 74, 40, 0.42), inset 0 1px 0 rgba(255, 255, 255, 0.3);
   letter-spacing: -0.005em;
 }
 
 .primary-action:hover {
   transform: translateY(-2px);
-  box-shadow: 0 16px 30px rgba(226, 77, 53, 0.38), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+  box-shadow: 0 18px 34px rgba(250, 74, 40, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.3);
 }
 
 .primary-action:active {
@@ -2298,9 +2298,47 @@ h2 {
   box-shadow: var(--shadow);
 }
 
+/* Punto focal: panel de salud oscuro de alto contraste */
 .executive-score {
   border-radius: var(--r);
-  background: linear-gradient(180deg, #ffffff, var(--surface-2));
+  background: radial-gradient(120% 120% at 0% 0%, #232a30, var(--ink) 70%);
+  color: #fff;
+  box-shadow: var(--shadow-ink);
+}
+
+.executive-score .eyebrow {
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.executive-score h1 {
+  color: #fff;
+}
+
+.executive-score .score-note {
+  color: rgba(255, 255, 255, 0.62);
+}
+
+.executive-score .status-chip {
+  background: rgba(7, 168, 108, 0.22);
+  color: #6ee7b0;
+  box-shadow: inset 0 0 0 1px rgba(7, 168, 108, 0.4);
+}
+
+.executive-score .gauge-track {
+  stroke: rgba(255, 255, 255, 0.1);
+}
+
+.executive-score .gauge-fill {
+  stroke: var(--green);
+  filter: drop-shadow(0 0 6px rgba(7, 168, 108, 0.5));
+}
+
+.executive-score .gauge-value strong {
+  color: #fff;
+}
+
+.executive-score .gauge-value span {
+  color: rgba(255, 255, 255, 0.6);
 }
 
 .executive-metrics .metric-card {
