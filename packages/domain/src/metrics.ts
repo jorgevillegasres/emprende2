@@ -87,6 +87,7 @@ export function calculateDashboardMetrics(state: DashboardState, today: string) 
     productInventoryValue,
     totalInventoryValue: round(supplyInventoryValue + productInventoryValue),
     netAfterExpenses: round(monthlyGrossProfit - monthlyExpenses),
+    breakEven: calculateBreakEven(monthlyExpenses, averageMarginPercent, monthlyRevenue),
     lowStockItems,
     weeklyRevenue,
     expensesByCategory,
@@ -208,6 +209,27 @@ function getGrowthActions(
   if (averageMarginPercent < 45) actions.push({ title: "Sube el margen promedio", detail: "Tu rentabilidad necesita revision.", tone: "focus" });
 
   return actions.slice(0, 3);
+}
+
+export function calculateBreakEven(fixedCosts: number, contributionMarginPercent: number, currentRevenue: number) {
+  const ratio = contributionMarginPercent / 100;
+  const canEstimate = ratio > 0 && fixedCosts > 0;
+  const breakEvenRevenue = canEstimate ? round(fixedCosts / ratio) : 0;
+  const isCovered = canEstimate ? currentRevenue >= breakEvenRevenue : fixedCosts === 0;
+  const revenueGap = round(Math.max(0, breakEvenRevenue - currentRevenue));
+  const progressPercent =
+    breakEvenRevenue > 0 ? round(Math.min(100, (currentRevenue / breakEvenRevenue) * 100)) : fixedCosts === 0 ? 100 : 0;
+
+  return {
+    fixedCosts: round(fixedCosts),
+    contributionMarginPercent: round(contributionMarginPercent),
+    breakEvenRevenue,
+    currentRevenue: round(currentRevenue),
+    revenueGap,
+    progressPercent,
+    isCovered,
+    canEstimate
+  };
 }
 
 function sumBy<T>(items: T[], selector: (item: T) => number) {

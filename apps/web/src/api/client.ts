@@ -5,6 +5,16 @@ export type DashboardMetrics = {
   averageMarginPercent: number;
   totalInventoryValue: number;
   netAfterExpenses: number;
+  breakEven: {
+    fixedCosts: number;
+    contributionMarginPercent: number;
+    breakEvenRevenue: number;
+    currentRevenue: number;
+    revenueGap: number;
+    progressPercent: number;
+    isCovered: boolean;
+    canEstimate: boolean;
+  };
   businessHealthScore?: number;
   operationalCounts?: {
     products: number;

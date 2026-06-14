@@ -9,6 +9,16 @@ const emptyMetrics: DashboardMetrics = {
   averageMarginPercent: 0,
   totalInventoryValue: 0,
   netAfterExpenses: 0,
+  breakEven: {
+    fixedCosts: 0,
+    contributionMarginPercent: 0,
+    breakEvenRevenue: 0,
+    currentRevenue: 0,
+    revenueGap: 0,
+    progressPercent: 0,
+    isCovered: false,
+    canEstimate: false
+  },
   businessHealthScore: 35,
   weeklyRevenue: [],
   expensesByCategory: [],

@@ -10,6 +10,16 @@ const metrics: DashboardMetrics = {
   averageMarginPercent: 68.87,
   totalInventoryValue: 914400,
   netAfterExpenses: -60600,
+  breakEven: {
+    fixedCosts: 146000,
+    contributionMarginPercent: 68.87,
+    breakEvenRevenue: 211993.61,
+    currentRevenue: 124000,
+    revenueGap: 87993.61,
+    progressPercent: 58.49,
+    isCovered: false,
+    canEstimate: true
+  },
   businessHealthScore: 57,
   weeklyRevenue: [{ label: "Semana 1", revenue: 124000 }],
   expensesByCategory: [{ category: "Servicios", amount: 68000 }],

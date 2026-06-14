@@ -1,5 +1,31 @@
 import { describe, expect, it } from "vitest";
-import { calculateDashboardMetrics } from "../src/index";
+import { calculateBreakEven, calculateDashboardMetrics } from "../src/index";
+
+describe("calculateBreakEven", () => {
+  it("estimates the revenue needed to cover fixed costs", () => {
+    const result = calculateBreakEven(20000, 50, 27000);
+    expect(result.breakEvenRevenue).toBe(40000);
+    expect(result.revenueGap).toBe(13000);
+    expect(result.progressPercent).toBe(67.5);
+    expect(result.isCovered).toBe(false);
+    expect(result.canEstimate).toBe(true);
+  });
+
+  it("marks the business as covered when revenue passes the break-even point", () => {
+    const result = calculateBreakEven(10000, 50, 30000);
+    expect(result.breakEvenRevenue).toBe(20000);
+    expect(result.revenueGap).toBe(0);
+    expect(result.progressPercent).toBe(100);
+    expect(result.isCovered).toBe(true);
+  });
+
+  it("cannot estimate without a contribution margin", () => {
+    const result = calculateBreakEven(20000, 0, 0);
+    expect(result.canEstimate).toBe(false);
+    expect(result.breakEvenRevenue).toBe(0);
+    expect(result.isCovered).toBe(false);
+  });
+});
 
 describe("calculateDashboardMetrics", () => {
   it("calculates monthly revenue, margin, weekly revenue, and growth actions", () => {

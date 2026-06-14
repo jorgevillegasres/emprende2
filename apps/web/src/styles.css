@@ -2333,6 +2333,94 @@ h2 {
   color: var(--green-ink);
 }
 
+/* --- Punto de equilibrio (Fase 4) --- */
+.break-even-band {
+  display: grid;
+  grid-template-columns: minmax(280px, 0.95fr) minmax(0, 1.05fr);
+  gap: 22px;
+  align-items: center;
+  margin: 14px 0 22px;
+  padding: 22px;
+  border: 1px solid var(--line);
+  border-left: 5px solid var(--coral);
+  border-radius: var(--r-lg);
+  background: linear-gradient(135deg, var(--surface), var(--surface-2));
+  box-shadow: var(--shadow);
+}
+
+.break-even-band.is-covered {
+  border-left-color: var(--green);
+}
+
+.break-even-band.is-empty {
+  border-left-color: var(--line-strong);
+}
+
+.break-even-copy h2 {
+  max-width: 32ch;
+  font-size: clamp(1.25rem, 1.9vw, 1.8rem);
+  line-height: 1.1;
+}
+
+.break-even-copy p:not(.eyebrow) {
+  margin: 8px 0 0;
+  max-width: 46ch;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.break-even-track-wrap {
+  display: grid;
+  gap: 10px;
+}
+
+.break-even-figures {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--muted);
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.break-even-figures b {
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-variant-numeric: tabular-nums;
+}
+
+.break-even-track {
+  height: 14px;
+  overflow: hidden;
+  border-radius: var(--r-pill);
+  background: var(--bg-2);
+}
+
+.break-even-fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--coral), var(--yellow));
+  transition: width 760ms var(--ease);
+}
+
+.is-covered .break-even-fill {
+  background: linear-gradient(90deg, var(--green), var(--blue));
+}
+
+.break-even-status {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-weight: 800;
+}
+
+@media (max-width: 900px) {
+  .break-even-band {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* --- Gauge de salud: más presencia --- */
 .gauge-track {
   stroke: var(--bg-2);

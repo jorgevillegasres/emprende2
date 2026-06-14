@@ -165,6 +165,8 @@ export function Dashboard({ metrics, onSectionChange, token }: { metrics: Dashbo
         </div>
       </section>
 
+      <BreakEvenPanel breakEven={metrics.breakEven} />
+
       <section className="dashboard-analysis">
         <article className="card pricing-card">
           <div className="card-head">
@@ -401,6 +403,47 @@ function OnboardingPanel({
             <small>{step.detail}</small>
           </button>
         ))}
+      </div>
+    </section>
+  );
+}
+
+function BreakEvenPanel({ breakEven }: { breakEven: DashboardMetrics["breakEven"] }) {
+  const { canEstimate, isCovered, breakEvenRevenue, currentRevenue, revenueGap, progressPercent, contributionMarginPercent } = breakEven;
+  const state = isCovered ? "is-covered" : canEstimate ? "is-below" : "is-empty";
+
+  const headline = !canEstimate
+    ? "Aun no podemos calcular tu punto de equilibrio"
+    : isCovered
+      ? "Tu negocio ya cubre sus gastos este mes"
+      : `Te faltan ${money(revenueGap)} en ventas para cubrir tus gastos`;
+
+  const detail = !canEstimate
+    ? "Registra ventas con margen y gastos del mes para estimar cuanto necesitas vender."
+    : `Con un margen promedio de ${contributionMarginPercent}%, necesitas vender ${money(breakEvenRevenue)} al mes para no perder dinero.`;
+
+  return (
+    <section className={`break-even-band ${state}`} aria-label="Punto de equilibrio">
+      <div className="break-even-copy">
+        <p className="eyebrow">Punto de equilibrio</p>
+        <h2>{headline}</h2>
+        <p>{detail}</p>
+      </div>
+      <div className="break-even-track-wrap">
+        <div className="break-even-figures">
+          <span>
+            Vas en <b>{money(currentRevenue)}</b>
+          </span>
+          <span>
+            Meta <b>{canEstimate ? money(breakEvenRevenue) : "--"}</b>
+          </span>
+        </div>
+        <div className="break-even-track">
+          <span className="break-even-fill" style={{ width: `${canEstimate ? progressPercent : 0}%` }} />
+        </div>
+        <p className="break-even-status">
+          {!canEstimate ? "Sin datos suficientes" : isCovered ? `Cubierto al ${progressPercent}%` : `${progressPercent}% del objetivo`}
+        </p>
       </div>
     </section>
   );
