@@ -3784,3 +3784,111 @@ body.modal-open {
   color: var(--green-ink);
   box-shadow: none;
 }
+
+/* =======================================================================
+   KANAKKU KPI CARDS + panel de salud claro
+   ======================================================================= */
+
+/* Stat card: ícono en círculo tintado + cifra grande */
+.metric-card {
+  position: relative;
+  display: grid;
+  gap: 3px;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-left-width: 1px;
+  border-radius: var(--r);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.metric-icon {
+  width: 40px;
+  height: 40px;
+  margin-bottom: 8px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+}
+
+.metric-icon.icon-blue {
+  background: var(--blue-soft);
+  color: var(--blue);
+}
+.metric-icon.icon-green {
+  background: var(--green-soft);
+  color: var(--green-ink);
+}
+.metric-icon.icon-coral {
+  background: var(--coral-soft);
+  color: var(--coral);
+}
+.metric-icon.icon-yellow {
+  background: var(--yellow-soft);
+  color: var(--yellow-ink);
+}
+
+.metric-label {
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.metric-card strong {
+  font-family: var(--font-body);
+  font-size: clamp(1.5rem, 2vw, 1.9rem);
+  font-weight: 700;
+  color: var(--ink);
+  letter-spacing: -0.01em;
+}
+
+.metric-card small {
+  color: var(--muted);
+}
+
+/* Panel "Salud del negocio": de oscuro a claro Kanakku */
+.executive-score {
+  background: var(--surface);
+  color: var(--ink);
+  border: 1px solid var(--line);
+  box-shadow: none;
+}
+
+.executive-score .eyebrow,
+.executive-score .score-note {
+  color: var(--muted);
+}
+
+.executive-score h1 {
+  color: var(--ink);
+}
+
+.executive-score .status-chip {
+  background: var(--green-soft);
+  color: var(--green-ink);
+  box-shadow: none;
+}
+
+.executive-score .gauge-track {
+  stroke: var(--bg-2);
+}
+
+.executive-score .gauge-fill {
+  stroke: var(--primary);
+  filter: none;
+}
+
+.executive-score .gauge-value strong {
+  color: var(--ink);
+}
+
+.executive-score .gauge-value span {
+  color: var(--muted);
+}
+
+/* Contenedor ejecutivo: superficie limpia */
+.executive-overview {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow);
+}

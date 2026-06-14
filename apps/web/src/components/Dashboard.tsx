@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { createDecision, listDecisions, updateDecisionStatus, type DashboardMetrics, type DecisionRecord } from "../api/client";
 import { buildGrowthDecisionPayload, buildPricingDecisionPayload, findMatchingDecision, type GrowthAction } from "./dashboardDecisions";
+import { Icon } from "./Icon";
 import type { AppSection } from "./Shell";
 import { getActivationStatus, getOnboardingProgress } from "./onboarding";
 
@@ -151,16 +152,17 @@ export function Dashboard({ metrics, onSectionChange, token }: { metrics: Dashbo
           </article>
 
           <section className="executive-metrics" aria-label="Indicadores principales">
-            <Metric label="Ventas del mes" value={money(metrics.monthlyRevenue)} detail="Ingresos registrados" accent="blue" />
-            <Metric label="Utilidad bruta" value={money(metrics.monthlyGrossProfit)} detail={`${metrics.averageMarginPercent}% margen`} accent="green" />
+            <Metric label="Ventas del mes" value={money(metrics.monthlyRevenue)} detail="Ingresos registrados" accent="blue" icon="sales" />
+            <Metric label="Utilidad bruta" value={money(metrics.monthlyGrossProfit)} detail={`${metrics.averageMarginPercent}% margen`} accent="green" icon="expenses" />
             <Metric
               label="Resultado operativo"
               value={money(metrics.netAfterExpenses)}
               detail={metrics.netAfterExpenses < 0 ? "Estas gastando mas de lo que ganas" : "Utilidad menos gastos"}
               accent={metrics.netAfterExpenses < 0 ? "coral" : "green"}
               tone={metrics.netAfterExpenses < 0 ? "negative" : "positive"}
+              icon="plan"
             />
-            <Metric label="Inventario valorizado" value={money(metrics.totalInventoryValue)} detail="Insumos + productos" accent="yellow" />
+            <Metric label="Inventario valorizado" value={money(metrics.totalInventoryValue)} detail="Insumos + productos" accent="yellow" icon="inventory" />
           </section>
         </div>
       </section>
@@ -449,10 +451,13 @@ function BreakEvenPanel({ breakEven }: { breakEven: DashboardMetrics["breakEven"
   );
 }
 
-function Metric({ label, value, detail, accent, tone }: { label: string; value: string; detail: string; accent: string; tone?: "positive" | "negative" }) {
+function Metric({ label, value, detail, accent, tone, icon }: { label: string; value: string; detail: string; accent: string; tone?: "positive" | "negative"; icon: string }) {
   return (
     <article className={`metric-card accent-${accent}${tone ? ` metric-tone-${tone}` : ""}`}>
-      <span>{label}</span>
+      <span className={`metric-icon icon-${accent}`} aria-hidden="true">
+        <Icon name={icon} size={18} />
+      </span>
+      <span className="metric-label">{label}</span>
       <strong>{value}</strong>
       <small>{detail}</small>
     </article>
