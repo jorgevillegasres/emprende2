@@ -153,7 +153,13 @@ export function Dashboard({ metrics, onSectionChange, token }: { metrics: Dashbo
           <section className="executive-metrics" aria-label="Indicadores principales">
             <Metric label="Ventas del mes" value={money(metrics.monthlyRevenue)} detail="Ingresos registrados" accent="blue" />
             <Metric label="Utilidad bruta" value={money(metrics.monthlyGrossProfit)} detail={`${metrics.averageMarginPercent}% margen`} accent="green" />
-            <Metric label="Resultado operativo" value={money(metrics.netAfterExpenses)} detail="Utilidad menos gastos" accent="ink" />
+            <Metric
+              label="Resultado operativo"
+              value={money(metrics.netAfterExpenses)}
+              detail={metrics.netAfterExpenses < 0 ? "Estas gastando mas de lo que ganas" : "Utilidad menos gastos"}
+              accent={metrics.netAfterExpenses < 0 ? "coral" : "green"}
+              tone={metrics.netAfterExpenses < 0 ? "negative" : "positive"}
+            />
             <Metric label="Inventario valorizado" value={money(metrics.totalInventoryValue)} detail="Insumos + productos" accent="yellow" />
           </section>
         </div>
@@ -400,9 +406,9 @@ function OnboardingPanel({
   );
 }
 
-function Metric({ label, value, detail, accent }: { label: string; value: string; detail: string; accent: string }) {
+function Metric({ label, value, detail, accent, tone }: { label: string; value: string; detail: string; accent: string; tone?: "positive" | "negative" }) {
   return (
-    <article className={`metric-card accent-${accent}`}>
+    <article className={`metric-card accent-${accent}${tone ? ` metric-tone-${tone}` : ""}`}>
       <span>{label}</span>
       <strong>{value}</strong>
       <small>{detail}</small>

@@ -1,18 +1,60 @@
 :root {
-  --bg: #f5f7f8;
-  --surface: #ffffff;
-  --ink: #17212b;
-  --muted: #6c7a86;
-  --line: #e1e7eb;
-  --green: #0a9f6a;
-  --green-soft: #dff5eb;
-  --coral: #ed5b43;
-  --coral-soft: #fde9e4;
-  --blue: #2668e8;
-  --blue-soft: #e4edff;
-  --yellow: #eca72c;
-  --yellow-soft: #fff3d9;
-  --shadow: 0 1px 2px rgba(23, 33, 43, 0.05), 0 18px 48px rgba(23, 33, 43, 0.08);
+  /* --- Canvas: warm "paper", not sterile white --- */
+  --bg: #f1ede4;
+  --bg-2: #e9e4d8;
+  --surface: #fffdf9;
+  --surface-2: #faf7f0;
+
+  /* --- Ink: warm near-black command surfaces --- */
+  --ink: #16191c;
+  --ink-soft: #353b41;
+  --muted: #5a646d;
+  --line: #e2dccf;
+  --line-strong: #d2cbba;
+
+  /* --- Semantic signals (richer, AA-safe) --- */
+  --green: #0c9b66;
+  --green-ink: #056045;
+  --green-soft: #d8f1e4;
+  --coral: #e24d35;
+  --coral-ink: #a83118;
+  --coral-soft: #fbe3dc;
+  --blue: #2456c8;
+  --blue-ink: #173f98;
+  --blue-soft: #e0e9ff;
+  --yellow: #d4881a;
+  --yellow-ink: #8a560b;
+  --yellow-soft: #fbeccf;
+
+  /* --- Typography --- */
+  --font-display: "Space Grotesk", "Segoe UI", sans-serif;
+  --font-body: "Hanken Grotesk", "Segoe UI", sans-serif;
+  --font-mono: "Space Grotesk", ui-monospace, "Cascadia Mono", monospace;
+
+  /* --- Spacing scale (4pt) --- */
+  --s1: 4px;
+  --s2: 8px;
+  --s3: 12px;
+  --s4: 16px;
+  --s5: 24px;
+  --s6: 32px;
+  --s7: 48px;
+
+  /* --- Radii: mixed for rhythm --- */
+  --r-sm: 10px;
+  --r: 14px;
+  --r-lg: 20px;
+  --r-pill: 999px;
+
+  /* --- Shadows: layered, warm --- */
+  --shadow-sm: 0 1px 2px rgba(34, 28, 18, 0.06);
+  --shadow: 0 1px 2px rgba(34, 28, 18, 0.05), 0 14px 38px rgba(34, 28, 18, 0.09);
+  --shadow-lg: 0 2px 4px rgba(34, 28, 18, 0.06), 0 28px 64px rgba(34, 28, 18, 0.14);
+  --shadow-ink: 0 16px 40px rgba(12, 14, 16, 0.28);
+
+  /* --- Motion --- */
+  --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --dur: 180ms;
 }
 
 * {
@@ -24,16 +66,25 @@ body {
   min-height: 100vh;
   overflow-x: hidden;
   background:
-    linear-gradient(135deg, rgba(10, 159, 106, 0.08), transparent 28%),
-    linear-gradient(315deg, rgba(237, 91, 67, 0.08), transparent 30%),
+    radial-gradient(1200px 600px at 12% -8%, rgba(12, 155, 102, 0.1), transparent 60%),
+    radial-gradient(900px 520px at 100% 0%, rgba(226, 77, 53, 0.07), transparent 55%),
     var(--bg);
+  background-attachment: fixed;
   color: var(--ink);
-  font-family: "Aptos", "Segoe UI", sans-serif;
+  font-family: var(--font-body);
+  font-feature-settings: "ss01", "cv01";
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
 button {
   font: inherit;
   cursor: pointer;
+}
+
+::selection {
+  background: var(--ink);
+  color: #fff;
 }
 
 .shell {
@@ -483,9 +534,16 @@ p {
 }
 
 h1,
+h2,
+h3 {
+  font-family: var(--font-display);
+  font-weight: 700;
+}
+
+h1,
 h2 {
   margin-bottom: 4px;
-  letter-spacing: 0;
+  letter-spacing: -0.015em;
 }
 
 .eyebrow {
@@ -2041,5 +2099,469 @@ h2 {
 
   .executive-metrics {
     grid-template-columns: 1fr;
+  }
+}
+
+/* =======================================================================
+   REDISEÑO v2 — "Sala de mando del emprendedor"
+   Táctico · editorial · disciplinado. Capa de elevación visual.
+   ======================================================================= */
+
+/* --- Tipografía de mando: titulares display, datos en cifras tabulares --- */
+.brand strong,
+.eyebrow,
+.gauge-value strong,
+.metric-card strong,
+.executive-metrics .metric-card strong,
+.operations-stat strong,
+.action-plan-summary strong,
+.pricing-result strong,
+.sales-summary .profit strong,
+.bar-row strong,
+.decision-task-row em,
+.movement-row > span:not(.movement-badge) {
+  font-family: var(--font-display);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+
+.eyebrow {
+  font-family: var(--font-body);
+  letter-spacing: 0.14em;
+  color: var(--muted);
+}
+
+/* --- Topbar: superficie de mando más sólida + sin "divisor" suelto --- */
+.topbar {
+  gap: 18px;
+  border-bottom: 1px solid transparent;
+  transition: border-color var(--dur) var(--ease), background var(--dur) var(--ease);
+}
+
+.topbar::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--line-strong), transparent);
+  opacity: 0.7;
+}
+
+.brand-mark {
+  border-radius: 12px;
+  background: linear-gradient(140deg, var(--ink), #2c3a33 60%, var(--green));
+  box-shadow: 0 6px 16px rgba(12, 155, 102, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.16);
+  font-family: var(--font-display);
+  transition: transform var(--dur) var(--ease);
+}
+
+.brand-button:hover .brand-mark {
+  transform: rotate(-4deg) scale(1.04);
+}
+
+.brand strong {
+  letter-spacing: -0.02em;
+}
+
+/* --- FIX bug: la nav mostraba scrollbar + flechas en desktop --- */
+.nav-viewport {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  position: relative;
+}
+
+.nav-viewport::-webkit-scrollbar {
+  display: none;
+}
+
+.nav {
+  gap: 2px;
+}
+
+.nav-item {
+  position: relative;
+  color: var(--muted);
+  font-weight: 700;
+  letter-spacing: -0.005em;
+  transition: color var(--dur) var(--ease), background var(--dur) var(--ease);
+}
+
+.nav-item:hover {
+  color: var(--ink);
+  background: rgba(22, 25, 28, 0.06);
+}
+
+.nav-item.active {
+  background: var(--ink);
+  color: #fff;
+  box-shadow: 0 6px 16px rgba(22, 25, 28, 0.22);
+}
+
+/* --- Botones: jerarquía clara + micro-interacción --- */
+.today-pill,
+.user-pill,
+.primary-action,
+.secondary-action,
+.export-action {
+  transition: transform var(--dur) var(--ease), box-shadow var(--dur) var(--ease),
+    background var(--dur) var(--ease), border-color var(--dur) var(--ease);
+}
+
+.primary-action {
+  background: linear-gradient(180deg, #ef6a52, var(--coral));
+  box-shadow: 0 10px 22px rgba(226, 77, 53, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+  letter-spacing: -0.005em;
+}
+
+.primary-action:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 16px 30px rgba(226, 77, 53, 0.38), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+}
+
+.primary-action:active {
+  transform: translateY(0);
+}
+
+.secondary-action:hover,
+.export-action:hover {
+  border-color: var(--line-strong);
+  background: #fff;
+  transform: translateY(-1px);
+}
+
+.today-pill {
+  background: var(--surface-2);
+  color: var(--ink-soft);
+}
+
+/* --- Cards: profundidad sutil + elevación al hover --- */
+.card,
+.metric-card,
+.system-panel,
+.onboarding-step,
+.template-chip,
+.action-plan-row {
+  transition: transform var(--dur) var(--ease), box-shadow var(--dur) var(--ease),
+    border-color var(--dur) var(--ease);
+}
+
+.card,
+.system-panel {
+  border-radius: var(--r);
+  border-color: rgba(226, 220, 207, 0.9);
+}
+
+.dashboard-analysis .card:hover,
+.analytics-grid .card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-lg);
+}
+
+.metric-card {
+  border-radius: var(--r-sm);
+}
+
+.metric-grid .metric-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+.metric-card strong {
+  font-size: clamp(1.45rem, 1.7vw, 2rem);
+}
+
+/* --- Panel ejecutivo: superficie "war room" --- */
+.executive-overview {
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow);
+}
+
+.executive-score {
+  border-radius: var(--r);
+  background: linear-gradient(180deg, #ffffff, var(--surface-2));
+}
+
+.executive-metrics .metric-card {
+  border-radius: var(--r-sm);
+  border: 1px solid var(--line);
+  background: var(--surface);
+}
+
+/* --- Semáforo de salud: el dato crítico se enciende --- */
+.metric-card.metric-tone-negative {
+  background: linear-gradient(180deg, var(--coral-soft), var(--surface));
+  border-color: rgba(226, 77, 53, 0.32);
+}
+
+.metric-card.metric-tone-negative strong {
+  color: var(--coral-ink);
+}
+
+.metric-card.metric-tone-negative small {
+  color: var(--coral-ink);
+  font-weight: 700;
+}
+
+.metric-card.metric-tone-positive {
+  background: linear-gradient(180deg, var(--green-soft), var(--surface));
+  border-color: rgba(12, 155, 102, 0.28);
+}
+
+.metric-card.metric-tone-positive strong {
+  color: var(--green-ink);
+}
+
+/* --- Gauge de salud: más presencia --- */
+.gauge-track {
+  stroke: var(--bg-2);
+}
+
+.gauge-value strong {
+  font-size: 3.2rem;
+}
+
+.status-chip {
+  background: var(--green-soft);
+  color: var(--green-ink);
+  box-shadow: inset 0 0 0 1px rgba(12, 155, 102, 0.18);
+}
+
+/* --- Decisiones: tarjetas con borde de acento e interacción --- */
+.decision {
+  border-radius: var(--r-sm);
+  border-left: 4px solid var(--green);
+  transition: transform var(--dur) var(--ease);
+}
+
+.decision.d-warning {
+  border-left-color: var(--yellow);
+}
+
+.decision.d-focus {
+  border-left-color: var(--coral);
+}
+
+.decision:hover {
+  transform: translateY(-2px);
+}
+
+.decision-plan-action {
+  transition: transform var(--dur) var(--ease), background var(--dur) var(--ease),
+    border-color var(--dur) var(--ease);
+}
+
+.decision-plan-action:not(:disabled):hover {
+  background: var(--ink);
+  color: #fff;
+  border-color: var(--ink);
+  transform: translateY(-1px);
+}
+
+/* --- Barras de datos animadas al entrar --- */
+.bar-fill,
+.expense-fill,
+.profit-fill,
+.onboarding-progress span {
+  transition: width 720ms var(--ease);
+}
+
+/* --- Operaciones: stat oscuro tipo instrumento --- */
+.operations-stat {
+  border-radius: var(--r);
+  background: linear-gradient(160deg, #20262b, var(--ink));
+  box-shadow: var(--shadow-ink);
+}
+
+.operations-hero,
+.action-plan-hero {
+  border-radius: var(--r-lg);
+}
+
+/* --- Onboarding: pasos con feedback claro --- */
+.onboarding-band {
+  border-radius: var(--r-lg);
+}
+
+.onboarding-step {
+  border-radius: var(--r-sm);
+}
+
+.onboarding-step:hover {
+  box-shadow: var(--shadow);
+  transform: translateY(-2px);
+}
+
+.template-chip:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+}
+
+/* --- Formularios: inputs con foco táctil --- */
+.login-form input,
+.form-grid input,
+.sales-builder input,
+.sales-builder select,
+.adjustment-grid input,
+.adjustment-grid select,
+.purchase-grid input,
+.purchase-grid select,
+.production-grid input,
+.production-grid select,
+.recipe-form-grid input,
+.recipe-form-grid select,
+.action-plan-form input,
+.action-plan-form select,
+.action-plan-filters select,
+.pricing-simulator select {
+  transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease),
+    background var(--dur) var(--ease);
+}
+
+/* --- Anillo de foco accesible y consistente --- */
+:where(button, a, input, select, [tabindex]):focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+  border-radius: var(--r-sm);
+}
+
+/* --- Login: panel editorial con textura --- */
+.login-copy {
+  border-radius: var(--r-lg);
+  background:
+    radial-gradient(120% 120% at 0% 0%, rgba(12, 155, 102, 0.14), transparent 55%),
+    linear-gradient(160deg, #ffffff, var(--surface-2));
+  border-color: var(--line);
+}
+
+.login-copy h1 {
+  font-family: var(--font-display);
+  letter-spacing: -0.03em;
+}
+
+.login-form {
+  padding: 4px 2px;
+}
+
+.mode-tabs,
+.login-form input {
+  border-radius: var(--r-sm);
+}
+
+/* --- Scroll horizontal pulido (sin flechas nativas de Windows) --- */
+.table-wrap,
+.nav-viewport {
+  scrollbar-width: thin;
+  scrollbar-color: var(--line-strong) transparent;
+}
+
+.table-wrap::-webkit-scrollbar {
+  height: 8px;
+}
+
+.table-wrap::-webkit-scrollbar-thumb {
+  border-radius: var(--r-pill);
+  background: var(--line-strong);
+}
+
+.table-wrap::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* --- Tablas de datos: encabezado tipo ledger --- */
+.data-table th {
+  font-family: var(--font-body);
+  letter-spacing: 0.06em;
+  color: var(--muted);
+}
+
+.data-table tbody tr {
+  transition: background var(--dur) var(--ease);
+}
+
+.data-table tbody tr:hover {
+  background: var(--surface-2);
+}
+
+.data-table td {
+  color: var(--ink-soft);
+  font-variant-numeric: tabular-nums;
+}
+
+/* --- Empty states: instructivos, no vacíos --- */
+.empty-note,
+.empty-copy {
+  position: relative;
+  padding: 16px 16px 16px 44px;
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--r-sm);
+  background: var(--surface-2);
+}
+
+.empty-note::before,
+.empty-copy::before {
+  content: "→";
+  position: absolute;
+  left: 16px;
+  top: 14px;
+  font-family: var(--font-display);
+  font-weight: 700;
+  color: var(--green);
+}
+
+/* --- Skeleton shimmer para estados de carga --- */
+.system-panel.boot-panel,
+.system-panel:not(.boot-panel) {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--r);
+}
+
+@keyframes emp-shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.boot-panel::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, rgba(12, 155, 102, 0.12), transparent);
+  animation: emp-shimmer 1.5s var(--ease) infinite;
+}
+
+/* --- Entrada suave del contenido principal --- */
+@keyframes emp-rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.executive-overview,
+.onboarding-band,
+.metric-grid,
+.dashboard-analysis,
+.operations-page,
+.recipes-grid,
+.action-plan-page {
+  animation: emp-rise 420ms var(--ease) both;
+}
+
+/* --- Respeto a quien prefiere menos movimiento --- */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
   }
 }
