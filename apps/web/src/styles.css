@@ -4139,3 +4139,9 @@ body.modal-open {
   background: var(--surface);
   color: var(--ink);
 }
+
+.field-hint {
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 500;
+}

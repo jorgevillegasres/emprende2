@@ -127,7 +127,16 @@ export function Login({
           </label>
           <label>
             <span>Contrasena</span>
-            <input autoComplete="current-password" name="password" onChange={(event) => setPassword(event.target.value)} required type="password" value={password} />
+            <input
+              autoComplete={mode === "register" ? "new-password" : "current-password"}
+              name="password"
+              onChange={(event) => setPassword(event.target.value)}
+              required
+              minLength={mode === "register" ? 8 : undefined}
+              type="password"
+              value={password}
+            />
+            {mode === "register" ? <small className="field-hint">Minimo 8 caracteres.</small> : null}
           </label>
           {error ? <p className="form-error">{error}</p> : null}
           <button className="primary-action form-action" disabled={isLoading} type="submit">
