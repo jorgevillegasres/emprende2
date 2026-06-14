@@ -3231,3 +3231,10 @@ body.modal-open {
     display: inline;
   }
 }
+
+/* En phones muy pequeños, "Salir" pasa a solo ícono para que la barra nunca se desborde */
+@media (max-width: 400px) {
+  .secondary-action .action-label {
+    display: none;
+  }
+}
