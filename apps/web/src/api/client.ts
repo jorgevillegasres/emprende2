@@ -265,6 +265,10 @@ export async function registerOwner(payload: RegisterPayload): Promise<AuthSessi
   return postJson(getRegisterPath(), payload);
 }
 
+export async function demoLogin(): Promise<AuthSession> {
+  return postJson("/v1/auth/demo", {});
+}
+
 export async function getCurrentUser(token: string): Promise<AuthSession> {
   const session = await getJson<Omit<AuthSession, "token">>("/v1/auth/me", token);
   return { ...session, token };

@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
-import { getCurrentUser, getDashboardMetrics, login, registerOwner, type AuthSession, type DashboardMetrics, type RegisterPayload } from "./api/client";
+import { demoLogin, getCurrentUser, getDashboardMetrics, login, registerOwner, type AuthSession, type DashboardMetrics, type RegisterPayload } from "./api/client";
 import { ActionPlan } from "./components/ActionPlanView";
 import { Dashboard } from "./components/Dashboard";
+import { Landing } from "./components/Landing";
 import { Login } from "./components/Login";
 import { Operations } from "./components/Operations";
 import { Recipes } from "./components/Recipes";
@@ -18,6 +19,9 @@ export function App() {
   const [isLoginLoading, setIsLoginLoading] = useState(false);
   const [activeSection, setActiveSection] = useState<AppSection>("dashboard");
   const [salesFocusSignal, setSalesFocusSignal] = useState(0);
+  const [authView, setAuthView] = useState<"landing" | "login">("landing");
+  const [loginInitialMode, setLoginInitialMode] = useState<"login" | "register">("login");
+  const [isDemoLoading, setIsDemoLoading] = useState(false);
 
   useEffect(() => {
     const storedSession = readStoredSession();
@@ -80,6 +84,22 @@ export function App() {
     }
   }
 
+  async function handleDemoLogin() {
+    setIsDemoLoading(true);
+    setAuthError("");
+    try {
+      const session = await demoLogin();
+      persistSession(session);
+      setAuthSession(session);
+      setActiveSection("dashboard");
+      await loadDashboard(session.token);
+    } catch {
+      setAuthError("No pudimos abrir el demo. Intenta de nuevo.");
+    } finally {
+      setIsDemoLoading(false);
+    }
+  }
+
   function handleLogout() {
     clearStoredSession();
     setAuthSession(null);
@@ -87,6 +107,7 @@ export function App() {
     setError("");
     setAuthError("");
     setActiveSection("dashboard");
+    setAuthView("landing");
   }
 
   function handlePrimaryAction() {
@@ -99,7 +120,32 @@ export function App() {
   }
 
   if (!authSession) {
-    return <Login error={authError} isLoading={isLoginLoading} onLogin={handleLogin} onRegister={handleRegister} />;
+    if (authView === "login") {
+      return (
+        <Login
+          error={authError}
+          isLoading={isLoginLoading}
+          initialMode={loginInitialMode}
+          onBack={() => setAuthView("landing")}
+          onLogin={handleLogin}
+          onRegister={handleRegister}
+        />
+      );
+    }
+    return (
+      <Landing
+        onLogin={() => {
+          setLoginInitialMode("login");
+          setAuthView("login");
+        }}
+        onRegister={() => {
+          setLoginInitialMode("register");
+          setAuthView("login");
+        }}
+        onDemo={handleDemoLogin}
+        demoLoading={isDemoLoading}
+      />
+    );
   }
 
   return (

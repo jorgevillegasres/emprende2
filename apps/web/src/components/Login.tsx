@@ -6,15 +6,19 @@ import { Icon } from "./Icon";
 export function Login({
   error,
   isLoading,
+  initialMode = "login",
+  onBack,
   onLogin,
   onRegister
 }: {
   error: string;
   isLoading: boolean;
+  initialMode?: "login" | "register";
+  onBack?: () => void;
   onLogin: (email: string, password: string) => Promise<void>;
   onRegister: (payload: RegisterPayload) => Promise<void>;
 }) {
-  const [mode, setMode] = useState<"login" | "register">("login");
+  const [mode, setMode] = useState<"login" | "register">(initialMode);
   const [email, setEmail] = useState("demo@emprendedos.local");
   const [password, setPassword] = useState("emprendedos-demo");
   const [ownerName, setOwnerName] = useState("");
@@ -93,6 +97,11 @@ export function Login({
         </div>
 
         <form className="card login-form" onSubmit={mode === "login" ? handleLoginSubmit : handleRegisterSubmit}>
+          {onBack ? (
+            <button className="login-back" type="button" onClick={onBack}>
+              &larr; Volver al inicio
+            </button>
+          ) : null}
           <div>
             <p className="eyebrow">Acceso</p>
             <h2>{mode === "login" ? "Iniciar sesion" : "Crear cuenta"}</h2>

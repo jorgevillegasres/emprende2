@@ -69,6 +69,18 @@ export async function registerAuthRoutes(app: FastifyInstance) {
       return reply.code(401).send({ error: "Authentication required" });
     }
   });
+
+  // Acceso publico de demostracion: emite un token para el tenant demo
+  // (datos de ejemplo sembrados). Sirve el boton "Ver demo" del landing.
+  app.post("/v1/auth/demo", async () => {
+    const demoContext = {
+      userId: process.env.DEMO_OWNER_USER_ID ?? "00000000-0000-0000-0000-000000000001",
+      tenantId: process.env.DEMO_TENANT_ID ?? "10000000-0000-0000-0000-000000000001",
+      role: "owner" as const
+    };
+    const token = signAuthToken(demoContext, { secret: getConfig().authSecret });
+    return { token, ...demoContext };
+  });
 }
 
 function signSession(identity: { userId: string; tenantId: string; role: "owner" | "admin" | "operator" | "viewer" }) {
