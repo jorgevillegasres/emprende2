@@ -12,6 +12,7 @@ import {
   type SupplyRecord
 } from "../api/client";
 import { buildCsvFromTable, createExportFilename, downloadCsv } from "./csvExport";
+import { Icon } from "./Icon";
 import { Modal } from "./Modal";
 
 export function Recipes({ token }: { token: string }) {
@@ -185,7 +186,8 @@ export function Recipes({ token }: { token: string }) {
               Producir lote
             </button>
             <button className="primary-action" onClick={() => setIsRecipeFormOpen(true)} type="button">
-              + Nueva receta
+              <Icon name="plus" size={16} />
+              Nueva receta
             </button>
           </div>
         </div>
@@ -330,6 +332,7 @@ export function Recipes({ token }: { token: string }) {
             <h2>Historial de lotes producidos</h2>
           </div>
           <button className="secondary-action export-action" disabled={!productionOrders.length} onClick={handleExportProductionOrders} type="button">
+            <Icon name="download" size={16} />
             Exportar CSV
           </button>
         </div>

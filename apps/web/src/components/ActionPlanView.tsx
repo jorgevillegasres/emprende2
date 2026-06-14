@@ -16,6 +16,7 @@ import {
   type DecisionSourceFilter,
   type DecisionStatusFilter
 } from "./actionPlanLogic";
+import { Icon } from "./Icon";
 import { Modal } from "./Modal";
 
 const statusLabels: Record<DecisionStatusFilter, string> = {
@@ -117,7 +118,8 @@ export function ActionPlan({ token }: { token: string }) {
               <h2>Acciones</h2>
             </div>
             <button className="primary-action" onClick={() => setIsFormOpen(true)} type="button">
-              + Nueva accion
+              <Icon name="plus" size={16} />
+              Nueva accion
             </button>
           </div>
           <div className="action-plan-filters">

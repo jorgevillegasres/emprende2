@@ -19,6 +19,7 @@ import {
   type SupplyRecord
 } from "../api/client";
 import { buildCsvFromTable, createExportFilename, downloadCsv } from "./csvExport";
+import { Icon } from "./Icon";
 import { Modal } from "./Modal";
 import { getTemplatesForSection } from "./operationTemplates";
 import { calculateSaleTotals } from "./salesCalculator";
@@ -441,10 +442,12 @@ export function Operations({ focusSignal = 0, section, token }: { focusSignal?: 
             </div>
             <div className="operations-head-actions">
               <button className="ghost-action export-action" disabled={!rows.length} onClick={handleExportRows} type="button">
+                <Icon name="download" size={16} />
                 Exportar CSV
               </button>
               <button className="primary-action" onClick={() => setIsDrawerOpen(true)} type="button">
-                + {addLabel}
+                <Icon name="plus" size={16} />
+                {addLabel}
               </button>
             </div>
           </div>
@@ -570,6 +573,7 @@ export function Operations({ focusSignal = 0, section, token }: { focusSignal?: 
             </div>
             <div className="operations-head-actions">
               <button className="ghost-action" disabled={!inventoryMovements.length} onClick={handleExportInventoryMovements} type="button">
+                <Icon name="download" size={16} />
                 Exportar CSV
               </button>
               <button className="ghost-action" onClick={() => setOpenInventoryAction("adjust")} type="button">
@@ -579,7 +583,8 @@ export function Operations({ focusSignal = 0, section, token }: { focusSignal?: 
                 Registrar entrada
               </button>
               <button className="primary-action" onClick={() => setOpenInventoryAction("produce")} type="button">
-                + Producir lote
+                <Icon name="plus" size={16} />
+                Producir lote
               </button>
             </div>
           </div>

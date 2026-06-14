@@ -2821,6 +2821,9 @@ h2 {
 
 /* Botón secundario discreto para acciones de soporte (export) */
 .ghost-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
   min-height: 38px;
   border-radius: var(--r-pill);
   border: 1px solid var(--line);
@@ -2830,6 +2833,11 @@ h2 {
   font-weight: 700;
   white-space: nowrap;
   transition: border-color var(--dur) var(--ease), background var(--dur) var(--ease), color var(--dur) var(--ease);
+}
+
+.ghost-action svg {
+  flex: 0 0 auto;
+  opacity: 0.7;
 }
 
 .ghost-action:not(:disabled):hover {
