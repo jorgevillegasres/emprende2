@@ -1,0 +1,6 @@
+{
+  "framework": "vite",
+  "buildCommand": "corepack pnpm --filter @emprendedos/web build",
+  "installCommand": "corepack pnpm install --frozen-lockfile",
+  "outputDirectory": "dist"
+}
