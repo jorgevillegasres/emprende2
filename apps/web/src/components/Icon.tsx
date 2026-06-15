@@ -129,7 +129,14 @@ const glyphs: Record<string, ReactNode> = {
     </>
   ),
   "chevron-left": <path d="m15 18-6-6 6-6" />,
-  "chevron-right": <path d="m9 18 6-6-6-6" />
+  "chevron-right": <path d="m9 18 6-6-6-6" />,
+  menu: (
+    <>
+      <line x1="4" x2="20" y1="6" y2="6" />
+      <line x1="4" x2="20" y1="12" y2="12" />
+      <line x1="4" x2="20" y1="18" y2="18" />
+    </>
+  )
 };
 
 export function Icon({ name, size = 18, ...props }: { name: string; size?: number } & SVGProps<SVGSVGElement>) {

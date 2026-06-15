@@ -4025,8 +4025,35 @@ body.modal-open {
 
 @media (max-width: 600px) {
   .topbar-search,
-  .date-pill {
+  .topbar-search-spacer,
+  .date-pill,
+  .breadcrumb {
     display: none;
+  }
+
+  /* El topbar se reordena: menu a la izquierda, acciones ocupan el resto. */
+  .topbar-actions {
+    margin-left: auto;
+    gap: 8px;
+  }
+
+  /* Selector de periodo mas compacto para que quepa todo. */
+  .period-selector {
+    padding: 0 2px;
+  }
+
+  .period-label {
+    min-width: 0;
+    font-size: 0.8rem;
+  }
+
+  /* "Registrar venta" pasa a solo icono en el topbar. */
+  .topbar .primary-action .action-label {
+    display: none;
+  }
+
+  .topbar .primary-action {
+    padding-inline: 12px;
   }
 
   .app-content {
@@ -4943,8 +4970,16 @@ body.modal-open {
 }
 
 @media (max-width: 560px) {
-  .landing-nav-actions .secondary-action {
+  /* En movil el nav muestra "Iniciar sesion" (lo que faltaba); el registro
+     queda como el CTA grande del hero ("Crear cuenta gratis"). */
+  .landing-nav-actions .primary-action {
     display: none;
+  }
+
+  .landing-nav-actions .secondary-action {
+    padding: 0 14px;
+    font-size: 0.88rem;
+    min-height: 38px;
   }
 
   .landing-feature-grid,

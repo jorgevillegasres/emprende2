@@ -151,7 +151,7 @@ export function Shell({
       <div className="app-main">
         <header className="topbar">
           <button className="icon-button nav-toggle" type="button" aria-label="Abrir menu" onClick={() => setNavOpen((open) => !open)}>
-            <Icon name="dashboard" size={18} />
+            <Icon name="menu" size={20} />
           </button>
           <div className="breadcrumb">
             <span>Inicio</span>
