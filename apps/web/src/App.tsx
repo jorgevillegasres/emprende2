@@ -5,6 +5,7 @@ import { AdminPanel } from "./components/AdminPanel";
 import { Dashboard } from "./components/Dashboard";
 import { Landing } from "./components/Landing";
 import { LegalDocument } from "./components/LegalDocument";
+import { LegalTips } from "./components/LegalTips";
 import type { LegalDocKey } from "./components/legalContent";
 import { Login } from "./components/Login";
 import { Operations } from "./components/Operations";
@@ -205,6 +206,8 @@ export function App() {
         <Recipes token={authSession.token} />
       ) : activeSection === "plan" ? (
         <ActionPlan token={authSession.token} />
+      ) : activeSection === "legal" ? (
+        <LegalTips onLegal={setLegalDoc} />
       ) : activeSection === "admin" ? (
         <AdminPanel token={authSession.token} currentUserId={authSession.userId} />
       ) : (

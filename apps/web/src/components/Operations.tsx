@@ -33,7 +33,7 @@ type Field = {
 };
 
 type Row = ProductRecord | SupplyRecord | SaleRecord | ExpenseRecord;
-type OperationSection = Exclude<AppSection, "dashboard" | "recipes" | "plan" | "admin">;
+type OperationSection = Exclude<AppSection, "dashboard" | "recipes" | "plan" | "legal" | "admin">;
 
 // Resuelve ids de referencia (productId/itemId) al nombre legible de la entidad.
 type CellContext = { resolveName: (id: string) => string };
