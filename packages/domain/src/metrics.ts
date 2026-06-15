@@ -1,4 +1,9 @@
 import { calculatePriceScenario } from "./pricing.js";
+import { calculateBusinessHealth } from "./scoring.js";
+
+// Por debajo de este margen, el mas vendido se trata como senal de revisar
+// precio, no de impulsar volumen.
+const LOW_TOP_PRODUCT_MARGIN = 35;
 
 export type Supply = {
   id?: string;
@@ -59,6 +64,13 @@ export function calculateDashboardMetrics(state: DashboardState, today: string) 
       .filter((product) => product.stock <= product.minStock)
       .map((product) => ({ ...product, type: "Producto" as const }))
   ];
+  const netAfterExpenses = round(monthlyGrossProfit - monthlyExpenses);
+  const businessHealth = calculateBusinessHealth({
+    averageMarginPercent,
+    netAfterExpenses,
+    lowStockCount: lowStockItems.length,
+    hasMinimumData: monthlyRevenue > 0 || monthlyExpenses > 0
+  });
   const weeklyRevenue = getWeeklyRevenue(monthlySales, today);
   const monthlyComparison = getMonthlyComparison(state.sales, state.expenses, today);
   const stockForecast = getStockForecast(state.products, monthlySales, today);
@@ -88,7 +100,9 @@ export function calculateDashboardMetrics(state: DashboardState, today: string) 
     supplyInventoryValue,
     productInventoryValue,
     totalInventoryValue: round(supplyInventoryValue + productInventoryValue),
-    netAfterExpenses: round(monthlyGrossProfit - monthlyExpenses),
+    netAfterExpenses,
+    businessHealth,
+    businessHealthScore: businessHealth.score,
     breakEven: calculateBreakEven(monthlyExpenses, averageMarginPercent, monthlyRevenue),
     lowStockItems,
     weeklyRevenue,
@@ -142,11 +156,15 @@ type ComparisonDelta = {
 
 function buildDelta(current: number, previous: number): ComparisonDelta {
   const delta = current - previous;
+  // El cambio porcentual solo tiene sentido sobre una base estrictamente
+  // positiva. Si la base anterior fue 0 o negativa (p. ej. una perdida), el
+  // porcentaje es enganoso ("de -32.300 a +15.000" no es "+146%"): se deja en
+  // null y la UI muestra el cambio absoluto u otro texto honesto.
   return {
     current: round(current),
     previous: round(previous),
     delta: round(delta),
-    deltaPercent: previous === 0 ? null : round((delta / Math.abs(previous)) * 100),
+    deltaPercent: previous > 0 ? round((delta / previous) * 100) : null,
     trend: delta > 0 ? "up" : delta < 0 ? "down" : "flat"
   };
 }
@@ -306,12 +324,25 @@ function getGrowthActions(
 ) {
   const actions: Array<{ title: string; detail: string; tone: "growth" | "warning" | "focus" }> = [];
   const topProduct = topProductsByRevenue[0];
+  const topProductMarginPercent = topProduct && topProduct.revenue > 0 ? round((topProduct.grossProfit / topProduct.revenue) * 100) : 0;
   const lowProduct = lowStockItems.find((item) => item.type === "Producto");
   const lowSupply = lowStockItems.find((item) => item.type === "Insumo");
   const weakMargin = [...marginLeaders].reverse().find((product) => product.marginPercent < 55);
   const topExpense = expensesByCategory[0];
 
-  if (topProduct) actions.push({ title: `Impulsa ${topProduct.name}`, detail: "Es el producto con mas ventas este mes.", tone: "growth" });
+  // Solo recomendamos impulsar el mas vendido si deja buen margen. Empujar
+  // volumen en un producto de margen bajo escala la perdida, no la utilidad.
+  if (topProduct) {
+    if (topProductMarginPercent < LOW_TOP_PRODUCT_MARGIN) {
+      actions.push({
+        title: `Revisa el precio de ${topProduct.name}`,
+        detail: `Es tu mas vendido pero deja poco margen (${topProductMarginPercent}%). Vender mas sin margen puede costarte.`,
+        tone: "focus"
+      });
+    } else {
+      actions.push({ title: `Impulsa ${topProduct.name}`, detail: "Es tu mas vendido y deja buen margen este mes.", tone: "growth" });
+    }
+  }
   if (lowProduct) actions.push({ title: `Programa produccion de ${lowProduct.name}`, detail: "Esta por debajo del minimo.", tone: "warning" });
   if (lowSupply) actions.push({ title: `Compra ${lowSupply.name}`, detail: "Este insumo puede frenar la proxima produccion.", tone: "warning" });
   if (weakMargin) actions.push({ title: `Revisa precio de ${weakMargin.name}`, detail: `Su margen estimado es ${weakMargin.marginPercent}%.`, tone: "focus" });

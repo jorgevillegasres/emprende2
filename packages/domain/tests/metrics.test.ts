@@ -157,4 +157,59 @@ describe("calculateDashboardMetrics", () => {
     // Most urgent product is listed first.
     expect(result.stockForecast[0]?.productId).toBe("soap");
   });
+
+  it("does not report a percentage change when the previous base is negative", () => {
+    const result = calculateDashboardMetrics(
+      {
+        supplies: [],
+        products: [{ id: "soap", name: "Jabon", stock: 8, minStock: 4, unitCost: 3000, price: 9000 }],
+        expenses: [
+          { date: "2026-05-04", category: "Arriendo", amount: 30000 },
+          { date: "2026-06-02", category: "Arriendo", amount: 5000 }
+        ],
+        sales: [
+          { date: "2026-05-05", productId: "soap", quantity: 1, revenue: 9000, cost: 3000, grossProfit: 6000 },
+          { date: "2026-06-01", productId: "soap", quantity: 3, revenue: 27000, cost: 9000, grossProfit: 18000 }
+        ]
+      },
+      "2026-06-10"
+    );
+
+    // Mayo: gp 6000 - gastos 30000 = -24000 (perdida). Junio: 18000 - 5000 = +13000.
+    expect(result.monthlyComparison.netResult.previous).toBe(-24000);
+    expect(result.monthlyComparison.netResult.current).toBe(13000);
+    expect(result.monthlyComparison.netResult.deltaPercent).toBeNull();
+    expect(result.monthlyComparison.netResult.trend).toBe("up");
+  });
+
+  it("recommends reviewing price instead of pushing volume when the top seller has a thin margin", () => {
+    const result = calculateDashboardMetrics(
+      {
+        supplies: [],
+        products: [{ id: "soap", name: "Jabon", stock: 8, minStock: 4, unitCost: 8500, price: 9000 }],
+        expenses: [],
+        sales: [{ date: "2026-06-01", productId: "soap", quantity: 10, revenue: 90000, cost: 85000, grossProfit: 5000 }]
+      },
+      "2026-06-10"
+    );
+
+    const topAction = result.growthActions[0];
+    expect(topAction.title).toContain("Revisa el precio");
+    expect(topAction.tone).toBe("focus");
+  });
+
+  it("exposes a business health verdict, never green while losing money", () => {
+    const losing = calculateDashboardMetrics(
+      {
+        supplies: [],
+        products: [{ id: "soap", name: "Jabon", stock: 8, minStock: 4, unitCost: 3000, price: 9000 }],
+        expenses: [{ date: "2026-06-02", category: "Arriendo", amount: 50000 }],
+        sales: [{ date: "2026-06-01", productId: "soap", quantity: 2, revenue: 18000, cost: 6000, grossProfit: 12000 }]
+      },
+      "2026-06-10"
+    );
+
+    expect(losing.businessHealth.verdict).toBe("at-risk");
+    expect(losing.businessHealthScore).toBeLessThanOrEqual(45);
+  });
 });

@@ -3,7 +3,7 @@ import { createDecision, listDecisions, updateDecisionStatus, type DashboardMetr
 import { buildGrowthDecisionPayload, buildPricingDecisionPayload, findMatchingDecision, type GrowthAction } from "./dashboardDecisions";
 import { Icon } from "./Icon";
 import type { AppSection } from "./Shell";
-import { getActivationStatus, getOnboardingProgress } from "./onboarding";
+import { getOnboardingProgress } from "./onboarding";
 
 const toneLabels: Record<string, string> = {
   growth: "Crecer",
@@ -29,7 +29,8 @@ export function Dashboard({ metrics, onSectionChange, token }: { metrics: Dashbo
   const [decisionStatusFilter, setDecisionStatusFilter] = useState<DecisionRecord["status"]>("open");
   const [decisionMessage, setDecisionMessage] = useState("");
   const [isSavingDecision, setIsSavingDecision] = useState(false);
-  const score = metrics.businessHealthScore ?? getScore(metrics);
+  const health = metrics.businessHealth;
+  const score = health?.score ?? metrics.businessHealthScore ?? 0;
   const circumference = 389.56;
   const offset = circumference - (score / 100) * circumference;
   const weeklyMax = Math.max(...metrics.weeklyRevenue.map((week) => week.revenue), 1);
@@ -37,7 +38,6 @@ export function Dashboard({ metrics, onSectionChange, token }: { metrics: Dashbo
   const profitMax = Math.max(...metrics.productProfitability.map((product) => product.grossProfit), 1);
   const selectedScenario = metrics.priceScenarios.find((scenario) => scenario.name === selectedProductName) ?? metrics.priceScenarios[0];
   const onboardingProgress = getOnboardingProgress(metrics);
-  const activationStatus = getActivationStatus(metrics);
   const simulatedScenario = useMemo(
     () => (selectedScenario ? calculateScenario(selectedScenario.name, selectedScenario.currentPrice, selectedScenario.unitCost, targetMargin) : null),
     [selectedScenario, targetMargin]
@@ -106,7 +106,7 @@ export function Dashboard({ metrics, onSectionChange, token }: { metrics: Dashbo
               <p className="eyebrow">Pulso operativo</p>
               <h1>Salud del negocio</h1>
             </div>
-            <span className="status-chip">{activationStatus.label}</span>
+            <span className={`status-chip health-${health?.verdict ?? "setup"}`}>{health?.label ?? "Sin datos"}</span>
           </div>
           <div className="gauge">
             <svg viewBox="0 0 160 160" aria-hidden="true">
@@ -118,7 +118,7 @@ export function Dashboard({ metrics, onSectionChange, token }: { metrics: Dashbo
               <span>de 100</span>
             </div>
           </div>
-          <p className="score-note">Margen, caja operativa, inventario y foco comercial en una sola lectura.</p>
+          <p className="score-note">{health?.reason ?? "Margen, caja operativa, inventario y foco comercial en una sola lectura."}</p>
         </article>
 
         <div className="executive-panel">
@@ -484,9 +484,11 @@ function MonthlyComparisonStrip({ comparison }: { comparison: DashboardMetrics["
           const arrow = delta.trend === "up" ? "↑" : delta.trend === "down" ? "↓" : "→";
           const badge = !comparison.hasPreviousData
             ? "Mes base"
-            : delta.deltaPercent === null
-              ? "Nuevo"
-              : `${arrow} ${delta.deltaPercent >= 0 ? "+" : ""}${delta.deltaPercent}%`;
+            : delta.deltaPercent !== null
+              ? `${arrow} ${delta.deltaPercent >= 0 ? "+" : ""}${delta.deltaPercent}%`
+              : delta.previous === 0
+                ? "Nuevo"
+                : `${arrow} ${money(delta.delta)}`;
           return (
             <article className={`comparison-card tone-${tone}`} key={item.label}>
               <span className="comparison-label">{item.label}</span>
@@ -572,13 +574,6 @@ function Metric({ label, value, detail, accent, tone, icon }: { label: string; v
       <small>{detail}</small>
     </article>
   );
-}
-
-function getScore(metrics: DashboardMetrics) {
-  const marginScore = Math.min(metrics.averageMarginPercent, 70);
-  const inventoryPenalty = Math.min(metrics.lowStockItems.length * 5, 20);
-  const cashScore = metrics.netAfterExpenses > 0 ? 20 : 8;
-  return Math.max(35, Math.round(marginScore + cashScore - inventoryPenalty));
 }
 
 function calculateScenario(name: string, currentPrice: number, unitCost: number, targetMarginPercent: number) {

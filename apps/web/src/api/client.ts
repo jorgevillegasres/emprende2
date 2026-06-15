@@ -24,6 +24,12 @@ export type DashboardMetrics = {
     canEstimate: boolean;
   };
   businessHealthScore?: number;
+  businessHealth?: {
+    score: number;
+    verdict: "healthy" | "watch" | "at-risk" | "setup";
+    label: string;
+    reason: string;
+  };
   operationalCounts?: {
     products: number;
     supplies: number;
