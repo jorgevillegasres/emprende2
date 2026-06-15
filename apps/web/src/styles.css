@@ -5376,3 +5376,338 @@ body.modal-open {
     grid-template-columns: 1fr;
   }
 }
+
+/* =======================================================================
+   LEGAL — documentos (terminos, datos) + consentimiento
+   ======================================================================= */
+.legal-page {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  overflow-y: auto;
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+}
+
+.legal-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px clamp(16px, 5vw, 48px);
+  border-bottom: 1px solid var(--line);
+  background: var(--surface);
+}
+
+.legal-brand {
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.legal-content {
+  width: 100%;
+  max-width: 760px;
+  margin: 0 auto;
+  padding: clamp(24px, 5vw, 56px) clamp(16px, 5vw, 24px);
+  flex: 1;
+}
+
+.legal-content h1 {
+  margin: 4px 0 6px;
+  font-size: clamp(1.6rem, 3vw, 2.2rem);
+}
+
+.legal-updated {
+  margin: 0 0 18px;
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.legal-disclaimer {
+  margin-bottom: 24px;
+  padding: 14px 16px;
+  border-radius: var(--r);
+  border: 1px solid var(--yellow);
+  border-left: 4px solid var(--yellow);
+  background: var(--yellow-soft);
+  color: var(--ink-soft);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.legal-disclaimer strong {
+  color: var(--yellow-ink);
+}
+
+.legal-intro {
+  margin-bottom: 8px;
+  color: var(--ink-soft);
+  line-height: 1.6;
+}
+
+.legal-section {
+  margin-top: 22px;
+}
+
+.legal-section h2 {
+  margin-bottom: 8px;
+  font-size: 1.08rem;
+}
+
+.legal-section p {
+  margin: 0 0 10px;
+  color: var(--ink-soft);
+  line-height: 1.6;
+}
+
+.legal-switch {
+  margin-top: 32px;
+  padding-top: 20px;
+  border-top: 1px solid var(--line);
+}
+
+.legal-switch button {
+  border: 0;
+  background: transparent;
+  color: var(--primary-ink);
+  font-weight: 700;
+  font-size: 0.95rem;
+  cursor: pointer;
+}
+
+.legal-switch button:hover {
+  text-decoration: underline;
+}
+
+.legal-footer {
+  padding: 18px clamp(16px, 5vw, 48px);
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  text-align: center;
+}
+
+.landing-legal-links {
+  display: inline-flex;
+  gap: 18px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.landing-legal-links button {
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font-size: 0.86rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.landing-legal-links button:hover {
+  color: var(--ink);
+}
+
+/* Consentimiento en el registro */
+.consent-check {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 0.86rem;
+  color: var(--ink-soft);
+  line-height: 1.45;
+}
+
+.consent-check input {
+  margin-top: 3px;
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
+  accent-color: var(--primary);
+}
+
+.link-button {
+  display: inline;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--primary-ink);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.link-button:hover {
+  text-decoration: underline;
+}
+
+/* --- Seccion Aspectos legales (tips por negocio) --- */
+.legal-tips-note {
+  margin-bottom: 16px;
+  padding: 14px 16px;
+  border-radius: var(--r);
+  border: 1px solid var(--blue);
+  border-left: 4px solid var(--blue);
+  background: var(--blue-soft);
+  color: var(--ink-soft);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.legal-tips-note strong {
+  color: var(--blue-ink);
+}
+
+.legal-tips-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 18px;
+}
+
+.legal-tips-toolbar label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.legal-tips-toolbar label span {
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.legal-tips-toolbar select {
+  min-height: 40px;
+  padding: 0 12px;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+}
+
+.legal-tips-relevant-count {
+  color: var(--primary-ink);
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.legal-tips-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+.legal-tip-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 18px;
+}
+
+.legal-tip-card.is-relevant {
+  border: 1px solid var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-soft);
+}
+
+.legal-tip-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.legal-tip-category {
+  padding: 3px 10px;
+  border-radius: var(--r-pill);
+  background: var(--bg-2);
+  color: var(--ink-soft);
+  font-size: 0.74rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.legal-tip-flag {
+  padding: 3px 9px;
+  border-radius: var(--r-pill);
+  background: var(--yellow-soft);
+  color: var(--yellow-ink);
+  font-size: 0.72rem;
+  font-weight: 900;
+}
+
+.legal-tip-relevant {
+  padding: 3px 9px;
+  border-radius: var(--r-pill);
+  background: var(--primary-soft);
+  color: var(--primary-ink);
+  font-size: 0.72rem;
+  font-weight: 900;
+}
+
+.legal-tip-card h2 {
+  font-size: 1.02rem;
+  line-height: 1.25;
+}
+
+.legal-tip-summary {
+  color: var(--ink-soft);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.legal-tip-details summary {
+  cursor: pointer;
+  color: var(--primary-ink);
+  font-weight: 700;
+  font-size: 0.88rem;
+  list-style: none;
+}
+
+.legal-tip-details summary::-webkit-details-marker {
+  display: none;
+}
+
+.legal-tip-details summary::before {
+  content: "+ ";
+  font-weight: 900;
+}
+
+.legal-tip-details[open] summary::before {
+  content: "− ";
+}
+
+.legal-tip-details ul {
+  margin: 10px 0 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 7px;
+}
+
+.legal-tip-details li {
+  color: var(--ink-soft);
+  font-size: 0.88rem;
+  line-height: 1.45;
+}
+
+.legal-tips-docs {
+  margin-top: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  flex-wrap: wrap;
+  padding: 20px;
+}
+
+.legal-tips-docs-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}

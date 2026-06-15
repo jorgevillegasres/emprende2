@@ -4,6 +4,9 @@ import { ActionPlan } from "./components/ActionPlanView";
 import { AdminPanel } from "./components/AdminPanel";
 import { Dashboard } from "./components/Dashboard";
 import { Landing } from "./components/Landing";
+import { LegalDocument } from "./components/LegalDocument";
+import { LegalTips } from "./components/LegalTips";
+import type { LegalDocKey } from "./components/legalContent";
 import { Login } from "./components/Login";
 import { MarginCalculator } from "./components/MarginCalculator";
 import { Operations } from "./components/Operations";
@@ -27,6 +30,7 @@ export function App() {
   const [isDemoLoading, setIsDemoLoading] = useState(false);
   const [selectedMonth, setSelectedMonth] = useState(currentMonthKey());
   const [searchQuery, setSearchQuery] = useState("");
+  const [legalDoc, setLegalDoc] = useState<LegalDocKey | null>(null);
 
   useEffect(() => {
     const storedSession = readStoredSession();
@@ -149,48 +153,64 @@ export function App() {
     return <div className="system-panel boot-panel">Preparando tu espacio Emprendedos...</div>;
   }
 
+  const legalOverlay = legalDoc ? (
+    <LegalDocument doc={legalDoc} onBack={() => setLegalDoc(null)} onSwitch={setLegalDoc} />
+  ) : null;
+
   if (!authSession) {
     if (authView === "calculator") {
       return (
-        <MarginCalculator
-          onBack={() => setAuthView("landing")}
-          onRegister={() => {
-            setLoginInitialMode("register");
-            setAuthView("login");
-          }}
-        />
+        <>
+          <MarginCalculator
+            onBack={() => setAuthView("landing")}
+            onRegister={() => {
+              setLoginInitialMode("register");
+              setAuthView("login");
+            }}
+          />
+          {legalOverlay}
+        </>
       );
     }
     if (authView === "login") {
       return (
-        <Login
-          error={authError}
-          isLoading={isLoginLoading}
-          initialMode={loginInitialMode}
-          onBack={() => setAuthView("landing")}
-          onLogin={handleLogin}
-          onRegister={handleRegister}
-        />
+        <>
+          <Login
+            error={authError}
+            isLoading={isLoginLoading}
+            initialMode={loginInitialMode}
+            onBack={() => setAuthView("landing")}
+            onLogin={handleLogin}
+            onRegister={handleRegister}
+            onLegal={setLegalDoc}
+          />
+          {legalOverlay}
+        </>
       );
     }
     return (
-      <Landing
-        onLogin={() => {
-          setLoginInitialMode("login");
-          setAuthView("login");
-        }}
-        onRegister={() => {
-          setLoginInitialMode("register");
-          setAuthView("login");
-        }}
-        onDemo={handleDemoLogin}
-        demoLoading={isDemoLoading}
-        onCalculator={() => setAuthView("calculator")}
-      />
+      <>
+        <Landing
+          onLogin={() => {
+            setLoginInitialMode("login");
+            setAuthView("login");
+          }}
+          onRegister={() => {
+            setLoginInitialMode("register");
+            setAuthView("login");
+          }}
+          onDemo={handleDemoLogin}
+          demoLoading={isDemoLoading}
+          onCalculator={() => setAuthView("calculator")}
+          onLegal={setLegalDoc}
+        />
+        {legalOverlay}
+      </>
     );
   }
 
   return (
+    <>
     <Shell
       activeSection={activeSection}
       onLogout={handleLogout}
@@ -228,12 +248,16 @@ export function App() {
         <Recipes token={authSession.token} />
       ) : activeSection === "plan" ? (
         <ActionPlan token={authSession.token} />
+      ) : activeSection === "legal" ? (
+        <LegalTips onLegal={setLegalDoc} />
       ) : activeSection === "admin" ? (
         <AdminPanel token={authSession.token} currentUserId={authSession.userId} />
       ) : (
         <Operations focusSignal={activeSection === "sales" ? salesFocusSignal : 0} section={activeSection} token={authSession.token} searchQuery={searchQuery} />
       )}
     </Shell>
+    {legalOverlay}
+    </>
   );
 }
 

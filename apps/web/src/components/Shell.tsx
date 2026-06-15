@@ -3,7 +3,7 @@ import { BrandMark } from "./BrandMark";
 import { Icon } from "./Icon";
 import { getPrimaryActionSection } from "./shellActions";
 
-export type AppSection = "dashboard" | "products" | "supplies" | "sales" | "expenses" | "recipes" | "plan" | "admin";
+export type AppSection = "dashboard" | "products" | "supplies" | "sales" | "expenses" | "recipes" | "plan" | "legal" | "admin";
 
 export type ShellNotification = { id: string; tone: "danger" | "warning" | "info" | "success"; title: string; detail: string };
 
@@ -29,6 +29,10 @@ const navGroups: Array<{ label: string; items: NavItem[] }> = [
       { section: "recipes", label: "Recetas", icon: "recipes" },
       { section: "plan", label: "Plan", icon: "plan" }
     ]
+  },
+  {
+    label: "Cumplimiento",
+    items: [{ section: "legal", label: "Legal", icon: "shield" }]
   }
 ];
 

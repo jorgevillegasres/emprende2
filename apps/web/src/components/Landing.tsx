@@ -1,5 +1,6 @@
 import { BrandMark } from "./BrandMark";
 import { Icon } from "./Icon";
+import type { LegalDocKey } from "./legalContent";
 
 const features: Array<{ icon: string; title: string; detail: string }> = [
   { icon: "dashboard", title: "Tablero claro", detail: "Salud del negocio, ventas, utilidad y margen de un vistazo." },
@@ -22,13 +23,15 @@ export function Landing({
   onRegister,
   onDemo,
   demoLoading,
-  onCalculator
+  onCalculator,
+  onLegal
 }: {
   onLogin: () => void;
   onRegister: () => void;
   onDemo: () => void;
   demoLoading?: boolean;
   onCalculator: () => void;
+  onLegal: (doc: LegalDocKey) => void;
 }) {
   return (
     <div className="landing">
@@ -167,6 +170,14 @@ export function Landing({
             emprende<span>dos</span>
           </strong>
         </span>
+        <nav className="landing-legal-links" aria-label="Documentos legales">
+          <button type="button" onClick={() => onLegal("terms")}>
+            Terminos y Condiciones
+          </button>
+          <button type="button" onClick={() => onLegal("privacy")}>
+            Tratamiento de Datos
+          </button>
+        </nav>
         <small>Crece con claridad · {new Date().getFullYear()}</small>
       </footer>
     </div>
