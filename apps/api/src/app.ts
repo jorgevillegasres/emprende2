@@ -3,7 +3,9 @@ import Fastify from "fastify";
 import { getConfig } from "./config.js";
 import { registerAdminRoutes } from "./routes/admin.js";
 import { registerAuthRoutes } from "./routes/auth.js";
+import { registerCaptureRoutes } from "./routes/capture.js";
 import { registerDashboardRoutes } from "./routes/dashboard.js";
+import { registerEventRoutes } from "./routes/events.js";
 import { registerHealthRoutes } from "./routes/health.js";
 import { registerOperationRoutes } from "./routes/operations.js";
 
@@ -15,6 +17,8 @@ export function buildApp() {
   void app.register(registerHealthRoutes);
   void app.register(registerDashboardRoutes);
   void app.register(registerOperationRoutes);
+  void app.register(registerCaptureRoutes);
+  void app.register(registerEventRoutes);
   void app.register(registerAdminRoutes);
   return app;
 }

@@ -59,6 +59,26 @@ export type DecisionRecord = TenantRecord & {
   updatedAt?: string;
 };
 
+export type AggregateEntryRecord = TenantRecord & {
+  id: string;
+  periodStart: string;
+  periodEnd: string;
+  revenue: number;
+  cashOut: number;
+  note?: string;
+  createdAt?: string;
+};
+
+export type TenantFeatureFlags = {
+  quickCapture?: boolean;
+};
+
+export type EventRecord = {
+  tenantId?: string | null;
+  name: string;
+  props?: Record<string, unknown>;
+};
+
 export type AuthIdentityRecord = {
   userId: string;
   userName?: string;
@@ -117,6 +137,17 @@ export type DecisionRepository = TenantRepository<DecisionRecord> & {
   updateStatus(tenantId: string, id: string, status: DecisionStatus): Promise<DecisionRecord | null>;
 };
 
+export type AggregateEntryRepository = TenantRepository<AggregateEntryRecord>;
+
+export type EventRepository = {
+  record(event: EventRecord): Promise<void>;
+};
+
+export type TenantSettingsRepository = {
+  getFlags(tenantId: string): Promise<TenantFeatureFlags>;
+  setFlags(tenantId: string, flags: TenantFeatureFlags): Promise<TenantFeatureFlags>;
+};
+
 export type Repositories = {
   auth: AuthRepository;
   products: ProductRepository;
@@ -127,6 +158,9 @@ export type Repositories = {
   recipes: RecipeRepository;
   productionOrders: ProductionOrderRepository;
   decisions: DecisionRepository;
+  aggregateEntries: AggregateEntryRepository;
+  events: EventRepository;
+  tenantSettings: TenantSettingsRepository;
 };
 
 export function createInMemoryRepositories(): Repositories {
@@ -139,6 +173,8 @@ export function createInMemoryRepositories(): Repositories {
   const productionOrders: ProductionOrderRecord[] = [];
   const decisions: DecisionRecord[] = [];
   const authIdentities: AuthIdentityRecord[] = [];
+  const aggregateEntries: AggregateEntryRecord[] = [];
+  const tenantFlags = new Map<string, TenantFeatureFlags>();
 
   return {
     auth: createAuthRepository(authIdentities),
@@ -149,7 +185,23 @@ export function createInMemoryRepositories(): Repositories {
     recipes: createRecipeRepository(recipes),
     productionOrders: createTenantRepository(productionOrders),
     decisions: createDecisionRepository(decisions),
-    products: createProductRepository(products)
+    products: createProductRepository(products),
+    aggregateEntries: createTenantRepository(aggregateEntries),
+    events: {
+      async record() {
+        // En memoria los eventos no se persisten; basta con no fallar.
+      }
+    },
+    tenantSettings: {
+      async getFlags(tenantId: string) {
+        return tenantFlags.get(tenantId) ?? {};
+      },
+      async setFlags(tenantId: string, flags: TenantFeatureFlags) {
+        const next = { ...(tenantFlags.get(tenantId) ?? {}), ...flags };
+        tenantFlags.set(tenantId, next);
+        return next;
+      }
+    }
   };
 }
 

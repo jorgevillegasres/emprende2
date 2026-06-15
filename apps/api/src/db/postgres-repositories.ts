@@ -1,8 +1,8 @@
 import { randomUUID } from "node:crypto";
 import { and, desc, eq } from "drizzle-orm";
 import type { createPostgresClient } from "./client.js";
-import type { AuthIdentityRecord, DecisionRecord, DecisionStatus, ExpenseRecord, InventoryMovementRecord, ProductRecord, ProductionOrderRecord, RecipeRecord, Repositories, SaleRecord, SupplyRecord } from "./repositories.js";
-import { decisions, expenses, inventoryMovements, memberships, productionOrders, products, recipeIngredients, recipes, sales, supplies, tenants, users } from "./schema.js";
+import type { AggregateEntryRecord, AuthIdentityRecord, DecisionRecord, DecisionStatus, EventRecord, ExpenseRecord, InventoryMovementRecord, ProductRecord, ProductionOrderRecord, RecipeRecord, Repositories, SaleRecord, SupplyRecord, TenantFeatureFlags } from "./repositories.js";
+import { aggregateEntries, decisions, events, expenses, inventoryMovements, memberships, productionOrders, products, recipeIngredients, recipes, sales, supplies, tenants, users } from "./schema.js";
 
 type Db = ReturnType<typeof createPostgresClient>["db"];
 
@@ -308,6 +308,66 @@ export function createPostgresRepositories(db: Db): Repositories {
           .where(and(eq(decisions.tenantId, tenantId), eq(decisions.id, id)))
           .returning();
         return updated ? toDecisionRecord(updated) : null;
+      }
+    },
+    aggregateEntries: {
+      async insert(record: AggregateEntryRecord) {
+        const [created] = await db
+          .insert(aggregateEntries)
+          .values({
+            id: record.id,
+            tenantId: record.tenantId,
+            periodStart: record.periodStart,
+            periodEnd: record.periodEnd,
+            revenue: record.revenue,
+            cashOut: record.cashOut,
+            note: record.note ?? ""
+          })
+          .returning();
+        return {
+          tenantId: created.tenantId,
+          id: created.id,
+          periodStart: created.periodStart,
+          periodEnd: created.periodEnd,
+          revenue: created.revenue,
+          cashOut: created.cashOut,
+          note: created.note,
+          createdAt: created.createdAt?.toISOString()
+        };
+      },
+      async listByTenant(tenantId: string) {
+        const rows = await db.select().from(aggregateEntries).where(eq(aggregateEntries.tenantId, tenantId)).orderBy(desc(aggregateEntries.periodStart));
+        return rows.map((row) => ({
+          tenantId: row.tenantId,
+          id: row.id,
+          periodStart: row.periodStart,
+          periodEnd: row.periodEnd,
+          revenue: row.revenue,
+          cashOut: row.cashOut,
+          note: row.note,
+          createdAt: row.createdAt?.toISOString()
+        }));
+      }
+    },
+    events: {
+      async record(event: EventRecord) {
+        await db.insert(events).values({
+          tenantId: event.tenantId ?? null,
+          name: event.name,
+          props: event.props ?? {}
+        });
+      }
+    },
+    tenantSettings: {
+      async getFlags(tenantId: string) {
+        const [row] = await db.select({ featureFlags: tenants.featureFlags }).from(tenants).where(eq(tenants.id, tenantId)).limit(1);
+        return (row?.featureFlags as TenantFeatureFlags | undefined) ?? {};
+      },
+      async setFlags(tenantId: string, flags: TenantFeatureFlags) {
+        const [row] = await db.select({ featureFlags: tenants.featureFlags }).from(tenants).where(eq(tenants.id, tenantId)).limit(1);
+        const next = { ...((row?.featureFlags as TenantFeatureFlags | undefined) ?? {}), ...flags };
+        await db.update(tenants).set({ featureFlags: next }).where(eq(tenants.id, tenantId));
+        return next;
       }
     }
   };

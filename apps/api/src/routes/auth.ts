@@ -68,7 +68,10 @@ export async function registerAuthRoutes(app: FastifyInstance) {
 
   app.get("/v1/auth/me", async (request, reply) => {
     try {
-      return resolveRequestContext(request.headers);
+      const context = resolveRequestContext(request.headers);
+      const repositories = await getRepositories();
+      const featureFlags = await repositories.tenantSettings.getFlags(context.tenantId);
+      return { ...context, featureFlags };
     } catch {
       return reply.code(401).send({ error: "Authentication required" });
     }

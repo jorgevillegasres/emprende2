@@ -64,6 +64,13 @@
       "when": 1781298000000,
       "tag": "0009_user_suspended",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1781384400000,
+      "tag": "0010_capture_flags_events",
+      "breakpoints": true
     }
   ]
 }

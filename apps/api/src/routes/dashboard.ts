@@ -26,13 +26,14 @@ export async function registerDashboardRoutes(app: FastifyInstance) {
   app.get<{ Querystring: { month?: string } }>("/v1/dashboard", async (request) => {
     const context = resolveRequestContext(request.headers);
     const referenceDate = resolveReferenceDate(request.query.month);
-    const [supplies, products, sales, expenses] = await Promise.all([
+    const [supplies, products, sales, expenses, aggregateEntries] = await Promise.all([
       repositories.supplies.listByTenant(context.tenantId),
       repositories.products.listByTenant(context.tenantId),
       repositories.sales.listByTenant(context.tenantId),
-      repositories.expenses.listByTenant(context.tenantId)
+      repositories.expenses.listByTenant(context.tenantId),
+      repositories.aggregateEntries.listByTenant(context.tenantId)
     ]);
 
-    return calculateDashboardMetrics({ supplies, products, sales, expenses }, referenceDate);
+    return calculateDashboardMetrics({ supplies, products, sales, expenses, aggregateEntries }, referenceDate);
   });
 }

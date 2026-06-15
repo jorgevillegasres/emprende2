@@ -1,4 +1,4 @@
-import { boolean, date, doublePrecision, index, pgTable, text, timestamp, uniqueIndex, uuid } from "drizzle-orm/pg-core";
+import { boolean, date, doublePrecision, index, jsonb, pgTable, text, timestamp, uniqueIndex, uuid } from "drizzle-orm/pg-core";
 
 export const tenants = pgTable("tenants", {
   id: uuid("id").primaryKey(),
@@ -7,6 +7,7 @@ export const tenants = pgTable("tenants", {
   businessType: text("business_type").notNull(),
   country: text("country").notNull(),
   currency: text("currency").notNull(),
+  featureFlags: jsonb("feature_flags").notNull().default({}),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow()
 });
 
@@ -183,6 +184,37 @@ export const productionOrders = pgTable(
   })
 );
 
+export const aggregateEntries = pgTable(
+  "aggregate_entries",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    tenantId: uuid("tenant_id").notNull().references(() => tenants.id),
+    periodStart: date("period_start", { mode: "string" }).notNull(),
+    periodEnd: date("period_end", { mode: "string" }).notNull(),
+    revenue: doublePrecision("revenue").notNull(),
+    cashOut: doublePrecision("cash_out").notNull(),
+    note: text("note").notNull().default(""),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow()
+  },
+  (table) => ({
+    aggregateEntriesTenantPeriodIdx: index("aggregate_entries_tenant_period_idx").on(table.tenantId, table.periodStart)
+  })
+);
+
+export const events = pgTable(
+  "events",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    tenantId: uuid("tenant_id"),
+    name: text("name").notNull(),
+    props: jsonb("props").notNull().default({}),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow()
+  },
+  (table) => ({
+    eventsNameCreatedIdx: index("events_name_created_idx").on(table.name, table.createdAt)
+  })
+);
+
 export const decisions = pgTable(
   "decisions",
   {
@@ -216,7 +248,9 @@ export const schema = {
   recipes,
   recipeIngredients,
   productionOrders,
-  decisions
+  decisions,
+  aggregateEntries,
+  events
 };
 
 export const databaseSchemaVersion = "2026-06-11-decision-tracking";
