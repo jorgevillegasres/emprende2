@@ -30,6 +30,14 @@ export type DashboardMetrics = {
     label: string;
     reason: string;
   };
+  cashFlow?: {
+    usesAggregateCapture: boolean;
+    cashIn: number;
+    cashOut: number;
+    cashResult: number;
+    aggregateRevenue: number;
+    aggregateCashOut: number;
+  };
   operationalCounts?: {
     products: number;
     supplies: number;
@@ -92,12 +100,17 @@ export type DashboardMetrics = {
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://127.0.0.1:3001";
 
+export type TenantFeatureFlags = {
+  quickCapture?: boolean;
+};
+
 export type AuthSession = {
   token: string;
   userId: string;
   tenantId: string;
   role: string;
   superAdmin?: boolean;
+  featureFlags?: TenantFeatureFlags;
 };
 
 export type AdminAccount = {
@@ -344,6 +357,27 @@ export async function getDashboardMetrics(token?: string | null, month?: string)
   });
   if (!response.ok) throw new Error("No se pudo cargar el dashboard");
   return response.json();
+}
+
+export async function setTenantFlags(flags: TenantFeatureFlags, token: string): Promise<TenantFeatureFlags> {
+  const result = await postJson<{ featureFlags: TenantFeatureFlags }>("/v1/tenant/flags", flags, token);
+  return result.featureFlags;
+}
+
+export async function createWeeklyCapture(
+  payload: { periodStart: string; periodEnd: string; revenue: number; cashOut: number; note?: string },
+  token: string
+): Promise<void> {
+  await postJson("/v1/capture/weekly", payload, token);
+}
+
+// Instrumentacion fire-and-forget: nunca debe romper la UX.
+export function track(name: string, props: Record<string, unknown> = {}, token?: string | null): void {
+  void fetch(`${API_BASE_URL}/v1/events`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...createAuthHeaders(token) },
+    body: JSON.stringify({ name, props })
+  }).catch(() => {});
 }
 
 export async function listProducts(token?: string | null): Promise<ProductRecord[]> {

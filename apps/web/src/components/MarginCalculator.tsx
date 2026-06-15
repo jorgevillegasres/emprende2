@@ -1,4 +1,5 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { track } from "../api/client";
 import { BrandMark } from "./BrandMark";
 import { Icon } from "./Icon";
 
@@ -41,6 +42,14 @@ export function MarginCalculator({ onBack, onRegister }: { onBack: () => void; o
 
     return { unitProfit, marginPercent, suggestedPrice, verdict };
   }, [cost, price]);
+
+  const tracked = useRef(false);
+  useEffect(() => {
+    if (result && !tracked.current) {
+      tracked.current = true;
+      track("calculator_used", { marginPercent: result.marginPercent });
+    }
+  }, [result]);
 
   return (
     <main className="calc-page">

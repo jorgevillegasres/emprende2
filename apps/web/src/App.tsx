@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { demoLogin, getCurrentUser, getDashboardMetrics, login, registerOwner, type AuthSession, type DashboardMetrics, type RegisterPayload } from "./api/client";
+import { demoLogin, getCurrentUser, getDashboardMetrics, login, registerOwner, track, type AuthSession, type DashboardMetrics, type RegisterPayload } from "./api/client";
 import { ActionPlan } from "./components/ActionPlanView";
 import { AdminPanel } from "./components/AdminPanel";
 import { Dashboard } from "./components/Dashboard";
@@ -7,6 +7,7 @@ import { Landing } from "./components/Landing";
 import { Login } from "./components/Login";
 import { MarginCalculator } from "./components/MarginCalculator";
 import { Operations } from "./components/Operations";
+import { WeeklyCapture } from "./components/WeeklyCapture";
 import { Recipes } from "./components/Recipes";
 import { Shell, type AppSection, type ShellNotification } from "./components/Shell";
 
@@ -56,10 +57,22 @@ export function App() {
   async function loadDashboard(token: string, month: string) {
     setError("");
     return getDashboardMetrics(token, month)
-      .then(setMetrics)
+      .then((metrics) => {
+        setMetrics(metrics);
+        track("dashboard_viewed", { month }, token);
+      })
       .catch((err: unknown) => {
         setError(err instanceof Error ? err.message : "Error cargando dashboard");
       });
+  }
+
+  function handleEnableCapture() {
+    setAuthSession((session) => {
+      if (!session) return session;
+      const updated = { ...session, featureFlags: { ...session.featureFlags, quickCapture: true } };
+      persistSession(updated);
+      return updated;
+    });
   }
 
   async function handleLogin(email: string, password: string) {
@@ -85,6 +98,7 @@ export function App() {
       persistSession(session);
       setAuthSession(session);
       setActiveSection("dashboard");
+      track("register_completed", {}, session.token);
     } catch {
       setAuthError("No pudimos crear la cuenta. Revisa el correo o intenta con otro.");
     } finally {
@@ -100,6 +114,7 @@ export function App() {
       persistSession(session);
       setAuthSession(session);
       setActiveSection("dashboard");
+      track("demo_opened", {}, session.token);
     } catch {
       setAuthError("No pudimos abrir el demo. Intenta de nuevo.");
     } finally {
@@ -196,7 +211,18 @@ export function App() {
         <>
           {error ? <div className="system-panel">{error}</div> : null}
           {!metrics && !error ? <div className="system-panel">Cargando Emprendedos...</div> : null}
-          {metrics ? <Dashboard metrics={metrics} onSectionChange={changeSection} token={authSession.token} /> : null}
+          {metrics ? (
+            <>
+              <WeeklyCapture
+                token={authSession.token}
+                quickCapture={authSession.featureFlags?.quickCapture ?? false}
+                cashFlow={metrics.cashFlow}
+                onEnable={handleEnableCapture}
+                onCaptured={() => void loadDashboard(authSession.token, selectedMonth)}
+              />
+              <Dashboard metrics={metrics} onSectionChange={changeSection} token={authSession.token} />
+            </>
+          ) : null}
         </>
       ) : activeSection === "recipes" ? (
         <Recipes token={authSession.token} />
