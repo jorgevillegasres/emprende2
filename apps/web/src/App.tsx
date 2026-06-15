@@ -5,6 +5,7 @@ import { AdminPanel } from "./components/AdminPanel";
 import { Dashboard } from "./components/Dashboard";
 import { Landing } from "./components/Landing";
 import { Login } from "./components/Login";
+import { MarginCalculator } from "./components/MarginCalculator";
 import { Operations } from "./components/Operations";
 import { Recipes } from "./components/Recipes";
 import { Shell, type AppSection, type ShellNotification } from "./components/Shell";
@@ -20,7 +21,7 @@ export function App() {
   const [isLoginLoading, setIsLoginLoading] = useState(false);
   const [activeSection, setActiveSection] = useState<AppSection>("dashboard");
   const [salesFocusSignal, setSalesFocusSignal] = useState(0);
-  const [authView, setAuthView] = useState<"landing" | "login">("landing");
+  const [authView, setAuthView] = useState<"landing" | "login" | "calculator">("landing");
   const [loginInitialMode, setLoginInitialMode] = useState<"login" | "register">("login");
   const [isDemoLoading, setIsDemoLoading] = useState(false);
   const [selectedMonth, setSelectedMonth] = useState(currentMonthKey());
@@ -134,6 +135,17 @@ export function App() {
   }
 
   if (!authSession) {
+    if (authView === "calculator") {
+      return (
+        <MarginCalculator
+          onBack={() => setAuthView("landing")}
+          onRegister={() => {
+            setLoginInitialMode("register");
+            setAuthView("login");
+          }}
+        />
+      );
+    }
     if (authView === "login") {
       return (
         <Login
@@ -158,6 +170,7 @@ export function App() {
         }}
         onDemo={handleDemoLogin}
         demoLoading={isDemoLoading}
+        onCalculator={() => setAuthView("calculator")}
       />
     );
   }

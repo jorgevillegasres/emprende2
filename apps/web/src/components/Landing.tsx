@@ -21,12 +21,14 @@ export function Landing({
   onLogin,
   onRegister,
   onDemo,
-  demoLoading
+  demoLoading,
+  onCalculator
 }: {
   onLogin: () => void;
   onRegister: () => void;
   onDemo: () => void;
   demoLoading?: boolean;
+  onCalculator: () => void;
 }) {
   return (
     <div className="landing">
@@ -68,6 +70,10 @@ export function Landing({
               {demoLoading ? "Abriendo demo..." : "Ver demo en vivo"}
             </button>
           </div>
+          <button className="landing-calc-link" type="button" onClick={onCalculator}>
+            <Icon name="sales" size={16} />
+            Calcula tu margen en 10 segundos — sin cuenta
+          </button>
           <p className="landing-note">Sin tarjeta. Empieza con datos de ejemplo o los tuyos.</p>
         </div>
 
