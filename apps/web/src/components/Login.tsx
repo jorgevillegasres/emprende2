@@ -2,6 +2,7 @@ import { FormEvent, useState } from "react";
 import type { RegisterPayload } from "../api/client";
 import { BrandMark } from "./BrandMark";
 import { Icon } from "./Icon";
+import type { LegalDocKey } from "./legalContent";
 
 export function Login({
   error,
@@ -9,7 +10,8 @@ export function Login({
   initialMode = "login",
   onBack,
   onLogin,
-  onRegister
+  onRegister,
+  onLegal
 }: {
   error: string;
   isLoading: boolean;
@@ -17,6 +19,7 @@ export function Login({
   onBack?: () => void;
   onLogin: (email: string, password: string) => Promise<void>;
   onRegister: (payload: RegisterPayload) => Promise<void>;
+  onLegal: (doc: LegalDocKey) => void;
 }) {
   const [mode, setMode] = useState<"login" | "register">(initialMode);
   const [email, setEmail] = useState("demo@emprendedos.local");
@@ -24,6 +27,7 @@ export function Login({
   const [ownerName, setOwnerName] = useState("");
   const [businessName, setBusinessName] = useState("");
   const [businessType, setBusinessType] = useState("Productos fisicos");
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
 
   function switchMode(nextMode: "login" | "register") {
     setMode(nextMode);
@@ -147,8 +151,24 @@ export function Login({
             />
             {mode === "register" ? <small className="field-hint">Minimo 8 caracteres.</small> : null}
           </label>
+          {mode === "register" ? (
+            <label className="consent-check">
+              <input type="checkbox" checked={acceptedTerms} onChange={(event) => setAcceptedTerms(event.target.checked)} required />
+              <span>
+                Acepto los{" "}
+                <button type="button" className="link-button" onClick={() => onLegal("terms")}>
+                  Terminos y Condiciones
+                </button>{" "}
+                y la{" "}
+                <button type="button" className="link-button" onClick={() => onLegal("privacy")}>
+                  Politica de Tratamiento de Datos
+                </button>
+                .
+              </span>
+            </label>
+          ) : null}
           {error ? <p className="form-error">{error}</p> : null}
-          <button className="primary-action form-action" disabled={isLoading} type="submit">
+          <button className="primary-action form-action" disabled={isLoading || (mode === "register" && !acceptedTerms)} type="submit">
             {isLoading ? "Validando..." : mode === "login" ? "Entrar" : "Crear mi espacio"}
           </button>
         </form>

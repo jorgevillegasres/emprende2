@@ -4,6 +4,8 @@ import { ActionPlan } from "./components/ActionPlanView";
 import { AdminPanel } from "./components/AdminPanel";
 import { Dashboard } from "./components/Dashboard";
 import { Landing } from "./components/Landing";
+import { LegalDocument } from "./components/LegalDocument";
+import type { LegalDocKey } from "./components/legalContent";
 import { Login } from "./components/Login";
 import { Operations } from "./components/Operations";
 import { Recipes } from "./components/Recipes";
@@ -25,6 +27,7 @@ export function App() {
   const [isDemoLoading, setIsDemoLoading] = useState(false);
   const [selectedMonth, setSelectedMonth] = useState(currentMonthKey());
   const [searchQuery, setSearchQuery] = useState("");
+  const [legalDoc, setLegalDoc] = useState<LegalDocKey | null>(null);
 
   useEffect(() => {
     const storedSession = readStoredSession();
@@ -133,36 +136,49 @@ export function App() {
     return <div className="system-panel boot-panel">Preparando tu espacio Emprendedos...</div>;
   }
 
+  const legalOverlay = legalDoc ? (
+    <LegalDocument doc={legalDoc} onBack={() => setLegalDoc(null)} onSwitch={setLegalDoc} />
+  ) : null;
+
   if (!authSession) {
     if (authView === "login") {
       return (
-        <Login
-          error={authError}
-          isLoading={isLoginLoading}
-          initialMode={loginInitialMode}
-          onBack={() => setAuthView("landing")}
-          onLogin={handleLogin}
-          onRegister={handleRegister}
-        />
+        <>
+          <Login
+            error={authError}
+            isLoading={isLoginLoading}
+            initialMode={loginInitialMode}
+            onBack={() => setAuthView("landing")}
+            onLogin={handleLogin}
+            onRegister={handleRegister}
+            onLegal={setLegalDoc}
+          />
+          {legalOverlay}
+        </>
       );
     }
     return (
-      <Landing
-        onLogin={() => {
-          setLoginInitialMode("login");
-          setAuthView("login");
-        }}
-        onRegister={() => {
-          setLoginInitialMode("register");
-          setAuthView("login");
-        }}
-        onDemo={handleDemoLogin}
-        demoLoading={isDemoLoading}
-      />
+      <>
+        <Landing
+          onLogin={() => {
+            setLoginInitialMode("login");
+            setAuthView("login");
+          }}
+          onRegister={() => {
+            setLoginInitialMode("register");
+            setAuthView("login");
+          }}
+          onDemo={handleDemoLogin}
+          demoLoading={isDemoLoading}
+          onLegal={setLegalDoc}
+        />
+        {legalOverlay}
+      </>
     );
   }
 
   return (
+    <>
     <Shell
       activeSection={activeSection}
       onLogout={handleLogout}
@@ -195,6 +211,8 @@ export function App() {
         <Operations focusSignal={activeSection === "sales" ? salesFocusSignal : 0} section={activeSection} token={authSession.token} searchQuery={searchQuery} />
       )}
     </Shell>
+    {legalOverlay}
+    </>
   );
 }
 
