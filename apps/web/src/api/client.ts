@@ -371,12 +371,28 @@ export async function createWeeklyCapture(
   await postJson("/v1/capture/weekly", payload, token);
 }
 
+// Id anonimo y estable por navegador. Permite unir eventos pre-auth (p. ej.
+// calculator_used) con register_completed para medir el embudo de activacion.
+function getVisitorId(): string {
+  try {
+    const key = "emprendedos.visitor";
+    let id = window.localStorage.getItem(key);
+    if (!id) {
+      id = window.crypto?.randomUUID?.() ?? `v-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      window.localStorage.setItem(key, id);
+    }
+    return id;
+  } catch {
+    return "anon";
+  }
+}
+
 // Instrumentacion fire-and-forget: nunca debe romper la UX.
 export function track(name: string, props: Record<string, unknown> = {}, token?: string | null): void {
   void fetch(`${API_BASE_URL}/v1/events`, {
     method: "POST",
     headers: { "Content-Type": "application/json", ...createAuthHeaders(token) },
-    body: JSON.stringify({ name, props })
+    body: JSON.stringify({ name, props: { ...props, visitorId: getVisitorId() } })
   }).catch(() => {});
 }
 
