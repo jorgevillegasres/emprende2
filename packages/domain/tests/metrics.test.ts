@@ -212,4 +212,45 @@ describe("calculateDashboardMetrics", () => {
     expect(losing.businessHealth.verdict).toBe("at-risk");
     expect(losing.businessHealthScore).toBeLessThanOrEqual(45);
   });
+
+  it("computes a cash result and cash-mode health from aggregate weekly entries", () => {
+    const result = calculateDashboardMetrics(
+      {
+        supplies: [],
+        products: [],
+        expenses: [],
+        sales: [],
+        aggregateEntries: [
+          { periodStart: "2026-06-01", periodEnd: "2026-06-07", revenue: 200000, cashOut: 120000 },
+          { periodStart: "2026-06-08", periodEnd: "2026-06-14", revenue: 150000, cashOut: 180000 }
+        ]
+      },
+      "2026-06-10"
+    );
+
+    expect(result.cashFlow.usesAggregateCapture).toBe(true);
+    expect(result.cashFlow.cashIn).toBe(350000);
+    expect(result.cashFlow.cashOut).toBe(300000);
+    expect(result.cashFlow.cashResult).toBe(50000);
+    expect(result.businessHealth.verdict).toBe("healthy");
+  });
+
+  it("flags cash-negative aggregate capture as at-risk and leaves granular metrics empty", () => {
+    const result = calculateDashboardMetrics(
+      {
+        supplies: [],
+        products: [],
+        expenses: [],
+        sales: [],
+        aggregateEntries: [{ periodStart: "2026-06-02", periodEnd: "2026-06-08", revenue: 100000, cashOut: 150000 }]
+      },
+      "2026-06-10"
+    );
+
+    expect(result.cashFlow.cashResult).toBe(-50000);
+    expect(result.businessHealth.verdict).toBe("at-risk");
+    // La captura gruesa no inventa metricas por producto.
+    expect(result.monthlyRevenue).toBe(0);
+    expect(result.productProfitability).toHaveLength(0);
+  });
 });

@@ -24,4 +24,12 @@ describe("calculateBusinessHealth", () => {
     expect(result.verdict).toBe("healthy");
     expect(result.score).toBeGreaterThan(45);
   });
+
+  it("uses cash result for the verdict in cash mode, ignoring margin", () => {
+    const positive = calculateBusinessHealth({ averageMarginPercent: 0, netAfterExpenses: 0, lowStockCount: 0, hasMinimumData: true, cashMode: { cashResult: 30000 } });
+    expect(positive.verdict).toBe("healthy");
+
+    const negative = calculateBusinessHealth({ averageMarginPercent: 80, netAfterExpenses: 0, lowStockCount: 0, hasMinimumData: true, cashMode: { cashResult: -10000 } });
+    expect(negative.verdict).toBe("at-risk");
+  });
 });

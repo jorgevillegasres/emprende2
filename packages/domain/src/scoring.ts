@@ -22,10 +22,13 @@ export type BusinessHealthInput = {
   netAfterExpenses: number;
   lowStockCount: number;
   hasMinimumData: boolean;
+  // Modo caja: cuando el negocio carga datos gruesos (entro/salio) no se puede
+  // calcular margen, asi que el veredicto se basa solo en el resultado de caja.
+  cashMode?: { cashResult: number };
 };
 
 export function calculateBusinessHealth(input: BusinessHealthInput): BusinessHealth {
-  const { averageMarginPercent, netAfterExpenses, lowStockCount, hasMinimumData } = input;
+  const { averageMarginPercent, netAfterExpenses, lowStockCount, hasMinimumData, cashMode } = input;
 
   if (!hasMinimumData) {
     return {
@@ -34,6 +37,16 @@ export function calculateBusinessHealth(input: BusinessHealthInput): BusinessHea
       label: "Sin datos suficientes",
       reason: "Registra ventas y gastos para evaluar la salud de tu negocio."
     };
+  }
+
+  if (cashMode) {
+    if (cashMode.cashResult < 0) {
+      return { score: 30, verdict: "at-risk", label: "En riesgo", reason: "Sale mas plata de la que entra este mes." };
+    }
+    if (cashMode.cashResult === 0) {
+      return { score: 50, verdict: "watch", label: "Justo en cero", reason: "Entra lo mismo que sale; cuida tu margen." };
+    }
+    return { score: 70, verdict: "healthy", label: "Caja en positivo", reason: "Entra mas plata de la que sale este mes." };
   }
 
   const marginComponent = clamp(averageMarginPercent, 0, MARGIN_SCORE_CAP);

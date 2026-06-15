@@ -39,11 +39,21 @@ export type Sale = {
   grossProfit: number;
 };
 
+// Entrada de captura semanal gruesa: "entro ~revenue, salio ~cashOut" en un
+// periodo. No tiene desglose por producto, asi que alimenta caja, no margen.
+export type AggregateEntry = {
+  periodStart: string;
+  periodEnd: string;
+  revenue: number;
+  cashOut: number;
+};
+
 export type DashboardState = {
   supplies: Supply[];
   products: Product[];
   expenses: Expense[];
   sales: Sale[];
+  aggregateEntries?: AggregateEntry[];
 };
 
 export function calculateDashboardMetrics(state: DashboardState, today: string) {
@@ -65,11 +75,25 @@ export function calculateDashboardMetrics(state: DashboardState, today: string) 
       .map((product) => ({ ...product, type: "Producto" as const }))
   ];
   const netAfterExpenses = round(monthlyGrossProfit - monthlyExpenses);
+  const monthlyAggregates = (state.aggregateEntries ?? []).filter((entry) => entry.periodStart.startsWith(monthKey));
+  const usesAggregateCapture = monthlyAggregates.length > 0;
+  const aggregateRevenue = round(sumBy(monthlyAggregates, (entry) => entry.revenue));
+  const aggregateCashOut = round(sumBy(monthlyAggregates, (entry) => entry.cashOut));
+  const monthlyCostOfGoods = round(sumBy(monthlySales, (sale) => sale.cost));
+  // Resultado de caja = todo lo que entro - todo lo que salio. Para un negocio
+  // solo-granular coincide con netAfterExpenses; con captura gruesa incluye lo
+  // agregado. Es la verdad de caja, distinta del margen.
+  const cashIn = round(monthlyRevenue + aggregateRevenue);
+  const cashOut = round(monthlyExpenses + monthlyCostOfGoods + aggregateCashOut);
+  const cashResult = round(cashIn - cashOut);
   const businessHealth = calculateBusinessHealth({
     averageMarginPercent,
     netAfterExpenses,
     lowStockCount: lowStockItems.length,
-    hasMinimumData: monthlyRevenue > 0 || monthlyExpenses > 0
+    hasMinimumData: usesAggregateCapture
+      ? aggregateRevenue > 0 || aggregateCashOut > 0
+      : monthlyRevenue > 0 || monthlyExpenses > 0,
+    cashMode: usesAggregateCapture ? { cashResult } : undefined
   });
   const weeklyRevenue = getWeeklyRevenue(monthlySales, today);
   const monthlyComparison = getMonthlyComparison(state.sales, state.expenses, today);
@@ -103,6 +127,14 @@ export function calculateDashboardMetrics(state: DashboardState, today: string) 
     netAfterExpenses,
     businessHealth,
     businessHealthScore: businessHealth.score,
+    cashFlow: {
+      usesAggregateCapture,
+      cashIn,
+      cashOut,
+      cashResult,
+      aggregateRevenue,
+      aggregateCashOut
+    },
     breakEven: calculateBreakEven(monthlyExpenses, averageMarginPercent, monthlyRevenue),
     lowStockItems,
     weeklyRevenue,
